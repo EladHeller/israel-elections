@@ -25,6 +25,7 @@ const upload = async (key, contentType, body) => s3.upload({
   Key: key,
   ACL: 'public-read',
   ContentType: contentType,
+  ContentEncoding: 'utf-8',
   Body: body,
 }).promise();
 

@@ -3,7 +3,7 @@ const cloneDeep = require('lodash.clonedeep');
 const flatMap = require('lodash.flatmap');
 const reduce = require('lodash.reduce');
 const sumBy = require('lodash.sumby');
-const {notPartiesKeys, agreements, blockPercentage} = require('../elections-api/config');
+const {notPartiesKeys, agreements, blockPercentage} = require('./config');
 
 const MANDATS = 120;
 

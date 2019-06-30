@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "build": "sh ./pre-build.sh && node build.js && sh ./post-build.sh"
+  
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "archiver": "^3.0.0",
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.17.3",
