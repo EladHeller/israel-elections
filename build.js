@@ -39,6 +39,6 @@ archive.on('error', (err) => {
 
 archive.pipe(output);
 
-archive.directory('csv-monitor/', false);
+archive.directory('src/', false);
 
 archive.finalize();

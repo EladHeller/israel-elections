@@ -1,3 +1,3 @@
-cd ./csv-monitor
+cd ./src
 npm un -S aws-sdk
 cd ..
