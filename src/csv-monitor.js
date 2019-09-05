@@ -1,9 +1,26 @@
 const phin = require('phin');
 const encoding = require('encoding');
-const {csvUrl} = require('./config');
-const {calcCsvData} = require('./calc-elections');
+const xlsx = require('xlsx');
+const {calcVotesResults} = require('./calc-elections');
+const {csvUrl, notPartiesKeys, blockPercentage, agreements} = require('./config');
 const {upload, isFileAlreadyExists} = require('./s3');
 
+const calcCsvData = (csv) => {
+  const wb = xlsx.read(csv, {type: 'string'});
+  const data = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+  const electionsData = data.reduce((acc, city) => {
+    Object.entries(city).forEach(([k, v]) => {
+      if (notPartiesKeys.every(key => key.localeCompare(k) !== 0)) {
+        if (!acc[k]) {
+          acc[k] = {votes: 0};
+        }
+        acc[k].votes += v;
+      }
+    });
+    return acc;
+  }, {});
+  return calcVotesResults(electionsData, blockPercentage, agreements);
+};
 
 const uploadCsv = async (csvData) => {
   await upload('2019_2/elections.csv', 'text/csv', csvData);

@@ -1,4 +1,3 @@
-const xlsx = require('xlsx');
 const cloneDeep = require('lodash.clonedeep');
 const flatMap = require('lodash.flatmap');
 const reduce = require('lodash.reduce');
@@ -82,7 +81,7 @@ const ceilRound = (mandats, voteData) => {
   return res;
 };
 
-const calc = (voteData, blockPercentage = config.blockPercentage, agreements = config.agreements) => {
+const calcVotesResults = (voteData, blockPercentage = config.blockPercentage, agreements = config.agreements) => {
   const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData);
 
   const withMandats = calcMandats(MANDATS, passBlockPercntage);
@@ -99,24 +98,6 @@ const calc = (voteData, blockPercentage = config.blockPercentage, agreements = c
   return {finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer};
 };
 
-const calcCsvData = (csv) => {
-  const wb = xlsx.read(csv, {type: 'string'});
-  const data = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-  const electionsData = data.reduce((acc, city) => {
-    Object.entries(city).forEach(([k, v]) => {
-      if (config.notPartiesKeys.every(key => key.localeCompare(k) !== 0)) {
-        if (!acc[k]) {
-          acc[k] = {votes: 0};
-        }
-        acc[k].votes += v;
-      }
-    });
-    return acc;
-  }, {});
-  return calc(electionsData, config.blockPercentage, config.agreements);
-};
-
 module.exports = {
-  calcCsvData,
-  calc,
+  calcVotesResults,
 };

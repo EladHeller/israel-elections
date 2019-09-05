@@ -11,16 +11,16 @@
   "license": "ISC",
   "devDependencies": {
     "eslint": "^5.16.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.17.3",
-    "eslint-plugin-node": "^9.1.0",
-    "prettier": "^1.17.1",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^9.2.0",
+    "prettier": "^1.18.2",
     "prettier-eslint": "^8.8.2",
     "prettier-eslint-cli": "^4.7.1"
   },
   "dependencies": {
     "@welldone-software/env-config": "^1.1.1",
-    "archiver": "^3.0.0",
-    "aws-sdk": "^2.485.0"
+    "archiver": "^3.1.1",
+    "aws-sdk": "^2.524.0"
   }
 }
