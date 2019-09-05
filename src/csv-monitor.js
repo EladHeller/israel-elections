@@ -1,7 +1,7 @@
 const phin = require('phin');
 const encoding = require('encoding');
 const {csvUrl} = require('./config');
-const {calcElectionResults} = require('./calc-elections');
+const {calcCsvData} = require('./calc-elections');
 const {upload, isFileAlreadyExists} = require('./s3');
 
 
@@ -22,13 +22,13 @@ const uploadResults = async ({finnalResults, finnalResultsWithoutAgreements, bef
     JSON.stringify(beforeBaderOffer));
 };
 
-const csvMonitor = async (...params) => {
-  console.log(...params);
+const csvMonitor = async () => {
   const fetchRes = await phin({url: csvUrl});
   const csvData = `\ufeff${encoding.convert(fetchRes.body, 'utf8', 'windows-1255').toString().replace(/"/g, '\'\'')}`;
-  const exists = await isFileAlreadyExists('2019_2/elections.csv', Buffer.from(csvData));
+  const exists = !(await isFileAlreadyExists('2019_2/elections.csv', Buffer.from(csvData)));
   if (!exists) {
-    await uploadResults(calcElectionResults(csvData));
+    const results = calcCsvData(csvData);
+    await uploadResults(results);
     await uploadCsv(csvData);
   }
 };

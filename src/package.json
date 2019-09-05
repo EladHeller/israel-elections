@@ -2,9 +2,12 @@
   "name": "csv-monitor",
   "version": "1.0.0",
   "description": "",
-  "main": "csv-monitor.js",
+  "main": "index.js",
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "start": "node ./index.js"
+  },
   "dependencies": {
     "@welldone-software/env-config": "^1.1.1",
     "aws-sdk": "^2.485.0",
