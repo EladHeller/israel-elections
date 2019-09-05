@@ -42,7 +42,7 @@ const uploadResults = async ({finnalResults, finnalResultsWithoutAgreements, bef
 const csvMonitor = async () => {
   const fetchRes = await phin({url: csvUrl});
   const csvData = `\ufeff${encoding.convert(fetchRes.body, 'utf8', 'windows-1255').toString().replace(/"/g, '\'\'')}`;
-  const exists = !(await isFileAlreadyExists('2019_2/elections.csv', Buffer.from(csvData)));
+  const exists = (await isFileAlreadyExists('2019_2/elections.csv', Buffer.from(csvData)));
   if (!exists) {
     const results = calcCsvData(csvData);
     await uploadResults(results);
