@@ -109,13 +109,16 @@ fetch('https://israel-elections-1.s3.eu-west-3.amazonaws.com/2019_2/results.json
       .attr('x', width / 2 + margin)
       .attr('y', 40)
       .attr('text-anchor', 'middle')
-      .text('תוצאות הבחירות 2019');
+      .text('תוצאות הבחירות לכנסת ה-22');
 
-    svg.append('text')
+    svg.append('a')
       .attr('class', 'source')
+      .attr('href', 'https://votes22.bechirot.gov.il/')
+      .append('text')
+      .attr('text-anchor', 'start')
+      .style('fill', '#55aaff')
       .attr('x', width - margin / 2)
       .attr('y', height + margin * 1.7)
-      .attr('text-anchor', 'start')
       .text('מקור - ועדת הבחירות המרכזית');
   })
   .catch(() => {
