@@ -51,10 +51,8 @@ const calcMandats = (mandats, voteData) => {
   return res;
 };
 
-const filterNotPassBlockPersentage = (percentage, voteData) => {
-  const sumVotes = reduce(voteData, (acc, {votes}) => acc + votes, 0);
-  return fromEntries(Object.entries(voteData).filter(([letter, {votes}]) => sumVotes * percentage <= votes));
-};
+const filterNotPassBlockPersentage = (percentage, voteData, sumVotes) => fromEntries(Object.entries(voteData)
+  .filter(([letter, {votes}]) => sumVotes * percentage <= votes));
 
 const splitAgreements = (voteData, agreementsVoteData) => fromEntries(flatMap(agreementsVoteData, ({mandats, votes}, letter) => {
   if (letter.includes('+')) {
@@ -82,7 +80,8 @@ const ceilRound = (mandats, voteData) => {
 };
 
 const calcVotesResults = (voteData, blockPercentage = config.blockPercentage, agreements = config.agreements) => {
-  const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData);
+  const sumVotes = reduce(voteData, (acc, {votes}) => acc + votes, 0);
+  const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData, sumVotes);
 
   const withMandats = calcMandats(MANDATS, passBlockPercntage);
 
@@ -95,7 +94,7 @@ const calcVotesResults = (voteData, blockPercentage = config.blockPercentage, ag
   // Before Bader Offer
   const beforeBaderOffer = ceilRound(MANDATS, withMandats);
 
-  return {finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer};
+  return {finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer, voteData};
 };
 
 module.exports = {

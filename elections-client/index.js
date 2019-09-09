@@ -113,7 +113,7 @@ fetch('https://israel-elections-1.s3.eu-west-3.amazonaws.com/2019_2/results.json
 
     svg.append('a')
       .attr('class', 'source')
-      .attr('href', 'https://votes22.bechirot.gov.il/')
+      .attr('href', 'https://media22.bechirot.gov.il/files/expc.csv')
       .append('text')
       .attr('text-anchor', 'start')
       .style('fill', '#55aaff')

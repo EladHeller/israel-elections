@@ -27,16 +27,18 @@ const uploadCsv = async (csvData) => {
   await upload(`2019_2/${new Date().toJSON()}_elections.csv`, 'text/csv', csvData);
 };
 
-const uploadResults = async ({finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer}) => {
-  await upload('2019_2/results.json', 'text/json', JSON.stringify(finnalResults));
-  await upload('2019_2/resultsWithoutAgremments.json', 'text/json',
+const uploadResults = async ({finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer, voteData}) => {
+  await upload('2019_2/voteData.json', 'text/json; charset=UTF-8', JSON.stringify(voteData));
+  await upload('2019_2/results.json', 'text/json; charset=UTF-8', JSON.stringify(finnalResults));
+  await upload('2019_2/resultsWithoutAgremments.json', 'text/json; charset=UTF-8',
     JSON.stringify(finnalResultsWithoutAgreements));
-  await upload('2019_2/beforeBaderOffer.json', 'text/json', JSON.stringify(beforeBaderOffer));
-  await upload(`2019_2/${new Date().toJSON()}_results.json`, 'text/json', JSON.stringify(finnalResults));
-  await upload(`2019_2/${new Date().toJSON()}_resultsWithoutAgremments.json`, 'text/json',
+  await upload('2019_2/beforeBaderOffer.json', 'text/json; charset=UTF-8', JSON.stringify(beforeBaderOffer));
+  await upload(`2019_2/${new Date().toJSON()}_results.json`, 'text/json; charset=UTF-8', JSON.stringify(finnalResults));
+  await upload(`2019_2/${new Date().toJSON()}_resultsWithoutAgremments.json`, 'text/json; charset=UTF-8',
     JSON.stringify(finnalResultsWithoutAgreements));
-  await upload(`2019_2/${new Date().toJSON()}_beforeBaderOffer.json`, 'text/json',
+  await upload(`2019_2/${new Date().toJSON()}_beforeBaderOffer.json`, 'text/json; charset=UTF-8',
     JSON.stringify(beforeBaderOffer));
+  await upload(`2019_2/${new Date().toJSON()}_voteData.json`, 'text/json; charset=UTF-8', JSON.stringify(voteData));
 };
 
 const csvMonitor = async () => {
@@ -51,5 +53,5 @@ const csvMonitor = async () => {
 };
 
 module.exports = {
-  handler: csvMonitor,
+  csvMonitor,
 };

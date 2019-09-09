@@ -1,7 +1,8 @@
 const {S3} = require('aws-sdk');
 const fs = require('fs');
+const {region} = require('./config');
 
-const s3 = new S3({region: 'eu-west-3'});
+const s3 = new S3({region});
 
 const upload = async (key, contentType, body) => s3.upload({
   Bucket: 'elections-client',
