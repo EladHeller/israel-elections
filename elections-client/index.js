@@ -14,7 +14,7 @@ const onError = (e) => {
 
 const loadResults = (elections, file) => fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${elections}/${file}`)
   .then(res => res.json())
-  .then(showSvg)
+  .then(res => showSvg(res, elections))
   .catch(onError);
 
 d3.selectAll('select').on('change', () => {

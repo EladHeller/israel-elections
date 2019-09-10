@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-export default (jsonData) => {
+export default (jsonData, electionsNumber) => {
   const data = Object.entries(jsonData)
     .map(([key, {votes, mandats}]) => ({key, votes, mandats, color: '#80cbc4'}))
     .sort((a, b) => b.votes - a.votes);
@@ -107,11 +107,11 @@ export default (jsonData) => {
     .attr('x', width / 2 + margin)
     .attr('y', 40)
     .attr('text-anchor', 'middle')
-    .text('תוצאות הבחירות לכנסת ה-22');
+    .text(`תוצאות הבחירות לכנסת ה-${electionsNumber}`);
 
   svg.append('a')
     .attr('class', 'source')
-    .attr('href', 'https://media22.bechirot.gov.il/files/expc.csv')
+    .attr('href', `https://israel-elections-1.s3.eu-west-3.amazonaws.com/${electionsNumber}/elections.csv`)
     .append('text')
     .attr('text-anchor', 'start')
     .style('fill', '#55aaff')
