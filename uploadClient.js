@@ -14,6 +14,7 @@ const upload = async (key, contentType, body) => s3.upload({
 const main = async () => {
   await upload('index.html', 'text/html', fs.readFileSync('./elections-client/index.html'));
   await upload('index.js', 'application/javascript', fs.readFileSync('./elections-client/index.js'));
+  await upload('show-svg.js', 'application/javascript', fs.readFileSync('./elections-client/show-svg.js'));
   await upload('index.css', 'text/css', fs.readFileSync('./elections-client/index.css'));
   await upload('preview.png', 'image/png', fs.readFileSync('./elections-client/preview.png'));
 };
