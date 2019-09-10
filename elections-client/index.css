@@ -98,8 +98,6 @@ select::-ms-expand {
 }
 .select {
   position: absolute;
-  right: 0px;
-  top: 0px;
   display: none;
   width: 16em;
   height: 3em;
@@ -108,8 +106,17 @@ select::-ms-expand {
   overflow: hidden;
   border-radius: .25em;
 }
+.select.select-type {
+  right: 0px;
+  top: 0px;
+}
+.select.select-elections {
+  left: 0px;
+  top: 0px;
+}
 select {
   flex: 1;
+  font-size: 15px;
   padding: 0 .5em;
   color: #fff;
   cursor: pointer;
