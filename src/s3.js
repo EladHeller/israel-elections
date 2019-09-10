@@ -1,4 +1,6 @@
 const crypto = require('crypto');
+const mime = require('mime-types');
+const path = require('path');
 const {S3} = require('aws-sdk');
 const {bucket, region} = require('./config');
 
@@ -20,11 +22,11 @@ const isFileAlreadyExists = async (key, stream) => {
 };
 
 
-const upload = async (key, contentType, body) => s3.upload({
+const upload = async (key, body) => s3.upload({
   Bucket: bucket,
   Key: key,
   ACL: 'public-read',
-  ContentType: contentType,
+  ContentType: mime.contentType(path.extname(key)) || 'application/octet-stream',
   Body: body,
 }).promise();
 
