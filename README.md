@@ -1,13 +1,13 @@
 # API
 ## Results
 ### Vote data
-GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/2019_2/voteData.json`
+GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/22/voteData.json`
 ### Real results
-GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/2019_2/results.json`
+GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/22/results.json`
 ### Before bader offer
-GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/2019_2/beforeBaderOffer.json`
+GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/22/beforeBaderOffer.json`
 ### Without agreements
-GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/2019_2/resultsWithoutAgremments.json`
+GET  `https://israel-elections-1.s3.eu-west-3.amazonaws.com/22/resultsWithoutAgremments.json`
 
 ## Calc
 POST  `https://7xf5kfr3ga.execute-api.eu-west-3.amazonaws.com/prod/calc`
