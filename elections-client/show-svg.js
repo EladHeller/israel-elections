@@ -3,9 +3,10 @@ export default (jsonData) => {
   const data = Object.entries(jsonData)
     .map(([key, {votes, mandats}]) => ({key, votes, mandats, color: '#80cbc4'}))
     .sort((a, b) => b.votes - a.votes);
-  const loading = d3.select('h1');
-  loading.style('display', 'none');
+  d3.select('h1').style('display', 'none');
+  d3.select('.select').style('display', 'flex');
   const svg = d3.select('svg');
+  svg.html('');
 
   const margin = 80;
   const width = 1000 - 2 * margin;
