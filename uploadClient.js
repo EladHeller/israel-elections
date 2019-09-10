@@ -9,13 +9,13 @@ const upload = async (key, contentType, body) => s3.upload({
   Key: key,
   ACL: 'public-read',
   ContentType: contentType,
-  ContentEncoding: 'utf-8',
   Body: body,
 }).promise();
 const main = async () => {
-  upload('index.html', 'text/html', fs.readFileSync('./elections-client/index.html'));
-  upload('index.js', 'application/javascript', fs.readFileSync('./elections-client/index.js'));
-  upload('index.css', 'text/css', fs.readFileSync('./elections-client/index.css'));
+  await upload('index.html', 'text/html', fs.readFileSync('./elections-client/index.html'));
+  await upload('index.js', 'application/javascript', fs.readFileSync('./elections-client/index.js'));
+  await upload('index.css', 'text/css', fs.readFileSync('./elections-client/index.css'));
+  await upload('preview.png', 'image/png', fs.readFileSync('./elections-client/preview.png'));
 };
 
 main().then(console.log).catch(console.error);
