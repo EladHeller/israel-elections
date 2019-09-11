@@ -17,11 +17,11 @@ const loadResults = (elections, file) => fetch(`https://israel-elections-1.s3.eu
   .then(res => showSvg(res, elections))
   .catch(onError);
 
+const getCurrElection = () => document.querySelector('.select-elections > select').value;
+const getCurrType = () => document.querySelector('.select-type > select').value;
+
 d3.selectAll('select').on('change', () => {
-  const currElections = document.querySelector('.select-elections > select').value;
-  const currType = document.querySelector('.select-type > select').value;
-  console.log(currElections, currType);
-  loadResults(currElections, dataPath[currType]);
+  loadResults(getCurrElection(), dataPath[getCurrType()]);
 });
 
-loadResults('22', dataPath.results);
+loadResults(getCurrElection(), dataPath[getCurrType()]);
