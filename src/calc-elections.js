@@ -2,7 +2,9 @@ const cloneDeep = require('lodash.clonedeep');
 const flatMap = require('lodash.flatmap');
 const reduce = require('lodash.reduce');
 const sumBy = require('lodash.sumby');
-const config = require('./config');
+const {currElections, electionsConfig} = require('./config');
+
+const currElectionsConfig = electionsConfig[currElections];
 
 const MANDATS = 120;
 
@@ -79,20 +81,22 @@ const ceilRound = (mandats, voteData) => {
   return res;
 };
 
-const calcVotesResults = (voteData, blockPercentage = config.blockPercentage, agreements = config.agreements) => {
+const calcVotesResults = (voteData, blockPercentage = currElectionsConfig.blockPercentage,
+  agreements = currElectionsConfig.agreements) => {
   const sumVotes = reduce(voteData, (acc, {votes}) => acc + votes, 0);
   const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData, sumVotes);
 
   const withMandats = calcMandats(MANDATS, passBlockPercntage);
+  const withAgreements = convertToAgreements(agreements, withMandats);
 
   // Bader Offer
-  const withAgreements = convertToAgreements(agreements, withMandats);
   const resultWithAgreements = baderOffer(MANDATS, withAgreements);
   const finnalResults = splitAgreements(withMandats, resultWithAgreements);
   // Bader Offer without agreements
   const finnalResultsWithoutAgreements = baderOffer(MANDATS, withMandats);
   // Before Bader Offer
-  const beforeBaderOffer = ceilRound(MANDATS, withMandats);
+  const beforeBaderOfferAgreements = ceilRound(MANDATS, withAgreements);
+  const beforeBaderOffer = splitAgreements(withMandats, beforeBaderOfferAgreements);
 
   return {finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer, voteData};
 };
