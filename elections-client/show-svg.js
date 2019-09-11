@@ -118,4 +118,17 @@ export default (jsonData, electionsNumber) => {
     .attr('x', width - margin / 2)
     .attr('y', height + margin * 1.7)
     .text('מקור - ועדת הבחירות המרכזית');
+
+  fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${electionsNumber}/voteData.json`)
+    .then(res => res.json())
+    .then((voteData) => {
+      const sumVotes = Object.values(voteData).reduce((acc, {votes}) => acc + votes, 0);
+      svg.append('text')
+        .attr('text-anchor', 'start')
+        .style('fill', '#fff')
+        .attr('x', margin * 3)
+        .attr('y', height + margin * 1.7)
+        .text(`סה"כ קולות כשרים - ${sumVotes}`);
+    })
+    .catch(console.error);
 };
