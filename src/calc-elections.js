@@ -87,16 +87,15 @@ const calcVotesResults = (voteData, blockPercentage = currElectionsConfig.blockP
   const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData, sumVotes);
 
   const withMandats = calcMandats(MANDATS, passBlockPercntage);
-  const withAgreements = convertToAgreements(agreements, withMandats);
 
   // Bader Offer
+  const withAgreements = convertToAgreements(agreements, withMandats);
   const resultWithAgreements = baderOffer(MANDATS, withAgreements);
   const finnalResults = splitAgreements(withMandats, resultWithAgreements);
   // Bader Offer without agreements
   const finnalResultsWithoutAgreements = baderOffer(MANDATS, withMandats);
   // Before Bader Offer
-  const beforeBaderOfferAgreements = ceilRound(MANDATS, withAgreements);
-  const beforeBaderOffer = splitAgreements(withMandats, beforeBaderOfferAgreements);
+  const beforeBaderOffer = ceilRound(MANDATS, withMandats);
 
   return {finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer, voteData};
 };
