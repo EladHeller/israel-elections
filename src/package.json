@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@welldone-software/env-config": "^1.1.1",
-    "aws-sdk": "^2.529.0",
+    "aws-sdk": "^2.530.0",
     "encoding": "^0.1.12",
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatmap": "^4.5.0",
