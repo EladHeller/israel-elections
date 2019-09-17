@@ -111,13 +111,15 @@ export default (jsonData, electionsNumber) => {
 
   svg.append('a')
     .attr('class', 'source')
-    .attr('href', `https://israel-elections-1.s3.eu-west-3.amazonaws.com/${electionsNumber}/elections.csv`)
+    .attr('href', 'https://github.com/EladHeller/israel-elections')
+    .attr('target', '_blank')
+    .attr('rel', 'noopener noreferrer')
     .append('text')
     .attr('text-anchor', 'start')
     .style('fill', '#55aaff')
     .attr('x', width - margin / 2)
     .attr('y', height + margin * 1.7)
-    .text('מקור - ועדת הבחירות המרכזית');
+    .text('קוד מקור');
 
   fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${electionsNumber}/voteData.json`)
     .then(res => res.json())
