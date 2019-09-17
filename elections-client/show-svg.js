@@ -20,7 +20,7 @@ export default (jsonData, electionsNumber) => {
     .domain(data.map(s => s.key))
     .padding(0.4);
 
-  const domainY = Math.ceil(data[0].mandats / 10) * 10;
+  const domainY = data[0] ? Math.ceil(data[0].mandats / 10) * 10 : 30;
 
   const yScale = d3.scaleLinear()
     .range([height, 0])

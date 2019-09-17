@@ -84,6 +84,9 @@ const ceilRound = (mandats, voteData) => {
 const calcVotesResults = (voteData, blockPercentage = currElectionsConfig.blockPercentage,
   agreements = currElectionsConfig.agreements) => {
   const sumVotes = reduce(voteData, (acc, {votes}) => acc + votes, 0);
+  if (sumVotes === 0) {
+    return {finnalResults: {}, finnalResultsWithoutAgreements: {}, beforeBaderOffer: {}, voteData};
+  }
   const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData, sumVotes);
 
   const withMandats = calcMandats(MANDATS, passBlockPercntage);
