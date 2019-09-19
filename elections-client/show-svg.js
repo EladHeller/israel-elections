@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-export default (jsonData, electionsNumber) => {
-  const data = Object.entries(jsonData)
+export default (electionsResults, electionsNumber, type) => {
+  const data = Object.entries(electionsResults[type])
     .map(([key, {votes, mandats}]) => ({key, votes, mandats, color: '#80cbc4'}))
     .sort((a, b) => b.votes - a.votes);
   d3.select('h1').style('display', 'none');
@@ -108,6 +108,13 @@ export default (jsonData, electionsNumber) => {
     .attr('y', 40)
     .attr('text-anchor', 'middle')
     .text(`תוצאות הבחירות לכנסת ה-${electionsNumber}`);
+  const time = new Date(electionsResults.time);
+  const formattedTime = `${time.getHours()}:${time.getMinutes().toString().padStart(2, '0')}`;
+  svg.append('text')
+    .attr('x', width / 2 + margin)
+    .attr('y', 60)
+    .attr('text-anchor', 'middle')
+    .text(`מעודכן ל-${formattedTime}`);
 
   svg.append('a')
     .attr('class', 'source')
@@ -121,16 +128,11 @@ export default (jsonData, electionsNumber) => {
     .attr('y', height + margin * 1.7)
     .text('קוד מקור');
 
-  fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${electionsNumber}/voteData.json`)
-    .then(res => res.json())
-    .then((voteData) => {
-      const sumVotes = Object.values(voteData).reduce((acc, {votes}) => acc + votes, 0);
-      svg.append('text')
-        .attr('text-anchor', 'start')
-        .style('fill', '#fff')
-        .attr('x', margin * 3)
-        .attr('y', height + margin * 1.7)
-        .text(`סה"כ קולות כשרים - ${sumVotes}`);
-    })
-    .catch(console.error);
+  const sumVotes = Object.values(electionsResults.voteData).reduce((acc, {votes}) => acc + votes, 0);
+  svg.append('text')
+    .attr('text-anchor', 'start')
+    .style('fill', '#fff')
+    .attr('x', margin * 3)
+    .attr('y', height + margin * 1.7)
+    .text(`סה"כ קולות כשרים - ${sumVotes}`);
 };

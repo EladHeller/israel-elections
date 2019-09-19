@@ -23,23 +23,15 @@ const getCsvData = (csv) => {
   }, {});
 };
 
-const uploadCsv = async (csvData) => {
-  await upload(`${currElections}/elections.csv`, csvData);
-  await upload(`${currElections}/${new Date().toJSON()}_elections.csv`, csvData);
+const uploadCsv = async (csvData, elections) => {
+  await upload(`${elections}/elections.csv`, csvData);
+  await upload(`${elections}/${new Date().toJSON()}_elections.csv`, csvData);
 };
 
-const uploadResults = async ({finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer, voteData}) => {
-  await upload(`${currElections}/voteData.json`, JSON.stringify(voteData));
-  await upload(`${currElections}/results.json`, JSON.stringify(finnalResults));
-  await upload(`${currElections}/resultsWithoutAgremments.json`,
-    JSON.stringify(finnalResultsWithoutAgreements));
-  await upload(`${currElections}/beforeBaderOffer.json`, JSON.stringify(beforeBaderOffer));
-  await upload(`${currElections}/${new Date().toJSON()}_results.json`, JSON.stringify(finnalResults));
-  await upload(`${currElections}/${new Date().toJSON()}_resultsWithoutAgremments.json`,
-    JSON.stringify(finnalResultsWithoutAgreements));
-  await upload(`${currElections}/${new Date().toJSON()}_beforeBaderOffer.json`,
-    JSON.stringify(beforeBaderOffer));
-  await upload(`${currElections}/${new Date().toJSON()}_voteData.json`, JSON.stringify(voteData));
+const uploadResults = async (results, elections) => {
+  await upload(`${elections}/allResults.json`, JSON.stringify({...results, time: new Date().toJSON()}));
+  await upload(`${elections}/${new Date().toJSON()}_allResults.json`,
+    JSON.stringify({...results, time: new Date().toJSON()}));
 };
 
 const csvMonitor = async () => {
@@ -49,8 +41,8 @@ const csvMonitor = async () => {
   if (!exists) {
     const electionsData = getCsvData(csvData);
     const results = calcVotesResults(electionsData, blockPercentage, agreements);
-    await uploadResults(results);
-    await uploadCsv(csvData);
+    await uploadResults(results, currElections);
+    await uploadCsv(csvData, currElections);
   }
 };
 

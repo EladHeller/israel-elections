@@ -94,13 +94,13 @@ const calcVotesResults = (voteData, blockPercentage = currElectionsConfig.blockP
   // Bader Offer
   const withAgreements = convertToAgreements(agreements, withMandats);
   const resultWithAgreements = baderOffer(MANDATS, withAgreements);
-  const finnalResults = splitAgreements(withMandats, resultWithAgreements);
+  const realResults = splitAgreements(withMandats, resultWithAgreements);
   // Bader Offer without agreements
-  const finnalResultsWithoutAgreements = baderOffer(MANDATS, withMandats);
+  const withoutAgreements = baderOffer(MANDATS, withMandats);
   // Before Bader Offer
   const beforeBaderOffer = ceilRound(MANDATS, withMandats);
 
-  return {finnalResults, finnalResultsWithoutAgreements, beforeBaderOffer, voteData};
+  return {realResults, withoutAgreements, beforeBaderOffer, voteData};
 };
 
 module.exports = {
