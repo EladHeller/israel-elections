@@ -63,11 +63,11 @@ export default (electionsResults, electionsNumber, type) => {
         .attr('fill', 'white')
         .attr('text-anchor', 'middle');
       texts.append('tspan')
-        .attr('y', a => yScale(a.mandats) + 30)
+        .attr('y', a => yScale(a.mandats) + 15)
         .attr('x', a => xScale(a.key) + xScale.bandwidth() / 2)
         .text(a => a.votes);
       texts.append('tspan')
-        .attr('y', a => yScale(a.mandats) + 42)
+        .attr('y', a => yScale(a.mandats) + 27)
         .attr('x', a => xScale(a.key) + xScale.bandwidth() / 2)
         .text('קולות');
     })
@@ -82,7 +82,7 @@ export default (electionsResults, electionsNumber, type) => {
     .append('text')
     .attr('class', 'value')
     .attr('x', a => xScale(a.key) + xScale.bandwidth() / 2)
-    .attr('y', a => yScale(a.mandats) + 30)
+    .attr('y', a => yScale(a.mandats) + 15)
     .attr('text-anchor', 'middle')
     .text(a => `${a.mandats}`);
 
@@ -108,7 +108,7 @@ export default (electionsResults, electionsNumber, type) => {
     .attr('y', 40)
     .attr('text-anchor', 'middle')
     .text(`תוצאות הבחירות לכנסת ה-${electionsNumber}`);
-  if (electionsNumber === '22') {
+  if (electionsNumber === '23') {
     const time = new Date(electionsResults.time);
     const formattedTime = `${time.getHours()}:${time.getMinutes().toString().padStart(2, '0')}`;
     svg.append('text')
