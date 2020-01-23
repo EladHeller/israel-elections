@@ -8,11 +8,6 @@ const currElectionsConfig = electionsConfig[currElections];
 
 const MANDATS = 120;
 
-const fromEntries = entries => entries.reduce((acc, [k, v]) => ({
-  ...acc,
-  [k]: v,
-}), {});
-
 const baderOffer = (allMandats, voteData) => {
   const res = cloneDeep(voteData);
   while (sumBy(Object.values(res), 'mandats') < allMandats) {
@@ -48,32 +43,34 @@ const calcMandats = (mandats, voteData) => {
 
   const sumVotes = sumBy(Object.values(res), 'votes');
   Object.values(res).forEach((partyData) => {
-    partyData.mandats = Math.floor(partyData.votes / sumVotes * mandats);
+    partyData.mandats = Math.floor((partyData.votes / sumVotes) * mandats);
   });
   return res;
 };
 
-const filterNotPassBlockPersentage = (percentage, voteData, sumVotes) => fromEntries(Object.entries(voteData)
-  .filter(([letter, {votes}]) => sumVotes * percentage <= votes));
+const filterNotPassBlockPersentage = (percentage, voteData, sumVotes) => Object.fromEntries(Object.entries(voteData)
+  .filter(([, {votes}]) => sumVotes * percentage <= votes));
 
-const splitAgreements = (voteData, agreementsVoteData) => fromEntries(flatMap(agreementsVoteData, ({mandats, votes}, letter) => {
-  if (letter.includes('+')) {
-    const [a, b] = letter.split('+');
-    const result = baderOffer(mandats, {[a]: voteData[a], [b]: voteData[b]});
-    return [[a, result[a]], [b, result[b]]];
-  }
-  return [[letter, {votes, mandats}]];
-}));
-
+const splitAgreements = (voteData, agreementsVoteData) => {
+  const agreementArray = flatMap(agreementsVoteData, ({mandats, votes}, letter) => {
+    if (letter.includes('+')) {
+      const [a, b] = letter.split('+');
+      const result = baderOffer(mandats, {[a]: voteData[a], [b]: voteData[b]});
+      return [[a, result[a]], [b, result[b]]];
+    }
+    return [[letter, {votes, mandats}]];
+  });
+  return Object.fromEntries(agreementArray);
+};
 const ceilRound = (mandats, voteData) => {
   const res = cloneDeep(voteData);
 
   const mandatVotes = sumBy(Object.values(res), 'votes') / mandats;
   const mandatsForDistribution = mandats - sumBy(Object.values(res), 'mandats');
   const sortedParties = Object.entries(res).sort(
-    ([k1, v1], [k2, v2]) => (v2.votes % mandatVotes) - (v1.votes % mandatVotes)
+    ([, v1], [, v2]) => (v2.votes % mandatVotes) - (v1.votes % mandatVotes),
   );
-  sortedParties.forEach(([letter, partieData], i) => {
+  sortedParties.forEach(([, partieData], i) => {
     if (mandatsForDistribution > i) {
       partieData.mandats += 1;
     }
