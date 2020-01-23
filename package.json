@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint src",
+    "lint": "eslint src elections-client",
+    "lint-fix": "eslint --fix src elections-client",
     "build": "sh ./pre-build.sh && node build.js && sh ./post-build.sh",
     "upload-client": "node uploadClient.js"
   },

@@ -1,34 +1,59 @@
-/* eslint-disable no-undef */
 import showSvg from './show-svg.js';
 
-const dataPath = {
-  results: 'results.json',
-  resultsWithoutAgreements: 'resultsWithoutAgremments.json',
-  beforeBaderOffer: 'beforeBaderOffer.json',
-};
+const selectType = d3.select('.select-type > select');
+let currResults;
+
 
 const onError = (e) => {
+  d3.select('h1')
+    .style('color', 'red')
+    .style('display', 'block')
+    .text('שגיאה בהבאת הנתונים');
+  d3.select('svg')
+    .html('');
   console.error(e);
-  d3.select('h1').style('color', 'red').text('שגיאה בהבאת הנתונים');
 };
-let currResults;
+
 
 const getCurrElection = () => document.querySelector('.select-elections > select').value;
 const getCurrType = () => document.querySelector('.select-type > select').value;
 
-const loadResults = elections => fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${elections}/allResults.json`)
-  .then(res => res.json())
-  .then((res) => {
-    currResults = res;
-    showSvg(res, elections, getCurrType());
-  })
-  .catch(onError);
-
+const loadResults = async (elections) => {
+  try {
+    const res = await fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${elections}/allResults.json`);
+    if (res.ok) {
+      currResults = await res.json();
+      showSvg(currResults, elections, getCurrType());
+    } else {
+      onError(await res.text());
+    }
+  } catch (e) {
+    onError(e);
+  }
+};
 
 d3.select('.select-elections').on('change', () => {
-  loadResults(getCurrElection());
+  const elections = Number(getCurrElection());
+  loadResults(elections);
+  if (elections === 1) {
+    selectType.html(`
+        <option selected value="realResults">תוצאות אמת</option>
+        <option value="beforeBaderOffer">תוצאות ללא בדר עופר</option>
+    `);
+  } else if (elections < 8) {
+    selectType.html(`
+        <option selected value="realResults">תוצאות אמת</option>
+        <option value="afterBaderOffer">תוצאות עם בדר עופר</option>
+    `);
+  } else {
+    selectType.html(`
+          <option selected value="realResults">תוצאות אמת</option>
+          <option value="beforeBaderOffer">תוצאות ללא בדר עופר</option>
+          <option value="withoutAgreements">תוצאות ללא הסכמי עודפים</option>
+      `);
+  }
 });
-d3.select('.select-type').on('change', () => {
+selectType.on('change', () => {
   showSvg(currResults, getCurrElection(), getCurrType());
 });
 

@@ -1,0 +1,6 @@
+env:
+  browser: true
+globals:
+  d3: readonly
+rules:
+  import/extensions: [error, {js: allways}]
