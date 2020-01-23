@@ -4,7 +4,7 @@ const selectType = d3.select('.select-type > select');
 let currResults;
 
 
-const onError = (e) => {
+const onError = e => {
   d3.select('h1')
     .style('color', 'red')
     .style('display', 'block')
@@ -18,7 +18,7 @@ const onError = (e) => {
 const getCurrElection = () => document.querySelector('.select-elections > select').value;
 const getCurrType = () => document.querySelector('.select-type > select').value;
 
-const loadResults = async (elections) => {
+const loadResults = async elections => {
   try {
     const res = await fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${elections}/allResults.json`);
     if (res.ok) {

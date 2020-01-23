@@ -25,7 +25,7 @@ output.on('end', () => {
   console.log('Data has been drained');
 });
 
-archive.on('warning', (err) => {
+archive.on('warning', err => {
   if (err.code === 'ENOENT') {
     console.log(err);
   } else {
@@ -33,7 +33,7 @@ archive.on('warning', (err) => {
   }
 });
 
-archive.on('error', (err) => {
+archive.on('error', err => {
   throw err;
 });
 

@@ -12,7 +12,7 @@ const lstat = promisify(fs.lstat);
 const readdir = promisify(fs.readdir);
 const readFile = promisify(fs.readFile);
 
-const getAllDirsFiles = (files, basePath) => Promise.all(files.map(async (file) => {
+const getAllDirsFiles = (files, basePath) => Promise.all(files.map(async file => {
   const currPath = basePath ? `${basePath}/${file}` : file;
   const stat = await lstat(currPath);
   if (stat.isDirectory()) {

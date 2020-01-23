@@ -1,7 +1,7 @@
 const {csvMonitor} = require('./csv-monitor');
 const {calcVotesResults} = require('./calc-elections');
 
-const handler = async (req) => {
+const handler = async req => {
   try {
     if (req.source === 'aws.events') {
       return csvMonitor();

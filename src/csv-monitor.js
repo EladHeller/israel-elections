@@ -7,12 +7,12 @@ const {upload, isFileAlreadyExists} = require('./s3');
 
 const {csvUrl, agreements, blockPercentage} = electionsConfig[currElections];
 
-const getCsvData = (csv) => {
+const getCsvData = csv => {
   const wb = xlsx.read(csv, {type: 'string'});
   const data = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
   return data.reduce((acc, city) => {
     Object.entries(city).forEach(([k, v]) => {
-      if (notPartiesKeys.every((key) => key.localeCompare(k) !== 0)) {
+      if (notPartiesKeys.every(key => key.localeCompare(k) !== 0)) {
         if (!acc[k]) {
           acc[k] = {votes: 0};
         }

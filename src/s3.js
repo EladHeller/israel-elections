@@ -6,7 +6,7 @@ const {bucket, region} = require('./config');
 
 const s3 = new S3({region});
 
-const md5 = (data) => crypto.createHash('md5').update(data).digest('hex');
+const md5 = data => crypto.createHash('md5').update(data).digest('hex');
 
 const isFileAlreadyExists = async (key, stream) => {
   try {

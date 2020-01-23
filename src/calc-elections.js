@@ -42,7 +42,7 @@ const calcMandats = (mandats, voteData) => {
   const res = cloneDeep(voteData);
 
   const sumVotes = sumBy(Object.values(res), 'votes');
-  Object.values(res).forEach((partyData) => {
+  Object.values(res).forEach(partyData => {
     partyData.mandats = Math.floor((partyData.votes / sumVotes) * mandats);
   });
   return res;
