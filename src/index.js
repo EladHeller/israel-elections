@@ -1,5 +1,6 @@
-const {csvMonitor} = require('./csv-monitor');
+const {csvMonitor, uploadResults} = require('./csv-monitor');
 const {calcVotesResults} = require('./calc-elections');
+const {electionsConfig} = require('./config');
 
 const handler = async req => {
   try {
@@ -29,6 +30,16 @@ const handler = async req => {
   }
 };
 
+const calcOldElectionsResults = async electionsIndex => {
+  const {agreements, algorithm, blockPercentage, voteData} = electionsConfig[electionsIndex];
+  const votesData = Object.fromEntries(
+    Object.entries(voteData).map(([k, votes]) => [k, {votes}]),
+  );
+  const res = calcVotesResults(votesData, blockPercentage, agreements, algorithm);
+  await uploadResults(res, electionsIndex);
+};
+
 module.exports = {
   handler,
+  calcOldElectionsResults,
 };

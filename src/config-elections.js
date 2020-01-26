@@ -423,7 +423,7 @@ module.exports = {
   1: {
     agreements: [],
     algorithm: 'baderOffer',
-    blockPercentage: 100 / 120,
+    blockPercentage: (100 / 120) * 0.01,
     voteData: {
       א: 155274,
       מ: 64018,

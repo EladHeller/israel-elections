@@ -48,4 +48,5 @@ const csvMonitor = async () => {
 
 module.exports = {
   csvMonitor,
+  uploadResults,
 };
