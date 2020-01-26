@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "clear-cache": "node cloudfront-refresh.js",
     "lint": "eslint src elections-client",
     "lint-fix": "eslint --fix src elections-client",
     "build": "sh ./pre-build.sh && node build.js && sh ./post-build.sh",
