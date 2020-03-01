@@ -23,15 +23,14 @@ const getCsvData = csv => {
   }, {});
 };
 
-const uploadCsv = async (csvData, elections) => {
+const uploadCsv = async (csvData, elections, time) => {
   await upload(`${elections}/elections.csv`, csvData);
-  await upload(`${elections}/${new Date().toJSON()}_elections.csv`, csvData);
+  await upload(`${elections}/${time}_elections.csv`, csvData);
 };
 
-const uploadResults = async (results, elections) => {
-  await upload(`${elections}/allResults.json`, JSON.stringify({...results, time: new Date().toJSON()}));
-  await upload(`${elections}/${new Date().toJSON()}_allResults.json`,
-    JSON.stringify({...results, time: new Date().toJSON()}));
+const uploadResults = async (results, elections, time) => {
+  await upload(`${elections}/allResults.json`, JSON.stringify({...results, time}));
+  await upload(`${elections}/${time}_allResults.json`, JSON.stringify({...results, time}));
 };
 
 const csvMonitor = async () => {
@@ -41,8 +40,9 @@ const csvMonitor = async () => {
   if (!exists) {
     const electionsData = getCsvData(csvData);
     const results = calcVotesResults(electionsData, blockPercentage, agreements);
-    await uploadResults(results, currElections);
-    await uploadCsv(csvData, currElections);
+    const time = new Date(fetchRes.headers['last-modified']).toJSON();
+    await uploadResults(results, currElections, time);
+    await uploadCsv(csvData, currElections, time);
   }
 };
 
