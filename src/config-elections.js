@@ -1,4 +1,10 @@
 module.exports = {
+  23: {
+    algorithm: 'baderOffer',
+    csvUrl: 'https://media23.bechirot.gov.il/files/expc.csv',
+    blockPercentage: 0.0325,
+    agreements: [['שס', 'ג'], ['מחל', 'טב'], ['פה', 'אמת']],
+  },
   22: {
     algorithm: 'baderOffer',
     csvUrl: 'https://media22.bechirot.gov.il/files/expc.csv',
