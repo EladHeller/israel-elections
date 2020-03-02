@@ -85,7 +85,7 @@ const calcVotesResults = (voteData, blockPercentage = currElectionsConfig.blockP
   agreements = currElectionsConfig.agreements, algorithm = currElectionsConfig.algorithm) => {
   const sumVotes = reduce(voteData, (acc, {votes}) => acc + votes, 0);
   if (sumVotes === 0) {
-    return {finnalResults: {}, finnalResultsWithoutAgreements: {}, beforeBaderOffer: {}, voteData};
+    return {realResults: {}, withoutAgreements: {}, beforeBaderOffer: {}, voteData};
   }
   const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData, sumVotes);
 
