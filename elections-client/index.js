@@ -20,7 +20,8 @@ const getCurrType = () => document.querySelector('.select-type > select').value;
 
 const loadResults = async elections => {
   try {
-    const res = await fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${elections}/allResults.json`);
+    const res = await fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${elections}/allResults.json?v=${
+      Math.random().toString()}`);
     if (res.ok) {
       currResults = await res.json();
       showSvg(currResults, elections, getCurrType());
