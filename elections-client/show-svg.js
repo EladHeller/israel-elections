@@ -108,7 +108,7 @@ export default (electionsResults, electionsNumber, type) => {
     .attr('y', 40)
     .attr('text-anchor', 'middle')
     .text(`תוצאות הבחירות לכנסת ה-${electionsNumber}`);
-  if (electionsNumber === '23') {
+  if (electionsNumber === '24') {
     const time = new Date(electionsResults.time);
     const formattedTime = `${time.getHours()}:${
       time.getMinutes().toString().padStart(2, '0')} ${Intl.DateTimeFormat('he-IL').format(time)}`;
@@ -117,6 +117,12 @@ export default (electionsResults, electionsNumber, type) => {
       .attr('y', 60)
       .attr('text-anchor', 'middle')
       .text(`מעודכן ל-${formattedTime}`);
+  } else if (electionsNumber === '23') {
+    svg.append('text')
+      .attr('x', width / 2 + margin)
+      .attr('y', 60)
+      .attr('text-anchor', 'middle')
+      .text('תוצאות סופיות');
   }
 
   svg.append('a')
