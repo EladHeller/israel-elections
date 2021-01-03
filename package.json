@@ -14,14 +14,14 @@
   "license": "ISC",
   "devDependencies": {
     "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.20.0",
-    "eslint-plugin-node": "^11.0.0"
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0"
   },
   "dependencies": {
     "@welldone-software/env-config": "^1.1.1",
     "archiver": "^3.1.1",
-    "aws-sdk": "^2.608.0",
-    "mime-types": "^2.1.26"
+    "aws-sdk": "^2.820.0",
+    "mime-types": "^2.1.28"
   }
 }
