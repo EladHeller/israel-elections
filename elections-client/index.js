@@ -3,7 +3,6 @@ import showSvg from './show-svg.js';
 const selectType = d3.select('.select-type > select');
 let currResults;
 
-
 const onError = e => {
   d3.select('h1')
     .style('color', 'red')
@@ -13,7 +12,6 @@ const onError = e => {
     .html('');
   console.error(e);
 };
-
 
 const getCurrElection = () => document.querySelector('.select-elections > select').value;
 const getCurrType = () => document.querySelector('.select-type > select').value;
@@ -63,6 +61,5 @@ d3.select('.select-elections').on('change', () => {
 selectType.on('change', () => {
   showSvg(currResults, getCurrElection(), getCurrType());
 });
-
 
 loadResults(getCurrElection());

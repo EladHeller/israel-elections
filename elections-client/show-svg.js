@@ -117,12 +117,6 @@ export default (electionsResults, electionsNumber, type) => {
       .attr('y', 60)
       .attr('text-anchor', 'middle')
       .text(`מעודכן ל-${formattedTime}`);
-  } else if (electionsNumber === '23') {
-    svg.append('text')
-      .attr('x', width / 2 + margin)
-      .attr('y', 60)
-      .attr('text-anchor', 'middle')
-      .text('תוצאות סופיות');
   }
 
   svg.append('a')
