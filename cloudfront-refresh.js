@@ -19,7 +19,6 @@ const getAllDirsFiles = (files, basePath) => Promise.all(files.flatMap(async fil
   return currPath.replace(basePath, '');
 }));
 
-
 const getInvalidationStatus = id => cf.getInvalidation(
   {DistributionId: distributionID, Id: id},
 ).promise();
@@ -46,6 +45,5 @@ const main = async () => {
   }
   return invalidationStatus.Invalidation;
 };
-
 
 main().then(console.log).catch(console.error);

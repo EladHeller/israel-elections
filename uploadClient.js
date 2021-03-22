@@ -37,6 +37,7 @@ const main = async () => {
   await Promise.all(files.map(async ({file}) => {
     await upload(file.replace(`${basePath}/`, ''), await readFile(file));
   }));
+  console.log('finnish');
 };
 
 main().then(console.log).catch(console.error);

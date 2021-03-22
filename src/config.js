@@ -2,7 +2,7 @@ const {mergeEnv} = require('@welldone-software/env-config');
 const electionsConfig = require('./config-elections');
 
 const config = {
-  currElections: '23',
+  currElections: '24',
   electionsConfig,
   bucket: 'israel-elections-1',
   region: 'eu-west-3',
