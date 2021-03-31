@@ -10,14 +10,14 @@
   },
   "dependencies": {
     "@welldone-software/env-config": "^1.1.1",
-    "aws-sdk": "^2.869.0",
-    "encoding": "^0.1.12",
+    "aws-sdk": "^2.870.0",
+    "encoding": "^0.1.13",
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatmap": "^4.5.0",
     "lodash.reduce": "^4.6.0",
     "lodash.sumby": "^4.6.0",
-    "mime-types": "^2.1.24",
-    "phin": "^3.4.0",
+    "mime-types": "^2.1.29",
+    "phin": "^3.5.1",
     "xlsx": "^0.14.5"
   }
 }
