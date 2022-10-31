@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  BucketCodeName:
+    Description: The name of code bucket.
+    Type: String
+
+  ClientCodeName:
+    Description: The name of client code bucket.
+    Type: String
+
+Resources:
+  ElectionsLambdaCode:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref BucketCodeName
+  ElectionsClientCode:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref ClientCodeName
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref ElectionsClientCode
+  CDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Israel elections client
+        DefaultRootObject: index.html
+        Enabled: true
+        DefaultCacheBehavior:
+          TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: all
+        Origins:
+          - Id: !Sub origin-bucket-${ElectionsClientCode}
+            DomainName: !Sub ${ElectionsClientCode}.s3.amazonaws.com
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+
+
+
+Outputs:
+  DistributionId:
+    Value: !Ref CDN
+

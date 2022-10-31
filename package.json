@@ -4,24 +4,39 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "clear-cache": "node cloudfront-refresh.js",
-    "lint": "eslint src elections-client",
-    "lint-fix": "eslint --fix src elections-client",
-    "build": "sh ./pre-build.sh && node build.js && sh ./post-build.sh",
-    "upload-client": "node uploadClient.js"
+    "lint:test": "eslint ./**/*.ts ./elections-client/**/*.js --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "upload-client": "node uploadClient.js",
+    "build": "rm -rf dist && tsc",
+    "clear-cache": "ts-node-esm ./build/cloudfront.ts",
+    "update-lambda": "ts-node-esm ./build/update-lambda.ts",
+    "update-s3": "ts-node-esm ./build/update-s3.ts",
+    "update-env": "ts-node-esm ./build/update-env.ts",
+    "test:ci": "npm run type-check && npm run lint:test",
+    "deploy": "sh ./build/deploy.sh"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.1.0"
+    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-typescript": "^7.18.6",
+    "@types/node": "^18.11.6",
+    "@typescript-eslint/eslint-plugin": "^5.41.0",
+    "@typescript-eslint/parser": "^5.41.0",
+    "aws-sdk": "^2.1240.0",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.26.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^27.1.3",
+    "eslint-plugin-node": "^11.1.0",
+    "ts-node": "^10.9.1"
   },
   "dependencies": {
-    "@welldone-software/env-config": "^1.1.1",
-    "archiver": "^3.1.1",
-    "aws-sdk": "^2.820.0",
-    "mime-types": "^2.1.28"
+    "convict": "^6.2.3",
+    "csv-parse": "^5.3.0",
+    "encoding": "^0.1.13",
+    "mime-types": "^2.1.35",
+    "phin": "^3.6.1"
   }
 }

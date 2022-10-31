@@ -1,13 +1,13 @@
-const {csvMonitor, uploadResults} = require('./csv-monitor');
-const {calcVotesResults} = require('./calc-elections');
-const {electionsConfig} = require('./config');
+const { csvMonitor, uploadResults } = require('./csv-monitor');
+const { calcVotesResults } = require('./calc-elections');
+const { electionsConfig } = require('./config');
 
-const handler = async req => {
+const handler = async (req) => {
   try {
     if (req.source === 'aws.events') {
       return csvMonitor();
     }
-    const {voteData, blockPercentage, agreements} = JSON.parse(req.body);
+    const { voteData, blockPercentage, agreements } = JSON.parse(req.body);
     const res = calcVotesResults(voteData, blockPercentage, agreements);
     return {
       statusCode: 200,
@@ -30,10 +30,12 @@ const handler = async req => {
   }
 };
 
-const calcOldElectionsResults = async electionsIndex => {
-  const {agreements, algorithm, blockPercentage, voteData} = electionsConfig[electionsIndex];
+const calcOldElectionsResults = async (electionsIndex) => {
+  const {
+    agreements, algorithm, blockPercentage, voteData,
+  } = electionsConfig[electionsIndex];
   const votesData = Object.fromEntries(
-    Object.entries(voteData).map(([k, votes]) => [k, {votes}]),
+    Object.entries(voteData).map(([k, votes]) => [k, { votes }]),
   );
   const res = calcVotesResults(votesData, blockPercentage, agreements, algorithm);
   await uploadResults(res, electionsIndex);

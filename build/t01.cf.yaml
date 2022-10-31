@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  BucketCodeName:
+    Description: The name of code bucket.
+    Type: String
+  CurrentElections:
+    Description: The number of current elections.
+    Type: String
+
+Resources:
+  IsraelElectionsLambdaIamRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      RoleName: Israel-elections-lambda-role
+      Policies:
+        - PolicyName: Lambda-execution-basic
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 's3:*'
+                Resource: '*'
+  IsraelElectionsLambda:
+    DependsOn:
+      - IsraelElectionsLambdaIamRole
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Role: !GetAtt IsraelElectionsLambdaIamRole.Arn
+      FunctionName: Israel-elections-function
+      Runtime: nodejs16.x
+      Environment:
+        Variables:
+          CurrentElections: !Ref CurrentElections
+      Handler: dist/index.handler
+      Timeout: 360
+      Code:
+        S3Bucket: !Ref BucketCodeName
+        S3Key: dist.zip
+
+  IsraelElectionsEventRule:
+    DependsOn:
+      - IsraelElectionsLambda
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Name: Israel-elections-scheduler
+      ScheduleExpression: cron(0/5 * * * ? *)
+      Targets:
+        - Id: Israel-elections-function
+          Arn: !GetAtt IsraelElectionsLambda.Arn
+
+  IsraelElectionsInvokePermission:
+    DependsOn:
+      - IsraelElectionsEventRule
+      - IsraelElectionsLambda
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:  !GetAtt IsraelElectionsEventRule.Arn 
+      FunctionName: Israel-elections-function
+
+
+  
