@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@welldone-software/env-config": "^1.1.1",
-    "archiver": "^3.1.1",
+    "archiver": "^5.3.1",
     "aws-sdk": "^2.820.0",
     "mime-types": "^2.1.28"
   }
