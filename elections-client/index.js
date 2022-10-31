@@ -18,7 +18,7 @@ const getCurrType = () => document.querySelector('.select-type > select').value;
 
 const loadResults = async (elections) => {
   try {
-    const res = await fetch(`https://israel-elections-1.s3.eu-west-3.amazonaws.com/${elections}/allResults.json?v=${
+    const res = await fetch(`https://israel-elections-code-bucket.s3.eu-west-3.amazonaws.com/${elections}/allResults.json?v=${
       Math.random().toString()}`);
     if (res.ok) {
       currResults = await res.json();
