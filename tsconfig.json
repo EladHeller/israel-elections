@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "CommonJS",
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "strictNullChecks": true,
+        "outDir": "dist"
+    },
+    "include": [
+        "election-results-listener"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
