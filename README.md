@@ -1,2 +1,2 @@
 # UI
-https://d2embnarfzk3o4.cloudfront.net/index.html
+https://d2dtitluek3vlq.cloudfront.net/
