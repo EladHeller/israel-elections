@@ -1,0 +1,43 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - master
+jobs:
+  deploy:
+    environment: prod
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          lfs: true
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules-v1
+        with:
+          path: ~/.npm
+          key: deploy-cache-node-modules-v1-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build code
+        run: |
+          export REGION=${{ secrets.AWS_REGION }}
+          export CODE_BUCKET=${{ secrets.CODE_BUCKET_NAME }}
+          export CURR_ELECTIONS=${{ secrets.CURR_ELECTIONS }}
+          export CLIENT_CODE_BUCKET=${{ secrets.CLIENT_CODE_BUCKET }}
+          export DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID }}
+          npm run update-env
+          npm run update-lambda
