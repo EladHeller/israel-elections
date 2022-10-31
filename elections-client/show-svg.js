@@ -1,7 +1,9 @@
 /* eslint-disable no-undef */
 export default (electionsResults, electionsNumber, type) => {
   const data = Object.entries(electionsResults[type])
-    .map(([key, {votes, mandats}]) => ({key, votes, mandats, color: '#80cbc4'}))
+    .map(([key, { votes, mandats }]) => ({
+      key, votes, mandats, color: '#80cbc4',
+    }))
     .sort((a, b) => b.votes - a.votes);
   d3.select('h1').style('display', 'none');
   d3.selectAll('.select').style('display', 'flex');
@@ -17,7 +19,7 @@ export default (electionsResults, electionsNumber, type) => {
 
   const xScale = d3.scaleBand()
     .range([0, width])
-    .domain(data.map(s => s.key))
+    .domain(data.map((s) => s.key))
     .padding(0.4);
 
   const domainY = data[0] ? Math.ceil(data[0].mandats / 10) * 10 : 30;
@@ -50,9 +52,9 @@ export default (electionsResults, electionsNumber, type) => {
   barGroups
     .append('rect')
     .attr('class', 'bar')
-    .attr('x', g => xScale(g.key))
-    .attr('y', g => yScale(g.mandats))
-    .attr('height', g => height - yScale(g.mandats))
+    .attr('x', (g) => xScale(g.key))
+    .attr('y', (g) => yScale(g.mandats))
+    .attr('height', (g) => height - yScale(g.mandats))
     .attr('width', xScale.bandwidth())
     .on('mouseenter', () => {
       d3.selectAll('.value')
@@ -63,12 +65,12 @@ export default (electionsResults, electionsNumber, type) => {
         .attr('fill', 'white')
         .attr('text-anchor', 'middle');
       texts.append('tspan')
-        .attr('y', a => yScale(a.mandats) + 15)
-        .attr('x', a => xScale(a.key) + xScale.bandwidth() / 2)
-        .text(a => a.votes);
+        .attr('y', (a) => yScale(a.mandats) + 15)
+        .attr('x', (a) => xScale(a.key) + xScale.bandwidth() / 2)
+        .text((a) => a.votes);
       texts.append('tspan')
-        .attr('y', a => yScale(a.mandats) + 27)
-        .attr('x', a => xScale(a.key) + xScale.bandwidth() / 2)
+        .attr('y', (a) => yScale(a.mandats) + 27)
+        .attr('x', (a) => xScale(a.key) + xScale.bandwidth() / 2)
         .text('קולות');
     })
     .on('mouseleave', () => {
@@ -81,10 +83,10 @@ export default (electionsResults, electionsNumber, type) => {
   barGroups
     .append('text')
     .attr('class', 'value')
-    .attr('x', a => xScale(a.key) + xScale.bandwidth() / 2)
-    .attr('y', a => yScale(a.mandats) + 15)
+    .attr('x', (a) => xScale(a.key) + xScale.bandwidth() / 2)
+    .attr('y', (a) => yScale(a.mandats) + 15)
     .attr('text-anchor', 'middle')
-    .text(a => `${a.mandats}`);
+    .text((a) => `${a.mandats}`);
 
   svg
     .append('text')
@@ -131,7 +133,8 @@ export default (electionsResults, electionsNumber, type) => {
     .attr('y', height + margin * 1.7)
     .text('קוד מקור');
 
-  const sumVotes = Object.values(electionsResults.voteData).reduce((acc, {votes}) => acc + votes, 0);
+  const sumVotes = Object.values(electionsResults.voteData)
+    .reduce((acc, { votes }) => acc + votes, 0);
   svg.append('text')
     .attr('text-anchor', 'start')
     .style('fill', '#fff')
