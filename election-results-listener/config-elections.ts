@@ -5,7 +5,7 @@ const electionsConfig: Record<number, ElectionsConfig> = {
     algorithm: 'baderOffer',
     csvUrl: 'https://media25.bechirot.gov.il/files/expc.csv',
     blockPercentage: 0.0325,
-    agreements: [['שס', 'ג'], ['מחל', 'ט'], ['מרצ', 'אמת'], ['ת', 'ב'], ['יז', 'כן'], ['ל', 'פה']],
+    agreements: [['שס', 'ג'], ['מחל', 'ט'], ['מרצ', 'אמת'], ['פה', 'כן'], ['נק', 'ף']],
   },
   24: {
     algorithm: 'baderOffer',
