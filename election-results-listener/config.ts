@@ -3,7 +3,7 @@ import electionsConfig from './config-elections';
 
 const config = convict({
   currElections: {
-    default: '24',
+    default: '25',
     env: 'CURR_ELECTIONS',
     format: 'nat',
   },
