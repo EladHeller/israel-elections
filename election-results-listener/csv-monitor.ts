@@ -1,5 +1,4 @@
 import phin from 'phin';
-import encoding from 'encoding';
 import { parse } from 'csv-parse';
 import { promisify } from 'util';
 import { calcVotesResults } from './calc-elections';
@@ -42,7 +41,7 @@ export async function uploadResults(results, elections: number, time: string) {
 
 export async function csvMonitor() {
   const fetchRes = await phin({ url: csvUrl });
-  const csvData = `\ufeff${encoding.convert(fetchRes.body, 'utf8', 'windows-1255').toString().replace(/"/g, '\'\'')}`;
+  const csvData = fetchRes.body.toString();
   const exists = (await isFileAlreadyExists(`${currElections}/elections.csv`, Buffer.from(csvData)));
   if (!exists) {
     const electionsData = await getCsvData(csvData);
