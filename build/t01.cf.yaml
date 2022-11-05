@@ -56,7 +56,7 @@ Resources:
     Type: 'AWS::Events::Rule'
     Properties:
       Name: Israel-elections-scheduler
-      ScheduleExpression: cron(0/5 * * * ? *)
+      ScheduleExpression: cron(* 0/6 * * ? *)
       State: DISABLED
       Targets:
         - Id: Israel-elections-function
@@ -72,6 +72,3 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn:  !GetAtt IsraelElectionsEventRule.Arn 
       FunctionName: Israel-elections-function
-
-
-  
