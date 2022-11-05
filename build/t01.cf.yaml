@@ -57,7 +57,6 @@ Resources:
     Properties:
       Name: Israel-elections-scheduler
       ScheduleExpression: cron(* 0/6 * * ? *)
-      State: DISABLED
       Targets:
         - Id: Israel-elections-function
           Arn: !GetAtt IsraelElectionsLambda.Arn
