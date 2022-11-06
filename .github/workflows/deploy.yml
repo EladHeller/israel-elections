@@ -3,9 +3,31 @@ on:
   push:
     branches:
       - master
+      - develop
 jobs:
+  env_detect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect env
+        id: branch_check
+        run: |
+          echo "Running on branch ${{ github.ref }}"
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "::set-output name=env_name::prod"
+          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            echo "::set-output name=env_name::dev"
+          else
+             echo "::set-output name=env_name::Features"
+          fi
+      - name: Use variable setup in previous step
+        run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
+    outputs:
+      env_name: ${{ steps.branch_check.outputs.env_name }}
+
   deploy:
-    environment: prod
+    environment: 
+      name: ${{ needs.env_detect.outputs.env_name }}
+
     runs-on: ubuntu-latest
 
     steps:
@@ -38,6 +60,5 @@ jobs:
           export CODE_BUCKET=${{ secrets.CODE_BUCKET_NAME }}
           export CURR_ELECTIONS=${{ secrets.CURR_ELECTIONS }}
           export CLIENT_CODE_BUCKET=${{ secrets.CLIENT_CODE_BUCKET }}
-          export DISTRIBUTION_ID=${{ secrets.DISTRIBUTION_ID }}
           npm run update-env
           npm run update-lambda
