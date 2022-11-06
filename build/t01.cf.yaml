@@ -53,8 +53,8 @@ Resources:
       Runtime: nodejs16.x
       Environment:
         Variables:
-          CurrentElections: !Ref CurrentElections
-          Bucket: !Ref ClientCodeName
+          CURR_ELECTIONS: !Ref CurrentElections
+          BUCKET: !Ref ClientCodeName
           REGION: !Ref Region
       Handler: dist/index.handler
       Timeout: 360
