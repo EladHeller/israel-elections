@@ -23,6 +23,8 @@ jobs:
       env_name: ${{ steps.branch_check.outputs.env_name }}
 
   deploy:
+    needs:
+      - env_detect
     environment: 
       name: ${{ needs.env_detect.outputs.env_name }}
 
@@ -30,11 +32,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: print env and variables
-        run: |
-          echo ${{ needs.env_detect.outputs.env_name }}
-          echo ${{ secrets.AWS_REGION }}
 
       - name: Cache node modules
         uses: actions/cache@v2
