@@ -13,11 +13,9 @@ jobs:
         run: |
           echo "Running on branch ${{ github.ref }}"
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "::set-output name=env_name::prod"
+            echo "env_name=prod" >> $GITHUB_OUTPUT
           elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            echo "::set-output name=env_name::dev"
-          else
-             echo "::set-output name=env_name::Features"
+            echo "env_name=dev" >> $GITHUB_OUTPUT
           fi
       - name: Use variable setup in previous step
         run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
@@ -32,9 +30,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          persist-credentials: false
-          lfs: true
+
+      - name: print env and variables
+        run: |
+          echo ${{ needs.env_detect.outputs.env_name }}
+          echo ${{ secrets.AWS_REGION }}
 
       - name: Cache node modules
         uses: actions/cache@v2
