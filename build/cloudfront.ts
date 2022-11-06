@@ -8,7 +8,7 @@ const cf = new CloudFront();
 const batch = Math.random().toString();
 const setTimoutPromise = promisify(setTimeout);
 
-const distributionID = process.env.DISTRIBUTION_ID ?? '';
+const distributionID = process.argv[2] ?? '';
 const flat = (arr: any[]) => [].concat(...arr);
 
 const getAllDirsFiles = async (files: string[], basePath: string = '') => flat(await Promise.all(

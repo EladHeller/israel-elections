@@ -59,7 +59,7 @@ async function runTemplate(
     throw new Error('Creation failed');
   }
   console.log(`template ${name} ${newStack ? 'created' : 'updated'}.`);
-  return data.Stacks?.[0].Outputs;
+  return stack.Stacks?.[0].Outputs ?? data.Stacks?.[0].Outputs;
 }
 
 async function main() {
@@ -89,6 +89,12 @@ async function main() {
     [{
       ParameterKey: 'BucketCodeName',
       ParameterValue: bucketCodeName,
+    }, {
+      ParameterKey: 'ClientCodeName',
+      ParameterValue: clientCodeName,
+    }, {
+      ParameterKey: 'Region',
+      ParameterValue: region,
     }, {
       ParameterKey: 'CurrentElections',
       ParameterValue: currElections,

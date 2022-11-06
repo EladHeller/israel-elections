@@ -3,8 +3,14 @@ Parameters:
   BucketCodeName:
     Description: The name of code bucket.
     Type: String
+  ClientCodeName:
+    Description: The name of client code bucket.
+    Type: String
   CurrentElections:
     Description: The number of current elections.
+    Type: String
+  Region:
+    Description: The region that running on.
     Type: String
 
 Resources:
@@ -32,6 +38,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                   - 's3:*'
+                  - 'cloudfront:*'
                 Resource: '*'
   IsraelElectionsLambda:
     DependsOn:
@@ -44,6 +51,8 @@ Resources:
       Environment:
         Variables:
           CurrentElections: !Ref CurrentElections
+          Bucket: !Ref ClientCodeName
+          REGION: !Ref Region
       Handler: dist/index.handler
       Timeout: 360
       Code:
@@ -56,7 +65,7 @@ Resources:
     Type: 'AWS::Events::Rule'
     Properties:
       Name: Israel-elections-scheduler
-      ScheduleExpression: cron(* 0/6 * * ? *)
+      ScheduleExpression: cron(0/5 * * * ? *)
       Targets:
         - Id: Israel-elections-function
           Arn: !GetAtt IsraelElectionsLambda.Arn
