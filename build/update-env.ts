@@ -21,6 +21,7 @@ async function runTemplate(
   const stack = await cf.describeStacks({
     StackName: name,
   }).promise().catch(() => ({ Stacks: [] }));
+  console.log(stack.Stacks?.[0]?.Outputs);
   const template = await fs.readFile(templatePath, 'utf-8');
   const newStack = stack.Stacks != null && stack.Stacks.length < 1;
   console.log({ newStack });
@@ -42,7 +43,7 @@ async function runTemplate(
     } catch (e) {
       if (e.message === 'No updates are to be performed.') {
         console.log(`template ${name} No updates are to be performed.`);
-        return null;
+        return stack.Stacks?.[0]?.Outputs;
       }
       throw e;
     }
@@ -59,7 +60,7 @@ async function runTemplate(
     throw new Error('Creation failed');
   }
   console.log(`template ${name} ${newStack ? 'created' : 'updated'}.`);
-  return stack.Stacks?.[0].Outputs ?? data.Stacks?.[0].Outputs;
+  return stack.Stacks?.[0]?.Outputs ?? data.Stacks?.[0]?.Outputs;
 }
 
 async function main() {
@@ -71,7 +72,10 @@ async function main() {
     ParameterValue: clientCodeName,
   }]);
   const distributionId = outputs?.find(({ OutputKey }) => OutputKey === 'DistributionId')?.OutputValue;
-
+  console.log({ distributionId, outputs });
+  if (!distributionId) {
+    throw new Error('Missing distribution id');
+  }
   await new Promise((resolve, reject) => {
     exec(`sh ./build/deploy.sh ${distributionId}`, (error, stdout, stderr) => {
       console.log(error, stdout, stderr);

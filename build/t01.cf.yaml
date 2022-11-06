@@ -26,7 +26,10 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      RoleName: Israel-elections-lambda-role
+      RoleName: !Join
+        - '-'
+        - - !Ref Region
+          - 'israel-elections-lambda-role'
       Policies:
         - PolicyName: Lambda-execution-basic
           PolicyDocument:
@@ -65,7 +68,7 @@ Resources:
     Type: 'AWS::Events::Rule'
     Properties:
       Name: Israel-elections-scheduler
-      ScheduleExpression: cron(0/5 * * * ? *)
+      ScheduleExpression: cron(* 0/6 * * ? *)
       Targets:
         - Id: Israel-elections-function
           Arn: !GetAtt IsraelElectionsLambda.Arn
