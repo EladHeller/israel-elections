@@ -3,8 +3,14 @@ Parameters:
   BucketCodeName:
     Description: The name of code bucket.
     Type: String
+  ClientCodeName:
+    Description: The name of client code bucket.
+    Type: String
   CurrentElections:
     Description: The number of current elections.
+    Type: String
+  Region:
+    Description: The region that running on.
     Type: String
 
 Resources:
@@ -20,7 +26,10 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      RoleName: Israel-elections-lambda-role
+      RoleName: !Join
+        - '-'
+        - - !Ref Region
+          - 'israel-elections-lambda-role'
       Policies:
         - PolicyName: Lambda-execution-basic
           PolicyDocument:
@@ -32,6 +41,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                   - 's3:*'
+                  - 'cloudfront:*'
                 Resource: '*'
   IsraelElectionsLambda:
     DependsOn:
@@ -44,6 +54,8 @@ Resources:
       Environment:
         Variables:
           CurrentElections: !Ref CurrentElections
+          Bucket: !Ref ClientCodeName
+          REGION: !Ref Region
       Handler: dist/index.handler
       Timeout: 360
       Code:
