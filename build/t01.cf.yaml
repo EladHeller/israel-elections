@@ -68,7 +68,7 @@ Resources:
     Type: 'AWS::Events::Rule'
     Properties:
       Name: Israel-elections-scheduler
-      ScheduleExpression: cron(0 0/6 * * ? *)
+      ScheduleExpression: rate(1 hour)
       Targets:
         - Id: Israel-elections-function
           Arn: !GetAtt IsraelElectionsLambda.Arn
