@@ -110,7 +110,7 @@ export default (electionsResults, electionsNumber, type) => {
     .attr('y', 40)
     .attr('text-anchor', 'middle')
     .text(`תוצאות הבחירות לכנסת ה-${electionsNumber}`);
-  if (electionsNumber === '25') {
+  if (electionsNumber === '26') {
     const time = new Date(electionsResults.time);
     const formattedTime = `${time.getHours()}:${
       time.getMinutes().toString().padStart(2, '0')} ${Intl.DateTimeFormat('he-IL').format(time)}`;

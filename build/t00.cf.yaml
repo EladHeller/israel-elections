@@ -13,14 +13,6 @@ Resources:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Ref BucketCodeName
-      CorsConfiguration:
-        CorsRules:
-          - AllowedHeaders:
-              - '*'
-            AllowedMethods:
-              - GET
-            AllowedOrigins:
-              - '*'
   ElectionsClientCode:
     Type: 'AWS::S3::Bucket'
     Properties:
