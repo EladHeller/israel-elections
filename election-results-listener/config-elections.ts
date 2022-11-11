@@ -441,7 +441,7 @@ const electionsConfig: Record<number, ElectionsConfig> = {
     },
   },
   1: {
-    agreements: [],
+    agreements: [['ב', 'ל'], ['יג', 'ט'], ['יא', 'יד'], ['מ', 'ת'], ['צ', 'ס']],
     algorithm: 'baderOffer',
     blockPercentage: (100 / 120) * 0.01,
     voteData: {

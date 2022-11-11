@@ -33,10 +33,11 @@ const loadResults = async (elections) => {
 d3.select('.select-elections').on('change', () => {
   const elections = Number(getCurrElection());
   loadResults(elections);
-  if ([1, 8].includes(elections)) { // Bader offer without agreements
+  if (elections >= 8 || elections === 1) { // Bader offer
     selectType.html(`
         <option selected value="realResults">תוצאות אמת</option>
         <option value="beforeBaderOffer">תוצאות ללא בדר עופר</option>
+        <option value="withoutAgreements">תוצאות ללא הסכמי עודפים</option>
     `);
   } else if (elections === 7) { // Old algorithm with agreements
     selectType.html(`
@@ -49,12 +50,6 @@ d3.select('.select-elections').on('change', () => {
         <option selected value="realResults">תוצאות אמת</option>
         <option value="afterBaderOffer">תוצאות עם בדר עופר</option>
       `);
-  } else {
-    selectType.html(`
-        <option selected value="realResults">תוצאות אמת</option>
-        <option value="beforeBaderOffer">תוצאות ללא בדר עופר</option>
-        <option value="withoutAgreements">תוצאות ללא הסכמי עודפים</option>
-    `);
   }
 });
 selectType.on('change', () => {
