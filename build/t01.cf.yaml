@@ -50,7 +50,7 @@ Resources:
     Properties:
       Role: !GetAtt IsraelElectionsLambdaIamRole.Arn
       FunctionName: Israel-elections-function
-      Runtime: nodejs16.x
+      Runtime: nodejs18.x
       Environment:
         Variables:
           CURR_ELECTIONS: !Ref CurrentElections
