@@ -25,10 +25,13 @@ jobs:
             ${{ runner.os }}-build-
 
       - name: Install modules
-        run: npm i
+        run: npm ci
 
       - name: Type check
         run: npm run type-check
+
+      - name: Unit tests
+        run: npm run test:coverage
 
       - name: Run ESLint
         run: npm run lint:test

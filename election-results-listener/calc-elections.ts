@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import config from './config';
-import { ElectionsConfig, ResultsData, VoteData } from './types';
+import type { ElectionsConfig, ResultsData, VoteData } from './types';
 
 const { currElections, electionsConfig } = config;
 
@@ -9,8 +9,9 @@ const currElectionsConfig: ElectionsConfig = electionsConfig[currElections];
 const MANDATS = 120;
 
 const cloneDeep = <T>(data: T): T => JSON.parse(JSON.stringify(data));
-function sumBy(arr: any[], prop: string): number {
-  return arr.reduce((acc, curr) => acc + (Number(curr[prop]) ?? 0), 0);
+
+export function sumBy(arr: any[], prop: string): number {
+  return arr.reduce((acc, curr) => acc + (Number(curr[prop]) || 0), 0);
 }
 
 export function baderOffer(allMandats: number, voteData: ResultsData) {
@@ -82,7 +83,7 @@ export function splitAgreements(
     });
   return Object.fromEntries(agreementArray);
 }
-const ceilRound = (mandats: number, voteData: ResultsData) => {
+export const ceilRound = (mandats: number, voteData: ResultsData) => {
   const res = cloneDeep(voteData);
 
   const mandatVotes = sumBy(Object.values(res), 'votes') / mandats;
@@ -103,6 +104,7 @@ export function calcVotesResults(
   blockPercentage = currElectionsConfig.blockPercentage,
   agreements = currElectionsConfig.agreements,
   algorithm = currElectionsConfig.algorithm,
+  mandats = MANDATS,
 ) {
   const sumVotes = sumBy(Object.values(voteData), 'votes');
   if (sumVotes === 0) {
@@ -112,27 +114,27 @@ export function calcVotesResults(
   }
   const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData, sumVotes);
 
-  const withMandats = calcMandats(MANDATS, passBlockPercntage);
+  const withMandats = calcMandats(mandats, passBlockPercntage);
   const withAgreements = convertToAgreements(agreements, withMandats);
-  const baderOfferWithAgreements = baderOffer(MANDATS, withAgreements);
+  const baderOfferWithAgreements = baderOffer(mandats, withAgreements);
   const baderOfferResults = splitAgreements(withMandats, baderOfferWithAgreements, baderOffer);
 
   if (algorithm === 'baderOffer') {
     // Bader Offer without agreements
-    const withoutAgreements = baderOffer(MANDATS, withMandats);
+    const withoutAgreements = baderOffer(mandats, withMandats);
     // Before Bader Offer
-    const beforeBaderOffer = ceilRound(MANDATS, withMandats);
+    const beforeBaderOffer = ceilRound(mandats, withMandats);
 
     return {
       realResults: baderOfferResults, withoutAgreements, beforeBaderOffer, voteData,
     };
   }
   // Ceil round
-  const resultWithAgreements = ceilRound(MANDATS, withAgreements);
+  const resultWithAgreements = ceilRound(mandats, withAgreements);
   const realResults = splitAgreements(withMandats, resultWithAgreements, ceilRound);
 
   // Ceil round without agreements
-  const withoutAgreements = ceilRound(MANDATS, withMandats);
+  const withoutAgreements = ceilRound(mandats, withMandats);
 
   return {
     realResults, withoutAgreements, afterBaderOffer: baderOfferResults, voteData,

@@ -1,5 +1,5 @@
 import convict from 'convict';
-import electionsConfig from './config-elections';
+import electionsConfig from './config-elections.json';
 
 const config = convict({
   currElections: {

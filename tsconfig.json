@@ -3,6 +3,7 @@
         "target": "ES2020",
         "module": "CommonJS",
         "skipLibCheck": true,
+        "resolveJsonModule": true,
         "esModuleInterop": true,
         "strictNullChecks": true,
         "outDir": "dist"
@@ -11,6 +12,7 @@
         "election-results-listener"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "*/__tests__"
     ]
 }
