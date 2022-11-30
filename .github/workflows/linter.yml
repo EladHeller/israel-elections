@@ -1,5 +1,10 @@
 name: lint and test
 on:
+  push:
+    branches:
+      - master
+      - develop
+
   pull_request:
     branches:
       - master
@@ -9,12 +14,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+      - uses: actions/checkout@v3
 
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules-v1
         with:
@@ -33,6 +36,15 @@ jobs:
       - name: Unit tests
         run: npm run test:coverage
 
+      - name: Upload coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.sha }}-coverage-results
+          path: coverage/coverage-summary.json
+
       - name: Run ESLint
         run: npm run lint:test
+
+      - name: Check coverage
+        run: npm run check-coverage
 

@@ -5,17 +5,18 @@
   "main": "index.js",
   "scripts": {
     "lint:test": "eslint ./**/*.ts ./elections-client/**/*.js --max-warnings 0",
-    "test": "node --loader tsx --test ./election-results-listener/**/*.test.ts",
-    "test:coverage": "nyc --check-coverage -r=lcov npm test",
+    "test": "node --loader ts-node/esm --test ./election-results-listener/**/*.test.ts",
+    "test:coverage": "nyc -r=lcov -r=json-summary npm test",
+    "check-coverage": "ts-node-esm ./infra/CI/check-coverage.ts",
     "type-check": "tsc --noEmit",
     "upload-client": "node uploadClient.js",
     "build": "rm -rf dist && tsc",
-    "clear-cache": "ts-node-esm ./build/cloudfront.ts",
-    "update-lambda": "ts-node-esm ./build/update-lambda.ts",
-    "update-s3": "ts-node-esm ./build/update-s3.ts",
-    "update-env": "ts-node-esm ./build/update-env.ts",
+    "clear-cache": "ts-node-esm ./infra/CD/cloudfront.ts",
+    "update-lambda": "ts-node-esm ./infra/CD/update-lambda.ts",
+    "update-s3": "ts-node-esm ./infra/CD/update-s3.ts",
+    "update-env": "ts-node-esm ./infra/CD/update-env.ts",
     "test:ci": "npm run type-check && npm run test:coverage && npm run lint:test",
-    "deploy": "sh ./build/deploy.sh"
+    "deploy": "sh ./infra/CD/deploy.sh"
   },
   "author": "",
   "license": "ISC",
@@ -33,8 +34,7 @@
     "eslint-plugin-jest": "^27.1.5",
     "eslint-plugin-node": "^11.1.0",
     "nyc": "^15.1.0",
-    "ts-node": "^10.9.1",
-    "tsx": "^3.12.1"
+    "ts-node": "^10.9.1"
   },
   "dependencies": {
     "convict": "^6.2.3",
