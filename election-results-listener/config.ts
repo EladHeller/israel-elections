@@ -12,6 +12,11 @@ const config = convict({
     env: 'BUCKET',
     format: '*',
   },
+  distributionID: {
+    default: 'israel-elections-code-bucket',
+    env: 'DISTRIBUTION_ID',
+    format: '*',
+  },
   region: {
     default: 'eu-west-1',
     env: 'REGION',

@@ -5,7 +5,6 @@ import { promisify } from 'util';
 import fs from 'fs/promises';
 
 const cf = new CloudFront();
-const batch = Math.random().toString();
 const setTimoutPromise = promisify(setTimeout);
 
 const distributionID = process.argv[2] ?? '';
@@ -16,6 +15,9 @@ const getAllDirsFiles = async (files: string[], basePath: string = '') => flat(a
     const currPath = basePath ? `${basePath}/${file}` : file;
     const stat = await fs.lstat(currPath);
     if (stat.isDirectory()) {
+      if (file.match(/\d+/)) { // This is a elections results folder
+        return [];
+      }
       const dirFiles = await fs.readdir(currPath);
       return getAllDirsFiles(dirFiles, currPath);
     }
@@ -36,7 +38,7 @@ const main = async () => {
   const files = await getAllDirsFiles([basePath]);
   const { Invalidation } = await cf.createInvalidation({
     InvalidationBatch: {
-      CallerReference: batch,
+      CallerReference: Math.random().toString(),
       Paths: {
         Quantity: files.length,
         Items: files,
