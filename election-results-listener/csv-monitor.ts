@@ -3,8 +3,11 @@ import { promisify } from 'util';
 import { calcVotesResults } from './calc-elections';
 import { upload, isFileAlreadyExists } from './s3';
 import config from './config';
+import { invalidCache } from './cloudfront';
 
-const { notPartiesKeys, currElections, electionsConfig } = config;
+const {
+  notPartiesKeys, currElections, electionsConfig, distributionID,
+} = config;
 
 const promisifyParse: (input: Buffer | string) => Promise<any> = promisify(parse);
 
@@ -30,11 +33,13 @@ async function getCsvData(csv: string) {
 
 async function uploadCsv(csvData: string, elections: number, time: string) {
   await upload(`${elections}/elections.csv`, csvData);
+  await invalidCache([`${elections}/elections.csv`], distributionID);
   await upload(`${elections}/${time}_elections.csv`, csvData);
 }
 
 export async function uploadResults(results, elections: number, time: string) {
   await upload(`${elections}/allResults.json`, JSON.stringify({ ...results, time }));
+  await invalidCache([`${elections}/allResults.json`], distributionID);
   await upload(`${elections}/${time}_allResults.json`, JSON.stringify({ ...results, time }));
 }
 
