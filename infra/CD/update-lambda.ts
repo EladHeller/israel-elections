@@ -1,6 +1,5 @@
 /*  eslint-disable import/no-extraneous-dependencies */
 import { Lambda } from 'aws-sdk';
-import 'dotenv/config';
 
 const region = process.env.REGION;
 const bucketCodeName = process.env.CODE_BUCKET;
