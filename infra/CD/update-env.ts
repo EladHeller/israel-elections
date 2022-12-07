@@ -1,6 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { CloudFormation } from 'aws-sdk';
-import 'dotenv/config';
 import fs from 'fs/promises';
 
 import { exec } from 'child_process';
