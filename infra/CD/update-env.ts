@@ -102,6 +102,9 @@ async function main() {
     }, {
       ParameterKey: 'CurrentElections',
       ParameterValue: currElections,
+    }, {
+      ParameterKey: 'DistributionId',
+      ParameterValue: distributionId,
     }],
     ['CAPABILITY_NAMED_IAM'],
   );
