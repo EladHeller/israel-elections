@@ -1,5 +1,6 @@
 npm run build && \
 cp ./package.json ./dist/package.json  && \
+cp ./package-lock.json ./dist/package-lock.json  && \
 cd ./dist && \
 npm --quiet ci --omit=dev && \
 rm -rf ./__tests__ ./package-lock.json && \
