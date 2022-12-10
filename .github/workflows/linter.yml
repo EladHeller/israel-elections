@@ -45,15 +45,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Upload coverage results
-        run: |
-          echo "Bucket name: ${{ secrets.CODE_BUCKET_NAME }}"
-          export CODE_BUCKET=${{ secrets.CODE_BUCKET_NAME }}
-          npm run upload-coverage
-
       - name: Run ESLint
         run: npm run lint:test
 
-      - name: Check coverage
-        run: npm run check-coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
 
