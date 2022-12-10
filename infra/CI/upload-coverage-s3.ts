@@ -8,7 +8,8 @@ const COMMIT_HASH = process.env.GITHUB_SHA;
 
 async function main() {
   if (!bucketCodeName) {
-    throw new Error('Bucket code variable is empty!');
+    console.error('Bucket code variable is empty!');
+    return;
   }
   const files = await getAllDirsFiles([COVERAGE_DIR]);
   await Promise.all(files.map(async ({ file }: FileData) => {

@@ -17,6 +17,9 @@ jobs:
       name: dev
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
       - name: Cache node modules
         uses: actions/cache@v3
@@ -47,7 +50,6 @@ jobs:
 
       - name: Upload coverage results
         run: |
-          echo "Bucket name: ${{ secrets.CODE_BUCKET_NAME }}"
           export CODE_BUCKET=${{ secrets.CODE_BUCKET_NAME }}
           npm run upload-coverage
 
@@ -55,5 +57,7 @@ jobs:
         run: npm run lint:test
 
       - name: Check coverage
-        run: npm run check-coverage
+        run: |
+          export CODE_BUCKET=${{ secrets.CODE_BUCKET_NAME }}
+          npm run check-coverage ${{ secrets.GITHUB_TOKEN }}
 

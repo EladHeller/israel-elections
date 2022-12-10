@@ -7,7 +7,7 @@
     "lint:test": "eslint ./**/*.ts ./elections-client/**/*.js --max-warnings 0",
     "test": "node --loader ts-node/esm --test ./election-results-listener/**/*.test.ts",
     "test:coverage": "nyc -r=lcov -r=json-summary npm test",
-    "check-coverage": "ts-node-esm ./infra/CI/check-coverage.ts",
+    "check-coverage": "ts-node-esm ./infra/CI/update-pr-status.ts",
     "upload-coverage": "ts-node-esm ./infra/CI/upload-coverage-s3.ts",
     "type-check": "tsc --noEmit",
     "upload-client": "node uploadClient.js",
