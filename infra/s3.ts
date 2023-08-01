@@ -1,10 +1,10 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import { S3 } from 'aws-sdk';
 import fs from 'fs/promises';
 import crypto from 'crypto';
+import path from 'path';
+import { S3 } from 'aws-sdk';
 import { ObjectCannedACL } from 'aws-sdk/clients/s3';
 import mime from 'mime-types';
-import path from 'path';
 
 const region = process.env.REGION;
 
