@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import mime from 'mime-types';
 import path from 'path';
+import mime from 'mime-types';
 import { S3 } from 'aws-sdk'; // eslint-disable-line import/no-extraneous-dependencies
 import config from './config';
 

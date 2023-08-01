@@ -1,5 +1,5 @@
-import { parse } from 'csv-parse';
 import { promisify } from 'util';
+import { parse } from 'csv-parse';
 import { calcVotesResults } from './calc-elections';
 import { upload, isFileAlreadyExists } from './s3';
 import config from './config';
