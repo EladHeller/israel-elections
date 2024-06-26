@@ -1,11 +1,13 @@
-import phin from 'phin';
-import { parse } from 'csv-parse';
 import { promisify } from 'util';
+import { parse } from 'csv-parse';
 import { calcVotesResults } from './calc-elections';
 import { upload, isFileAlreadyExists } from './s3';
 import config from './config';
+import { invalidCache } from './cloudfront';
 
-const { notPartiesKeys, currElections, electionsConfig } = config;
+const {
+  notPartiesKeys, currElections, electionsConfig, distributionID,
+} = config;
 
 const promisifyParse: (input: Buffer | string) => Promise<any> = promisify(parse);
 
@@ -31,17 +33,19 @@ async function getCsvData(csv: string) {
 
 async function uploadCsv(csvData: string, elections: number, time: string) {
   await upload(`${elections}/elections.csv`, csvData);
+  await invalidCache([`${elections}/elections.csv`], distributionID);
   await upload(`${elections}/${time}_elections.csv`, csvData);
 }
 
 export async function uploadResults(results, elections: number, time: string) {
   await upload(`${elections}/allResults.json`, JSON.stringify({ ...results, time }));
+  await invalidCache([`${elections}/allResults.json`], distributionID);
   await upload(`${elections}/${time}_allResults.json`, JSON.stringify({ ...results, time }));
 }
 
 export async function csvMonitor() {
-  const fetchRes = await phin({ url: csvUrl });
-  const csvData = fetchRes.body.toString();
+  const fetchRes = await fetch(csvUrl);
+  const csvData = await fetchRes.text();
   const exists = (await isFileAlreadyExists(`${currElections}/elections.csv`, Buffer.from(csvData)));
   if (!exists) {
     const electionsData = await getCsvData(csvData);

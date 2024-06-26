@@ -1,5 +1,10 @@
-name: lint and test
+name: CI
 on:
+  push:
+    branches:
+      - master
+      - develop
+
   pull_request:
     branches:
       - master
@@ -9,12 +14,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+      - uses: actions/checkout@v3
 
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules-v1
         with:
@@ -25,11 +28,17 @@ jobs:
             ${{ runner.os }}-build-
 
       - name: Install modules
-        run: npm i
+        run: npm ci
 
       - name: Type check
         run: npm run type-check
 
+      - name: Unit tests
+        run: npm run test:coverage
+
       - name: Run ESLint
         run: npm run lint:test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
 

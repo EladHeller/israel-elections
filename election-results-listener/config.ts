@@ -1,5 +1,5 @@
 import convict from 'convict';
-import electionsConfig from './config-elections';
+import electionsConfig from './config-elections.json';
 
 const config = convict({
   currElections: {
@@ -10,6 +10,11 @@ const config = convict({
   bucket: {
     default: 'israel-elections-code-bucket',
     env: 'BUCKET',
+    format: '*',
+  },
+  distributionID: {
+    default: 'israel-elections-code-bucket',
+    env: 'DISTRIBUTION_ID',
     format: '*',
   },
   region: {

@@ -1,6 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { CloudFormation } from 'aws-sdk';
-import 'dotenv/config';
 import fs from 'fs/promises';
 
 import { exec } from 'child_process';
@@ -64,7 +63,7 @@ async function runTemplate(
 }
 
 async function main() {
-  const outputs = await runTemplate('./build/t00.cf.yaml', 'Israel-elections-code-bucket', [{
+  const outputs = await runTemplate('./infra/CD/t00.cf.yaml', 'Israel-elections-code-bucket', [{
     ParameterKey: 'BucketCodeName',
     ParameterValue: bucketCodeName,
   }, {
@@ -77,7 +76,7 @@ async function main() {
     throw new Error('Missing distribution id');
   }
   await new Promise((resolve, reject) => {
-    exec(`sh ./build/deploy.sh ${distributionId}`, (error, stdout, stderr) => {
+    exec(`sh ./infra/CD/deploy.sh ${distributionId}`, (error, stdout, stderr) => {
       console.log(error, stdout, stderr);
       if (error) {
         reject(stderr);
@@ -88,7 +87,7 @@ async function main() {
   });
 
   await runTemplate(
-    './build/t01.cf.yaml',
+    './infra/CD/t01.cf.yaml',
     'Israel-elections',
     [{
       ParameterKey: 'BucketCodeName',
@@ -102,6 +101,9 @@ async function main() {
     }, {
       ParameterKey: 'CurrentElections',
       ParameterValue: currElections,
+    }, {
+      ParameterKey: 'DistributionId',
+      ParameterValue: distributionId,
     }],
     ['CAPABILITY_NAMED_IAM'],
   );

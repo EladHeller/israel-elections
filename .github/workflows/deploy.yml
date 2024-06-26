@@ -1,4 +1,4 @@
-name: Deploy
+name: CD
 on:
   push:
     branches:
@@ -31,10 +31,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules-v1
         with:
@@ -42,7 +42,7 @@ jobs:
           key: deploy-cache-node-modules-v1-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1

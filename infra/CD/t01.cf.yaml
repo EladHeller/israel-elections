@@ -12,6 +12,10 @@ Parameters:
   Region:
     Description: The region that running on.
     Type: String
+  DistributionId:
+    Description: The distribution id.
+    Type: String
+
 
 Resources:
   IsraelElectionsLambdaIamRole:
@@ -50,12 +54,13 @@ Resources:
     Properties:
       Role: !GetAtt IsraelElectionsLambdaIamRole.Arn
       FunctionName: Israel-elections-function
-      Runtime: nodejs16.x
+      Runtime: nodejs18.x
       Environment:
         Variables:
           CURR_ELECTIONS: !Ref CurrentElections
           BUCKET: !Ref ClientCodeName
           REGION: !Ref Region
+          DISTRIBUTION_ID: !Ref DistributionId
       Handler: dist/index.handler
       Timeout: 360
       Code:
