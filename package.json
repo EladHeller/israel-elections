@@ -34,7 +34,7 @@
     "eslint-plugin-jest": "^27.6.0",
     "eslint-plugin-node": "^11.1.0",
     "nyc": "^15.1.0",
-    "tsx": "^4.15.7"
+    "tsx": "^4.16.0"
   },
   "dependencies": {
     "convict": "^6.2.4",
