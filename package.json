@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "convict": "^6.2.4",
-    "csv-parse": "^5.5.0",
+    "csv-parse": "^5.5.6",
     "encoding": "^0.1.13",
     "mime-types": "^2.1.35"
   }
