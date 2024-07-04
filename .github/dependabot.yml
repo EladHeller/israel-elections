@@ -3,7 +3,7 @@
 
 version: 2
 updates:
-  - package-ecosystem: npm
+  - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
@@ -14,3 +14,20 @@ updates:
       - eladheller
     reviewers:
       - eladheller
+  - package-ecosystem: npm
+    directory: /
+    open-pull-requests-limit: 15
+    schedule:
+      interval: monthly
+    target-branch: develop
+    commit-message:
+      prefix: "[dependabot]"
+    assignees:
+      - eladheller
+    reviewers:
+      - eladheller
+    groups:
+      typescript-eslint:
+        applies-to: version-updates
+        patterns:
+          - "*typescript-eslint*"
