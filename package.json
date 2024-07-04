@@ -33,7 +33,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jest": "^28.6.0",
     "eslint-plugin-node": "^11.1.0",
-    "nyc": "^15.1.0",
+    "nyc": "^17.0.0",
     "tsx": "^4.16.2"
   },
   "dependencies": {
