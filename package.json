@@ -22,23 +22,23 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@babel/preset-env": "^7.24.7",
-    "@babel/preset-typescript": "^7.23.3",
-    "@types/node": "^20.8.10",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.13.1",
-    "aws-sdk": "^2.1649.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-typescript": "^7.26.0",
+    "@types/node": "^22.10.3",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
+    "aws-sdk": "^2.1692.0",
     "eslint": "^8.52.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jest": "^27.6.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jest": "^28.10.0",
     "eslint-plugin-node": "^11.1.0",
-    "nyc": "^15.1.0",
-    "tsx": "^4.15.7"
+    "nyc": "^17.1.0",
+    "tsx": "^4.19.2"
   },
   "dependencies": {
     "convict": "^6.2.4",
-    "csv-parse": "^5.5.0",
+    "csv-parse": "^5.6.0",
     "encoding": "^0.1.13",
     "mime-types": "^2.1.35"
   }

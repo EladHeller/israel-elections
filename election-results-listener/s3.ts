@@ -18,7 +18,7 @@ export async function isFileAlreadyExists(key: string, stream: Buffer) {
       return false;
     }
     return md5(stream) === JSON.parse(ETag ?? '""');
-  } catch (e) {
+  } catch {
     return false;
   }
 }
