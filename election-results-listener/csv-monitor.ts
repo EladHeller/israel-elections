@@ -50,7 +50,7 @@ export async function csvMonitor() {
   if (!exists) {
     const electionsData = await getCsvData(csvData);
     const results = calcVotesResults(electionsData, blockPercentage, agreements);
-    const time = new Date(fetchRes.headers['last-modified'] ?? '').toJSON();
+    const time = new Date(fetchRes.headers.get('last-modified') ?? '').toJSON();
     await uploadResults(results, currElections, time);
     await uploadCsv(csvData, currElections, time);
   }
