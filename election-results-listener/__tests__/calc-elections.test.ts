@@ -118,6 +118,7 @@ describe('baderOffer', () => {
         mandats: 10,
       },
     });
+    assert.equal(sumBy(Object.values(res), 'mandats'), 20);
   });
 });
 
@@ -152,6 +153,7 @@ describe('ceilRound', () => {
         mandats: 10,
       },
     });
+    assert.equal(sumBy(Object.values(res), 'mandats'), 20);
   });
 });
 
