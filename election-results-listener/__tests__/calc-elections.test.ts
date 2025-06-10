@@ -34,7 +34,7 @@ describe('convertToAgreements', () => {
     });
   });
 
-  it('should not convert agreements if there are no votes', () => {
+  it('should ignore agreement pairs when a party is missing', () => {
     const res = convertToAgreements([['a', 'b'], ['c', 'd']], {
       a: {
         votes: 12345,
