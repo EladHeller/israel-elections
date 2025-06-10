@@ -21,7 +21,7 @@ async function main() {
       'public-read',
     );
   }));
-  console.log('finnish');
+  console.log('finish');
 
   await upload(clientCodeName, 'client.zip', './client.zip', 'public-read');
 }
