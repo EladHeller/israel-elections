@@ -23,7 +23,7 @@
   "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.28.5",
-    "@babel/preset-typescript": "^7.27.1",
+    "@babel/preset-typescript": "^7.28.5",
     "@types/node": "^24.9.2",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.31.1",
