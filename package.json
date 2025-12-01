@@ -24,22 +24,22 @@
   "devDependencies": {
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
-    "@types/node": "^24.9.2",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.31.1",
     "aws-sdk": "^2.1692.0",
     "eslint": "^8.52.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^29.0.1",
+    "eslint-plugin-jest": "^29.2.1",
     "eslint-plugin-node": "^11.1.0",
     "nyc": "^17.1.0",
-    "tsx": "^4.20.6"
+    "tsx": "^4.21.0"
   },
   "dependencies": {
     "convict": "^6.2.4",
     "csv-parse": "^6.1.0",
     "encoding": "^0.1.13",
-    "mime-types": "^3.0.1"
+    "mime-types": "^3.0.2"
   }
 }
