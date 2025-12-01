@@ -40,6 +40,6 @@
     "convict": "^6.2.4",
     "csv-parse": "^6.1.0",
     "encoding": "^0.1.13",
-    "mime-types": "^3.0.1"
+    "mime-types": "^3.0.2"
   }
 }
