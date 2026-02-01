@@ -25,7 +25,7 @@
     "@babel/preset-env": "^7.29.0",
     "@babel/preset-typescript": "^7.28.5",
     "@types/node": "^25.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.31.1",
     "aws-sdk": "^2.1693.0",
     "eslint": "^8.52.0",
