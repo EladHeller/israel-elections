@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign */
+
 import config from './config';
 import type { ElectionsConfig, ResultsData, VoteData } from './types';
 
@@ -70,7 +70,7 @@ export function filterNotPassBlockPersentage(
 export function splitAgreements(
   voteData: ResultsData,
   agreementsVoteData: ResultsData,
-  splitAlgorithm:(mandats: number, vData: ResultsData) => ResultsData = baderOffer,
+  splitAlgorithm: (mandats: number, vData: ResultsData) => ResultsData = baderOffer,
 ): ResultsData {
   const agreementArray = Object.entries(agreementsVoteData)
     .flatMap(([letter, { mandats, votes }]) => {

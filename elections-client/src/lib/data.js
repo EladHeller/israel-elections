@@ -1,11 +1,9 @@
-export const detectAvailableElections = async (max = 30, min = 1) => {
+export const LATEST_ELECTION_ID = 25;
+
+export const detectAvailableElections = async (max = LATEST_ELECTION_ID, min = 1) => {
   const available = [];
   for (let i = max; i >= min; i -= 1) {
-    // eslint-disable-next-line no-await-in-loop
-    const res = await fetch(`./data/${i}/allResults.json`, { cache: 'no-store' });
-    if (res.ok) {
-      available.push(String(i));
-    }
+    available.push(String(i));
   }
   return available;
 };

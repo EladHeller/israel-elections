@@ -4,23 +4,23 @@
     "blocks": {
       "right": {
         "label": "ימין",
-        "color": "#e4572e",
-        "parties": ["מחל", "ט", "שס", "ג"]
+        "color": "#2563eb",
+        "parties": ["מחל", "ט", "שס", "ג", "ב"]
       },
       "center": {
         "label": "מרכז",
-        "color": "#5c7cfa",
+        "color": "#facc15",
         "parties": ["פה", "כן", "ל"]
       },
       "left": {
         "label": "שמאל",
-        "color": "#2a9d8f",
-        "parties": ["אמת"]
+        "color": "#dc2626",
+        "parties": ["אמת", "מרצ", "צרץ"]
       },
       "arab": {
         "label": "ערביות",
-        "color": "#264653",
-        "parties": ["עם", "ום"]
+        "color": "#16a34a",
+        "parties": ["עם", "ום", "ד"]
       },
       "other": {
         "label": "אחר",
