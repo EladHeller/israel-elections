@@ -123,6 +123,68 @@ body {
   color: var(--ink-90);
 }
 
+.block-percentage-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.block-percentage-editor {
+  width: 140px;
+  display: block;
+  position: relative;
+  border: 1px solid var(--ink-20);
+  border-radius: 10px;
+  background: #fff;
+  padding: 0;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.block-percentage-editor:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(246, 170, 28, 0.2);
+}
+
+.block-percentage-input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: 'Assistant', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-90);
+  padding: 8px 40px 8px 10px;
+  text-align: right;
+  direction: ltr;
+}
+
+.block-percentage-input::-webkit-outer-spin-button,
+.block-percentage-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.block-percentage-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.block-percentage-suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-50);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.block-threshold-value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
 .card-sub {
   font-size: 12px;
   color: var(--ink-50);

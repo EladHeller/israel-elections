@@ -1,5 +1,6 @@
 {
   "25": {
+    "finalResults": true,
     "algorithm": "baderOffer",
     "blockPercentage": 0.0325,
     "agreements": [
