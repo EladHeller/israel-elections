@@ -10,7 +10,7 @@ async function main() {
 
   await upload(bucketCodeName, 'dist.zip', './dist.zip');
 
-  const basePath = './elections-client';
+  const basePath = './elections-client/dist';
   const files = await getAllDirsFiles([basePath]);
   await Promise.all(files.map(async ({ file }: FileData) => {
     console.log(file);

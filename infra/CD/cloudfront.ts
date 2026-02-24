@@ -1,10 +1,12 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable import/no-extraneous-dependencies */
-import { CloudFront } from 'aws-sdk';
+import {
+  CloudFrontClient,
+  CreateInvalidationCommand,
+  GetInvalidationCommand,
+} from '@aws-sdk/client-cloudfront';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 
-const cf = new CloudFront();
+const cf = new CloudFrontClient({});
 const setTimoutPromise = promisify(setTimeout);
 
 const distributionID = process.argv[2] ?? '';
@@ -26,9 +28,9 @@ const getAllDirsFiles = async (files: string[], basePath: string = '') => flat(a
   }),
 ));
 
-const getInvalidationStatus = (id: string) => cf.getInvalidation(
+const getInvalidationStatus = (id: string) => cf.send(new GetInvalidationCommand(
   { DistributionId: distributionID, Id: id },
-).promise();
+));
 
 const main = async () => {
   if (!distributionID) {
@@ -36,7 +38,7 @@ const main = async () => {
   }
   const basePath = './elections-client';
   const files = await getAllDirsFiles([basePath]);
-  const { Invalidation } = await cf.createInvalidation({
+  const { Invalidation } = await cf.send(new CreateInvalidationCommand({
     InvalidationBatch: {
       CallerReference: Math.random().toString(),
       Paths: {
@@ -45,8 +47,8 @@ const main = async () => {
       },
     },
     DistributionId: distributionID,
-  }).promise();
-  if (!Invalidation) {
+  }));
+  if (!Invalidation || !Invalidation.Id) {
     throw new Error('Invalidation is null');
   }
   let invalidationStatus = await getInvalidationStatus(Invalidation.Id);

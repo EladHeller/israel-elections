@@ -1,9 +1,9 @@
-import { CloudFront } from 'aws-sdk';// eslint-disable-line import/no-extraneous-dependencies
+import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 
-const cf = new CloudFront();
+const cf = new CloudFrontClient({});
 
 export async function invalidCache(files: string[], distributionID: string) {
-  await cf.createInvalidation({
+  await cf.send(new CreateInvalidationCommand({
     InvalidationBatch: {
       CallerReference: Math.random().toString(),
       Paths: {
@@ -12,7 +12,7 @@ export async function invalidCache(files: string[], distributionID: string) {
       },
     },
     DistributionId: distributionID,
-  }).promise();
+  }));
 }
 
 export default {
