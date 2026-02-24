@@ -1,0 +1,542 @@
+{
+  "25": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "ט"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "פה",
+        "כן"
+      ],
+      [
+        "נק",
+        "ף"
+      ]
+    ]
+  },
+  "24": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "ט"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "ת",
+        "ב"
+      ],
+      [
+        "יז",
+        "כן"
+      ],
+      [
+        "ל",
+        "פה"
+      ]
+    ]
+  },
+  "23": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "פה",
+        "אמת"
+      ]
+    ]
+  },
+  "22": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "פה",
+        "ל"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "כ",
+        "כף"
+      ]
+    ]
+  },
+  "21": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "ן",
+        "ל"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "דעם",
+        "ום"
+      ],
+      [
+        "ףץ",
+        "ףז"
+      ]
+    ]
+  },
+  "20": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "כ",
+        "ל"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ]
+    ]
+  },
+  "19": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.02,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "ץ",
+        "כן"
+      ],
+      [
+        "מרצ",
+        "צפ"
+      ],
+      [
+        "אמת",
+        "פה"
+      ],
+      [
+        "ד",
+        "ו"
+      ],
+      [
+        "זך",
+        "צק"
+      ]
+    ]
+  },
+  "18": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.02,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "ל"
+      ],
+      [
+        "רק",
+        "כן"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "ט",
+        "ב"
+      ],
+      [
+        "עם",
+        "ו"
+      ],
+      [
+        "צי",
+        "זך"
+      ],
+      [
+        "חי",
+        "ה"
+      ]
+    ]
+  },
+  "17": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.02,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "ל"
+      ],
+      [
+        "ו",
+        "ד"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ]
+    ]
+  },
+  "16": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.015,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "יש",
+        "רק"
+      ],
+      [
+        "ל",
+        "כן"
+      ],
+      [
+        "ב",
+        "ם"
+      ],
+      [
+        "אמת",
+        "מרצ"
+      ],
+      [
+        "ו",
+        "ד"
+      ]
+    ]
+  },
+  "15": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.015,
+    "agreements": [
+      [
+        "אמת",
+        "מרצ"
+      ],
+      [
+        "יט",
+        "כן"
+      ],
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "ם",
+        "ל"
+      ],
+      [
+        "מחל",
+        "ב"
+      ],
+      [
+        "עם",
+        "ו"
+      ],
+      [
+        "יש",
+        "רק"
+      ],
+      [
+        "פ",
+        "פז"
+      ],
+      [
+        "פה",
+        "הד"
+      ]
+    ]
+  },
+  "14": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.015,
+    "agreements": [
+      [
+        "אמת",
+        "מרצ"
+      ],
+      [
+        "ג",
+        "ב"
+      ],
+      [
+        "ו",
+        "עם"
+      ],
+      [
+        "מחל",
+        "שס"
+      ],
+      [
+        "ג",
+        "ב"
+      ],
+      [
+        "הד",
+        "כן"
+      ]
+    ]
+  },
+  "13": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.015,
+    "agreements": [
+      [
+        "אמת",
+        "מרצ"
+      ],
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "ט",
+        "ת"
+      ],
+      [
+        "מחל",
+        "ץ"
+      ],
+      [
+        "יד",
+        "נכ"
+      ],
+      [
+        "ק",
+        "נד"
+      ]
+    ]
+  },
+  "12": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "אמת",
+        "רצ"
+      ],
+      [
+        "שס",
+        "עץ"
+      ],
+      [
+        "מפם",
+        "הן"
+      ],
+      [
+        "מחל",
+        "ת"
+      ],
+      [
+        "יענ",
+        "קז"
+      ]
+    ]
+  },
+  "11": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "אמת",
+        "רצ"
+      ],
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "הן",
+        "ט"
+      ],
+      [
+        "מחל",
+        "ת"
+      ]
+    ]
+  },
+  "10": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "אמת",
+        "לע"
+      ],
+      [
+        "ד",
+        "ג"
+      ],
+      [
+        "הן",
+        "רצ"
+      ]
+    ]
+  },
+  "9": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "אמת",
+        "ימ"
+      ],
+      [
+        "לע",
+        "יש"
+      ],
+      [
+        "מחל",
+        "כנ"
+      ],
+      [
+        "ב",
+        "ג"
+      ],
+      [
+        "ש",
+        "נס"
+      ],
+      [
+        "רצ",
+        "ספ"
+      ]
+    ]
+  },
+  "8": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": []
+  },
+  "7": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "יא",
+        "רא"
+      ]
+    ]
+  },
+  "6": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": []
+  },
+  "5": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": []
+  },
+  "4": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": []
+  },
+  "3": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": []
+  },
+  "2": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": []
+  },
+  "1": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.00833,
+    "agreements": [
+      [
+        "ב",
+        "ל"
+      ],
+      [
+        "יג",
+        "ט"
+      ],
+      [
+        "יא",
+        "יד"
+      ],
+      [
+        "מ",
+        "ת"
+      ],
+      [
+        "צ",
+        "ס"
+      ]
+    ]
+  }
+}

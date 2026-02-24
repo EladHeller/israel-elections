@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint:test": "eslint ./**/*.ts ./elections-client/**/*.js --max-warnings 0",
-    "test": "tsx --test ./election-results-listener/**/*.test.ts",
+    "test": "tsx --test ./election-results-listener/**/*.test.ts ./elections-client/src/**/*.test.js",
     "test:coverage": "nyc -r=lcov -r=json-summary npm test",
     "check-coverage": "tsx ./infra/CI/check-coverage.ts",
     "upload-coverage": "tsx ./infra/CI/upload-coverage-s3.ts",
@@ -17,7 +17,8 @@
     "update-s3": "tsx ./infra/CD/update-s3.ts",
     "update-env": "tsx ./infra/CD/update-env.ts",
     "test:ci": "npm run type-check && npm run test:coverage && npm run lint:test",
-    "deploy": "sh ./infra/CD/deploy.sh"
+    "deploy": "sh ./infra/CD/deploy.sh",
+    "build:client": "cd elections-client && npm ci && npm run build"
   },
   "author": "",
   "license": "MIT",
@@ -25,21 +26,30 @@
     "@babel/preset-env": "^7.29.0",
     "@babel/preset-typescript": "^7.28.5",
     "@types/node": "^25.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
-    "@typescript-eslint/parser": "^8.31.1",
-    "aws-sdk": "^2.1693.0",
-    "eslint": "^8.52.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^29.12.1",
+    "eslint-plugin-jest": "^29.13.0",
     "eslint-plugin-node": "^11.1.0",
     "nyc": "^17.1.0",
     "tsx": "^4.21.0"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudformation": "^3.987.0",
+    "@aws-sdk/client-cloudfront": "^3.987.0",
+    "@aws-sdk/client-lambda": "^3.987.0",
+    "@aws-sdk/client-s3": "^3.987.0",
+    "@aws-sdk/lib-storage": "^3.987.0",
     "convict": "^6.2.4",
     "csv-parse": "^6.1.0",
     "encoding": "^0.1.13",
     "mime-types": "^3.0.2"
+  },
+  "overrides": {
+    "fast-xml-parser": "4.1.2",
+    "minimatch": "3.1.2",
+    "glob": "7.2.3"
   }
 }

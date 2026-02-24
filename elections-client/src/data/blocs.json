@@ -1,0 +1,32 @@
+{
+  "25": {
+    "order": ["right", "center", "left", "arab", "other"],
+    "blocks": {
+      "right": {
+        "label": "ימין",
+        "color": "#e4572e",
+        "parties": ["מחל", "ט", "שס", "ג"]
+      },
+      "center": {
+        "label": "מרכז",
+        "color": "#5c7cfa",
+        "parties": ["פה", "כן", "ל"]
+      },
+      "left": {
+        "label": "שמאל",
+        "color": "#2a9d8f",
+        "parties": ["אמת"]
+      },
+      "arab": {
+        "label": "ערביות",
+        "color": "#264653",
+        "parties": ["עם", "ום"]
+      },
+      "other": {
+        "label": "אחר",
+        "color": "#adb5bd",
+        "parties": []
+      }
+    }
+  }
+}

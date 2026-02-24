@@ -1,5 +1,14 @@
-/* eslint-disable import/no-extraneous-dependencies */
-import { CloudFormation } from 'aws-sdk';
+import {
+  CloudFormationClient,
+  DescribeStacksCommand,
+  CreateStackCommand,
+  UpdateStackCommand,
+  waitUntilStackCreateComplete,
+  waitUntilStackUpdateComplete,
+  waitUntilStackRollbackComplete,
+  Parameter,
+  Capability,
+} from '@aws-sdk/client-cloudformation';
 import fs from 'fs/promises';
 
 import { exec } from 'child_process';
@@ -9,37 +18,37 @@ const bucketCodeName = process.env.CODE_BUCKET;
 const clientCodeName = process.env.CLIENT_CODE_BUCKET;
 const currElections = process.env.CURR_ELECTIONS;
 
-const cf = new CloudFormation({ region });
+const cf = new CloudFormationClient({ region });
 
 async function runTemplate(
   templatePath: string,
   name: string,
-  parameters?: CloudFormation.Parameters,
-  capabilities?: CloudFormation.Capabilities,
+  parameters?: Parameter[],
+  capabilities?: Capability[],
 ) {
-  const stack = await cf.describeStacks({
+  const stack = await cf.send(new DescribeStacksCommand({
     StackName: name,
-  }).promise().catch(() => ({ Stacks: [] }));
+  })).catch(() => ({ Stacks: [] }));
   console.log(stack.Stacks?.[0]?.Outputs);
   const template = await fs.readFile(templatePath, 'utf-8');
-  const newStack = stack.Stacks != null && stack.Stacks.length < 1;
-  console.log({ newStack });
-  if (newStack) {
-    await cf.createStack({
+  const isNewStack = stack.Stacks != null && stack.Stacks.length < 1;
+  console.log({ isNewStack });
+  if (isNewStack) {
+    await cf.send(new CreateStackCommand({
       StackName: name,
       TemplateBody: template,
       Capabilities: capabilities,
       Parameters: parameters,
-    }).promise();
+    }));
   } else {
     try {
-      await cf.updateStack({
+      await cf.send(new UpdateStackCommand({
         StackName: name,
         TemplateBody: template,
         Capabilities: capabilities,
         Parameters: parameters,
-      }).promise();
-    } catch (e) {
+      }));
+    } catch (e: any) {
       if (e.message === 'No updates are to be performed.') {
         console.log(`template ${name} No updates are to be performed.`);
         return stack.Stacks?.[0]?.Outputs;
@@ -48,18 +57,23 @@ async function runTemplate(
     }
   }
 
-  const { $response: { data, error } } = await Promise.race([
-    cf.waitFor('stackCreateComplete', { StackName: name }).promise(),
-    cf.waitFor('stackUpdateComplete', { StackName: name }).promise(),
-    cf.waitFor('stackRollbackComplete', { StackName: name }).promise(),
+  await Promise.race([
+    waitUntilStackCreateComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name }),
+    waitUntilStackUpdateComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name }),
+    waitUntilStackRollbackComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name }),
   ]);
-  if (error || !data
-     || !['CREATE_COMPLETE', 'UPDATE_COMPLETE'].includes(data.Stacks?.[0]?.StackStatus ?? '')) {
-    console.log(error, data);
+
+  const updatedStack = await cf.send(new DescribeStacksCommand({
+    StackName: name,
+  }));
+
+  const status = updatedStack.Stacks?.[0]?.StackStatus;
+  if (!['CREATE_COMPLETE', 'UPDATE_COMPLETE'].includes(status ?? '')) {
+    console.log(updatedStack);
     throw new Error('Creation failed');
   }
-  console.log(`template ${name} ${newStack ? 'created' : 'updated'}.`);
-  return stack.Stacks?.[0]?.Outputs ?? data.Stacks?.[0]?.Outputs;
+  console.log(`template ${name} ${isNewStack ? 'created' : 'updated'}.`);
+  return updatedStack.Stacks?.[0]?.Outputs;
 }
 
 async function main() {

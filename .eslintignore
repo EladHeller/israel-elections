@@ -1,3 +1,8 @@
+node_modules/
 */node_modules/
-/node_modules/
-/dist/
+dist/
+*/dist/
+.gemini/
+elections-client/dist/
+elections-client/vite.config.js
+elections-client/**/*.test.js

@@ -5,10 +5,11 @@ cd ./dist && \
 npm --quiet ci --omit=dev && \
 rm -rf ./__tests__ ./package-lock.json && \
 cd - && \
+npm run build:client && \
 rm -f dist.zip && \
 zip -rq9 dist.zip ./dist && \
 rm -f client.zip && \
-zip -rq9 client.zip ./elections-client && \
+zip -rq9 client.zip ./elections-client/dist && \
 npm run update-s3 && \
 npm run clear-cache $1 && \
 echo finish deploy!

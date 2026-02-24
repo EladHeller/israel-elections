@@ -1,14 +1,13 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import fs from 'fs/promises';
 import crypto from 'crypto';
 import path from 'path';
-import { S3 } from 'aws-sdk';
-import { ObjectCannedACL } from 'aws-sdk/clients/s3';
+import { S3Client, HeadObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import mime from 'mime-types';
 
 const region = process.env.REGION;
 
-const s3 = new S3({ region });
+const s3 = new S3Client({ region });
 
 const chunk = 1024 * 1024 * 5; // 5MB
 
@@ -51,10 +50,10 @@ async function getEtagOfFile(stream: Buffer): Promise<string> {
 }
 
 export async function upload(bucket: string, key: string, filePath: string, acl: ObjectCannedACL = 'private') {
-  const s3Object = await s3.headObject({
+  const s3Object = await s3.send(new HeadObjectCommand({
     Bucket: bucket,
     Key: key,
-  }).promise().catch(() => ({ ContentLength: '', ETag: '""' }));
+  })).catch(() => ({ ContentLength: 0, ETag: '""' }));
   const file = await fs.readFile(filePath);
   const etag = await getEtagOfFile(file);
   if (etag === JSON.parse(s3Object.ETag ?? '""')) {
@@ -64,13 +63,18 @@ export async function upload(bucket: string, key: string, filePath: string, acl:
 
   const contentType = mime.contentType(path.extname(key));
 
-  await s3.upload({
-    Bucket: bucket,
-    Key: key,
-    Body: file,
-    ContentType: typeof contentType === 'string' ? contentType : 'application/octet-stream',
-    ACL: acl,
-  }).promise();
+  const parallelUploads3 = new Upload({
+    client: s3,
+    params: {
+      Bucket: bucket,
+      Key: key,
+      Body: file,
+      ContentType: typeof contentType === 'string' ? contentType : 'application/octet-stream',
+      ACL: acl,
+    },
+  });
+
+  await parallelUploads3.done();
 
   console.log(`${key} updated`);
 }

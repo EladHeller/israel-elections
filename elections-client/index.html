@@ -1,65 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-  <meta property="og:image" content="https://d2dtitluek3vlq.cloudfront.net/preview.png" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://d2dtitluek3vlq.cloudfront.net/" />
-  <meta property="og:title" content="תוצאות הבחירות לכנסת ה-25 בזמן אמת" />
-  <meta property="og:description" content="תוצאות הבחירות לכנסת ה-25, מתעדכנות בזמן אמת" />
-  <meta name="Description" content="תוצאות הבחירות לכנסת ה-25, מתעדכנות בזמן אמת">
-
-  <title>תוצאות הבחירות לכנסת ה-25</title>
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
-  <link href="./index.css" rel="stylesheet">
-  <script src="https://d3js.org/d3.v5.min.js"></script>
-  <script type="module" src="./index.js"></script>
-  <script type="module" src="./show-svg.js"></script>
-</head>
-<body>
-  <div id='layout'>
-    <div id='container'>
-      <h1>טוען נתונים...</h1>
-      <div class="select select-type">
-        <select>
-          <option selected value="realResults">תוצאות אמת</option>
-          <option value="beforeBaderOffer">תוצאות ללא בדר עופר</option>
-          <option value="withoutAgreements">תוצאות ללא הסכמי עודפים</option>
-        </select>
-      </div>
-      <div class="select select-elections">
-        <select>
-          <option selected value="25">הכנסת ה-25</option>
-          <option value="24">הכנסת ה-24</option>
-          <option value="23">הכנסת ה-23</option>
-          <option value="22">הכנסת ה-22</option>
-          <option value="21">הכנסת ה-21</option>
-          <option value="20">הכנסת ה-20</option>
-          <option value="19">הכנסת ה-19</option>
-          <option value="18">הכנסת ה-18</option>
-          <option value="17">הכנסת ה-17</option>
-          <option value="16">הכנסת ה-16</option>
-          <option value="15">הכנסת ה-15</option>
-          <option value="14">הכנסת ה-14</option>
-          <option value="13">הכנסת ה-13</option>
-          <option value="12">הכנסת ה-12</option>
-          <option value="11">הכנסת ה-11</option>
-          <option value="10">הכנסת ה-10</option>
-          <option value="9">הכנסת ה-9</option>
-          <option value="8">הכנסת ה-8</option>
-          <option value="7">הכנסת ה-7</option>
-          <option value="6">הכנסת ה-6</option>
-          <option value="5">הכנסת ה-5</option>
-          <option value="4">הכנסת ה-4</option>
-          <option value="3">הכנסת ה-3</option>
-          <option value="2">הכנסת ה-2</option>
-          <option value="1">הכנסת ה-1</option>
-        </select>
-      </div>
-      <svg></svg>
-    </div>
-  </div>
-</body>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="Description" content="תוצאות הבחירות לכנסת בזמן אמת" />
+    <title>תוצאות הבחירות לכנסת</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Secular+One&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
