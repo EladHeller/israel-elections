@@ -29,4 +29,4 @@ export const getStablePartyColor = (party) => {
 
 export const algorithmLabel = (algorithm) => (algorithm === 'baderOffer'
   ? 'שיטת בדר־עופר'
-  : 'שיטת שאריות (עיגול כלפי מעלה)');
+  : 'עיגול כלפי מעלה');
