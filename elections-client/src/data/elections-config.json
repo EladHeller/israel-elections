@@ -1,280 +1,253 @@
 {
-  "25": {
-    "finalResults": true,
+  "1": {
     "algorithm": "baderOffer",
-    "blockPercentage": 0.0325,
+    "blockPercentage": 0.00833,
     "agreements": [
       [
-        "שס",
-        "ג"
+        "ב",
+        "ל"
       ],
       [
-        "מחל",
+        "יג",
         "ט"
       ],
       [
-        "מרצ",
-        "אמת"
+        "יא",
+        "יד"
       ],
       [
-        "פה",
-        "כן"
+        "מ",
+        "ת"
       ],
       [
-        "נק",
-        "ף"
+        "צ",
+        "ס"
       ]
-    ]
+    ],
+    "turnoutPercentage": 86.88,
+    "totalVotes": 440095
   },
-  "24": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.0325,
+  "2": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": [],
+    "turnoutPercentage": 75.96,
+    "totalVotes": 702522
+  },
+  "3": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": [],
+    "turnoutPercentage": 82.82,
+    "totalVotes": 876066
+  },
+  "4": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": [],
+    "turnoutPercentage": 81.6,
+    "totalVotes": 994306
+  },
+  "5": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": [],
+    "turnoutPercentage": 81.57,
+    "totalVotes": 1036987
+  },
+  "6": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
+    "agreements": [],
+    "turnoutPercentage": 83,
+    "totalVotes": 1067971
+  },
+  "7": {
+    "algorithm": "ceilRound",
+    "blockPercentage": 0.01,
     "agreements": [
       [
-        "שס",
-        "ג"
-      ],
-      [
-        "מחל",
-        "ט"
-      ],
-      [
-        "מרצ",
-        "אמת"
-      ],
-      [
-        "ת",
-        "ב"
-      ],
-      [
-        "יז",
-        "כן"
-      ],
-      [
-        "ל",
-        "פה"
+        "יא",
+        "רא"
       ]
-    ]
+    ],
+    "turnoutPercentage": 81.66,
+    "totalVotes": 1427997
   },
-  "23": {
+  "8": {
     "algorithm": "baderOffer",
-    "blockPercentage": 0.0325,
-    "agreements": [
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "מחל",
-        "טב"
-      ],
-      [
-        "פה",
-        "אמת"
-      ]
-    ]
+    "blockPercentage": 0.01,
+    "agreements": [],
+    "turnoutPercentage": 78.58,
+    "totalVotes": 1490014
   },
-  "22": {
+  "9": {
     "algorithm": "baderOffer",
-    "blockPercentage": 0.0325,
+    "blockPercentage": 0.01,
     "agreements": [
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "מחל",
-        "טב"
-      ],
-      [
-        "פה",
-        "ל"
-      ],
-      [
-        "מרצ",
-        "אמת"
-      ],
-      [
-        "כ",
-        "כף"
-      ]
-    ]
-  },
-  "21": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.0325,
-    "agreements": [
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "מחל",
-        "טב"
-      ],
-      [
-        "ן",
-        "ל"
-      ],
-      [
-        "מרצ",
-        "אמת"
-      ],
-      [
-        "דעם",
-        "ום"
-      ],
-      [
-        "ףץ",
-        "ףז"
-      ]
-    ]
-  },
-  "20": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.0325,
-    "agreements": [
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "מחל",
-        "טב"
-      ],
-      [
-        "כ",
-        "ל"
-      ],
-      [
-        "מרצ",
-        "אמת"
-      ]
-    ]
-  },
-  "19": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.02,
-    "agreements": [
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "מחל",
-        "טב"
-      ],
-      [
-        "ץ",
-        "כן"
-      ],
-      [
-        "מרצ",
-        "צפ"
-      ],
       [
         "אמת",
-        "פה"
+        "ימ"
       ],
       [
-        "ד",
-        "ו"
-      ],
-      [
-        "זך",
-        "צק"
-      ]
-    ]
-  },
-  "18": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.02,
-    "agreements": [
-      [
-        "שס",
-        "ג"
+        "לע",
+        "יש"
       ],
       [
         "מחל",
-        "ל"
-      ],
-      [
-        "רק",
-        "כן"
-      ],
-      [
-        "מרצ",
-        "אמת"
-      ],
-      [
-        "ט",
-        "ב"
-      ],
-      [
-        "עם",
-        "ו"
-      ],
-      [
-        "צי",
-        "זך"
-      ],
-      [
-        "חי",
-        "ה"
-      ]
-    ]
-  },
-  "17": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.02,
-    "agreements": [
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "מחל",
-        "ל"
-      ],
-      [
-        "ו",
-        "ד"
-      ],
-      [
-        "מרצ",
-        "אמת"
-      ]
-    ]
-  },
-  "16": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.015,
-    "agreements": [
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "יש",
-        "רק"
-      ],
-      [
-        "ל",
-        "כן"
+        "כנ"
       ],
       [
         "ב",
-        "ם"
+        "ג"
       ],
+      [
+        "ש",
+        "נס"
+      ],
+      [
+        "רצ",
+        "ספ"
+      ]
+    ],
+    "turnoutPercentage": 79.23,
+    "totalVotes": 2012586
+  },
+  "10": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "אמת",
+        "לע"
+      ],
+      [
+        "ד",
+        "ג"
+      ],
+      [
+        "הן",
+        "רצ"
+      ]
+    ],
+    "turnoutPercentage": 78.5,
+    "totalVotes": 2122334
+  },
+  "11": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "אמת",
+        "רצ"
+      ],
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "הן",
+        "ט"
+      ],
+      [
+        "מחל",
+        "ת"
+      ]
+    ],
+    "turnoutPercentage": 78.78,
+    "totalVotes": 2542831
+  },
+  "12": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.01,
+    "agreements": [
+      [
+        "אמת",
+        "רצ"
+      ],
+      [
+        "שס",
+        "עץ"
+      ],
+      [
+        "מפם",
+        "הן"
+      ],
+      [
+        "מחל",
+        "ת"
+      ],
+      [
+        "יענ",
+        "קז"
+      ]
+    ],
+    "turnoutPercentage": 79.66,
+    "totalVotes": 2305567
+  },
+  "13": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.015,
+    "agreements": [
       [
         "אמת",
         "מרצ"
       ],
       [
-        "ו",
-        "ד"
+        "שס",
+        "ג"
+      ],
+      [
+        "ט",
+        "ת"
+      ],
+      [
+        "מחל",
+        "ץ"
+      ],
+      [
+        "יד",
+        "נכ"
+      ],
+      [
+        "ק",
+        "נד"
       ]
-    ]
+    ],
+    "turnoutPercentage": 77.38,
+    "totalVotes": 2637943
+  },
+  "14": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.015,
+    "agreements": [
+      [
+        "אמת",
+        "מרצ"
+      ],
+      [
+        "ג",
+        "ב"
+      ],
+      [
+        "ו",
+        "עם"
+      ],
+      [
+        "מחל",
+        "שס"
+      ],
+      [
+        "ג",
+        "ב"
+      ],
+      [
+        "הד",
+        "כן"
+      ]
+    ],
+    "turnoutPercentage": 79.32,
+    "totalVotes": 3119832
   },
   "15": {
     "algorithm": "baderOffer",
@@ -316,228 +289,305 @@
         "פה",
         "הד"
       ]
-    ]
+    ],
+    "turnoutPercentage": 78.72,
+    "totalVotes": 3373748
   },
-  "14": {
+  "16": {
     "algorithm": "baderOffer",
     "blockPercentage": 0.015,
     "agreements": [
       [
-        "אמת",
-        "מרצ"
+        "שס",
+        "ג"
       ],
       [
-        "ג",
-        "ב"
+        "יש",
+        "רק"
+      ],
+      [
+        "ל",
+        "כן"
+      ],
+      [
+        "ב",
+        "ם"
+      ],
+      [
+        "אמת",
+        "מרצ"
       ],
       [
         "ו",
-        "עם"
-      ],
-      [
-        "מחל",
-        "שס"
-      ],
-      [
-        "ג",
-        "ב"
-      ],
-      [
-        "הד",
-        "כן"
+        "ד"
       ]
-    ]
+    ],
+    "turnoutPercentage": 67.81,
+    "totalVotes": 3200773
   },
-  "13": {
+  "17": {
     "algorithm": "baderOffer",
-    "blockPercentage": 0.015,
+    "blockPercentage": 0.02,
     "agreements": [
-      [
-        "אמת",
-        "מרצ"
-      ],
       [
         "שס",
         "ג"
       ],
       [
-        "ט",
-        "ת"
-      ],
-      [
         "מחל",
-        "ץ"
-      ],
-      [
-        "יד",
-        "נכ"
-      ],
-      [
-        "ק",
-        "נד"
-      ]
-    ]
-  },
-  "12": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.01,
-    "agreements": [
-      [
-        "אמת",
-        "רצ"
-      ],
-      [
-        "שס",
-        "עץ"
-      ],
-      [
-        "מפם",
-        "הן"
-      ],
-      [
-        "מחל",
-        "ת"
-      ],
-      [
-        "יענ",
-        "קז"
-      ]
-    ]
-  },
-  "11": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.01,
-    "agreements": [
-      [
-        "אמת",
-        "רצ"
-      ],
-      [
-        "שס",
-        "ג"
-      ],
-      [
-        "הן",
-        "ט"
-      ],
-      [
-        "מחל",
-        "ת"
-      ]
-    ]
-  },
-  "10": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.01,
-    "agreements": [
-      [
-        "אמת",
-        "לע"
-      ],
-      [
-        "ד",
-        "ג"
-      ],
-      [
-        "הן",
-        "רצ"
-      ]
-    ]
-  },
-  "9": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.01,
-    "agreements": [
-      [
-        "אמת",
-        "ימ"
-      ],
-      [
-        "לע",
-        "יש"
-      ],
-      [
-        "מחל",
-        "כנ"
-      ],
-      [
-        "ב",
-        "ג"
-      ],
-      [
-        "ש",
-        "נס"
-      ],
-      [
-        "רצ",
-        "ספ"
-      ]
-    ]
-  },
-  "8": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.01,
-    "agreements": []
-  },
-  "7": {
-    "algorithm": "ceilRound",
-    "blockPercentage": 0.01,
-    "agreements": [
-      [
-        "יא",
-        "רא"
-      ]
-    ]
-  },
-  "6": {
-    "algorithm": "ceilRound",
-    "blockPercentage": 0.01,
-    "agreements": []
-  },
-  "5": {
-    "algorithm": "ceilRound",
-    "blockPercentage": 0.01,
-    "agreements": []
-  },
-  "4": {
-    "algorithm": "ceilRound",
-    "blockPercentage": 0.01,
-    "agreements": []
-  },
-  "3": {
-    "algorithm": "ceilRound",
-    "blockPercentage": 0.01,
-    "agreements": []
-  },
-  "2": {
-    "algorithm": "ceilRound",
-    "blockPercentage": 0.01,
-    "agreements": []
-  },
-  "1": {
-    "algorithm": "baderOffer",
-    "blockPercentage": 0.00833,
-    "agreements": [
-      [
-        "ב",
         "ל"
       ],
       [
-        "יג",
+        "ו",
+        "ד"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ]
+    ],
+    "turnoutPercentage": 63.55,
+    "totalVotes": 3186739
+  },
+  "18": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.02,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "ל"
+      ],
+      [
+        "רק",
+        "כן"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "ט",
+        "ב"
+      ],
+      [
+        "עם",
+        "ו"
+      ],
+      [
+        "צי",
+        "זך"
+      ],
+      [
+        "חי",
+        "ה"
+      ]
+    ],
+    "turnoutPercentage": 64.84,
+    "totalVotes": 3423174
+  },
+  "19": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.02,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "ץ",
+        "כן"
+      ],
+      [
+        "מרצ",
+        "צפ"
+      ],
+      [
+        "אמת",
+        "פה"
+      ],
+      [
+        "ד",
+        "ו"
+      ],
+      [
+        "זך",
+        "צק"
+      ]
+    ],
+    "turnoutPercentage": 67.8,
+    "totalVotes": 3833646
+  },
+  "20": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "כ",
+        "ל"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ]
+    ],
+    "turnoutPercentage": 72.34,
+    "totalVotes": 4254738
+  },
+  "21": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "ן",
+        "ל"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "דעם",
+        "ום"
+      ],
+      [
+        "ףץ",
+        "ףז"
+      ]
+    ],
+    "turnoutPercentage": 68.46,
+    "totalVotes": 4340253
+  },
+  "22": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "פה",
+        "ל"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "כ",
+        "כף"
+      ]
+    ],
+    "turnoutPercentage": 69.83,
+    "totalVotes": 4465168
+  },
+  "23": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "טב"
+      ],
+      [
+        "פה",
+        "אמת"
+      ]
+    ],
+    "turnoutPercentage": 71.52,
+    "totalVotes": 4615135
+  },
+  "24": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
         "ט"
       ],
       [
-        "יא",
-        "יד"
+        "מרצ",
+        "אמת"
       ],
       [
-        "מ",
-        "ת"
+        "ת",
+        "ב"
       ],
       [
-        "צ",
-        "ס"
+        "יז",
+        "כן"
+      ],
+      [
+        "ל",
+        "פה"
       ]
-    ]
+    ],
+    "turnoutPercentage": 67.44,
+    "totalVotes": 4436365
+  },
+  "25": {
+    "finalResults": true,
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [
+      [
+        "שס",
+        "ג"
+      ],
+      [
+        "מחל",
+        "ט"
+      ],
+      [
+        "מרצ",
+        "אמת"
+      ],
+      [
+        "פה",
+        "כן"
+      ],
+      [
+        "נק",
+        "ף"
+      ]
+    ],
+    "turnoutPercentage": 70.63,
+    "totalVotes": 4794593
   }
 }

@@ -248,9 +248,9 @@ export const BottomPanels = ({
     <div className="panel">
       <h2>קרובים למנדט נוסף / אובדן</h2>
       <div className="margins-head">
-        <span>מפלגה</span>
-        <span>+מנדט</span>
-        <span>-מנדט</span>
+        <span className="margin-party">מפלגה</span>
+        <span className="margin-change gain">+מנדט</span>
+        <span className="margin-change lose">-מנדט</span>
       </div>
       <SeatMargins margins={margins} getPartyName={getPartyName} />
     </div>

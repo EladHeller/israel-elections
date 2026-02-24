@@ -1,0 +1,103 @@
+{
+  "1": {
+    "validVotes": 434677,
+    "invalidVotes": 5418
+  },
+  "2": {
+    "validVotes": 687492,
+    "invalidVotes": 15030
+  },
+  "3": {
+    "validVotes": 853219,
+    "invalidVotes": 22847
+  },
+  "4": {
+    "validVotes": 969337,
+    "invalidVotes": 24969
+  },
+  "5": {
+    "validVotes": 1006964,
+    "invalidVotes": 30023
+  },
+  "6": {
+    "validVotes": 1206728,
+    "invalidVotes": 0
+  },
+  "7": {
+    "validVotes": 1367743,
+    "invalidVotes": 60254
+  },
+  "8": {
+    "validVotes": 1566855,
+    "invalidVotes": 0
+  },
+  "9": {
+    "validVotes": 1747820,
+    "invalidVotes": 264766
+  },
+  "10": {
+    "validVotes": 1937366,
+    "invalidVotes": 184968
+  },
+  "11": {
+    "validVotes": 2073321,
+    "invalidVotes": 469510
+  },
+  "12": {
+    "validVotes": 2283118,
+    "invalidVotes": 22449
+  },
+  "13": {
+    "validVotes": 2616841,
+    "invalidVotes": 21102
+
+  },
+  "14": {
+    "validVotes": 3052130,
+    "invalidVotes": 67702
+  },
+  "15": {
+    "validVotes": 3309416,
+    "invalidVotes": 64332
+  },
+  "16": {
+    "validVotes": 3148364,
+    "invalidVotes": 52409
+  },
+  "17": {
+    "validVotes": 3137064,
+    "invalidVotes": 49675
+  },
+  "18": {
+    "validVotes": 3373490,
+    "invalidVotes": 49684
+  },
+  "19": {
+    "validVotes": 3792742,
+    "invalidVotes": 40904
+  },
+  "20": {
+    "validVotes": 4210884,
+    "invalidVotes": 3927
+  },
+  "21": {
+    "validVotes": 4309054,
+    "invalidVotes": 30983
+  },
+  "22": {
+    "validVotes": 4436806,
+    "invalidVotes": 28362
+  },
+  "23": {
+    "validVotes": 4590062,
+    "invalidVotes": 25073
+  },
+  "24": {
+    "validVotes": 4410052,
+    "invalidVotes": 26313
+  },
+  "25": {
+    "validVotes": 4764742,
+    "invalidVotes": 29851
+  }
+}

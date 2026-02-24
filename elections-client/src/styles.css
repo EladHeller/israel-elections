@@ -77,6 +77,13 @@ body {
   color: var(--ink-50);
 }
 
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .controls select {
   min-width: 160px;
   padding: 10px 12px;
@@ -85,6 +92,11 @@ body {
   background: var(--card);
   font-size: 16px;
   font-family: 'Assistant', sans-serif;
+}
+
+.controls select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .summary {
@@ -192,6 +204,10 @@ body {
 }
 
 .summary.summary-extra {
+  margin-bottom: 24px;
+}
+
+.stats-summary {
   margin-bottom: 24px;
 }
 
@@ -512,7 +528,7 @@ body {
 
 .agreement-edit-item {
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   background: #f5f7fb;
@@ -520,17 +536,29 @@ body {
   padding: 8px 10px;
 }
 
+.agreement-edit-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .add-agreement {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.add-agreement select {
+  min-width: 0;
 }
 
 .add-agreement button {
   background: var(--ink-90);
   color: #fff;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .validation-errors {
@@ -542,6 +570,34 @@ body {
   border: 1px solid #ffc8c8;
   border-radius: 10px;
   padding: 10px;
+}
+
+.all-elections-summary h2 {
+  margin-bottom: 12px;
+}
+
+.summary-table-wrap {
+  overflow: auto;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.summary-table th,
+.summary-table td {
+  text-align: right;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ink-20);
+  white-space: nowrap;
+}
+
+.summary-table th {
+  color: var(--ink-50);
+  font-weight: 700;
+  background: #f5f7fb;
 }
 
 @media (max-width: 960px) {
@@ -573,5 +629,13 @@ body {
   .panel-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .controls {
+    width: 100%;
+  }
+
+  .controls label {
+    flex: 1 1 200px;
   }
 }

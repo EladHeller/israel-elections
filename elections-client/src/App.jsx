@@ -4,8 +4,10 @@ import {
   computeSeatMargins,
 } from './lib/analytics.js';
 import AppHeader from './components/AppHeader.jsx';
+import AllElectionsSummary from './components/AllElectionsSummary.jsx';
 import SummarySection from './components/SummarySection.jsx';
 import SecondarySummarySection from './components/SecondarySummarySection.jsx';
+import ElectionStatsSection from './components/ElectionStatsSection.jsx';
 import { BottomPanels, MainPanels } from './components/ElectionPanels.jsx';
 import { useElectionData } from './hooks/use-election-data.js';
 import { useScenario } from './hooks/use-scenario.js';
@@ -14,6 +16,7 @@ const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
 export default function App() {
   const [showBelowBlock, setShowBelowBlock] = useState(false);
+  const [viewMode, setViewMode] = useState('simulator');
 
   const {
     availableElections,
@@ -86,6 +89,8 @@ export default function App() {
 
   const sumVotes = Object.values(voteData).reduce((acc, { votes }) => acc + votes, 0);
   const blockThreshold = Math.ceil(sumVotes * activeConfig.blockPercentage);
+  const configTotalVotes = electionConfig.totalVotes ?? sumVotes;
+  const invalidVotesDerived = Math.max(0, configTotalVotes - sumVotes);
 
   const allParties = Object.entries(voteData)
     .filter(([party]) => !NON_PARTY_KEYS.has(party))
@@ -153,59 +158,74 @@ export default function App() {
         currentElection={currentElection}
         setCurrentElection={setCurrentElection}
         availableElections={availableElections}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
       />
 
-      <SummarySection
-        sumVotes={sumVotes}
-        baseSumVotes={baseSumVotes}
-        blockThreshold={blockThreshold}
-        baseBlockThreshold={baseBlockThreshold}
-        activeConfig={activeConfig}
-        isEdited={isEdited}
-        onBlockPercentageChange={onBlockPercentageChange}
-        onAlgorithmChange={onAlgorithmChange}
-      />
+      {viewMode === 'summary' ? (
+        <AllElectionsSummary />
+      ) : (
+        <>
+          <SummarySection
+            sumVotes={sumVotes}
+            baseSumVotes={baseSumVotes}
+            blockThreshold={blockThreshold}
+            baseBlockThreshold={baseBlockThreshold}
+            activeConfig={activeConfig}
+            isEdited={isEdited}
+            onBlockPercentageChange={onBlockPercentageChange}
+            onAlgorithmChange={onAlgorithmChange}
+          />
 
-      <SecondarySummarySection
-        nonParticipatingVotes={nonParticipatingVotes}
-        nonParticipatingPercent={nonParticipatingPercent}
-        participatingVotes={participatingVotes}
-        votesPerMandate={votesPerMandate}
-      />
+          <SecondarySummarySection
+            nonParticipatingVotes={nonParticipatingVotes}
+            nonParticipatingPercent={nonParticipatingPercent}
+            participatingVotes={participatingVotes}
+            votesPerMandate={votesPerMandate}
+          />
 
-      <MainPanels
-        isLatestElection={isLatestElection}
-        parties={parties}
-        passedParties={passedParties}
-        blocs={blocs}
-        partyToBloc={partyToBloc}
-        getPartyName={getPartyName}
-        partySeatDeltas={partySeatDeltas}
-        normalizedScenario={normalizedScenario}
-        onVoteChange={onVoteChange}
-        showBelowBlock={showBelowBlock}
-        setShowBelowBlock={setShowBelowBlock}
-        resetScenario={resetScenario}
-        blocData={blocData}
-        blocColors={blocColors}
-        blocLabels={blocLabels}
-        blocTotals={blocTotals}
-        blocSeatDeltas={blocSeatDeltas}
-      />
 
-      <BottomPanels
-        margins={margins}
-        getPartyName={getPartyName}
-        scenarioConfig={scenarioConfig}
-        removeAgreement={removeAgreement}
-        addAgreementA={addAgreementA}
-        setAddAgreementA={setAddAgreementA}
-        addAgreementB={addAgreementB}
-        setAddAgreementB={setAddAgreementB}
-        agreementSelectableParties={agreementSelectableParties}
-        addAgreement={addAgreement}
-        agreementValidation={agreementValidation}
-      />
+          <ElectionStatsSection
+            turnoutPercentage={electionConfig.turnoutPercentage}
+            totalVotes={electionConfig.totalVotes}
+            invalidVotes={invalidVotesDerived}
+          />
+
+          <MainPanels
+            isLatestElection={isLatestElection}
+            parties={parties}
+            passedParties={passedParties}
+            blocs={blocs}
+            partyToBloc={partyToBloc}
+            getPartyName={getPartyName}
+            partySeatDeltas={partySeatDeltas}
+            normalizedScenario={normalizedScenario}
+            onVoteChange={onVoteChange}
+            showBelowBlock={showBelowBlock}
+            setShowBelowBlock={setShowBelowBlock}
+            resetScenario={resetScenario}
+            blocData={blocData}
+            blocColors={blocColors}
+            blocLabels={blocLabels}
+            blocTotals={blocTotals}
+            blocSeatDeltas={blocSeatDeltas}
+          />
+
+          <BottomPanels
+            margins={margins}
+            getPartyName={getPartyName}
+            scenarioConfig={scenarioConfig}
+            removeAgreement={removeAgreement}
+            addAgreementA={addAgreementA}
+            setAddAgreementA={setAddAgreementA}
+            addAgreementB={addAgreementB}
+            setAddAgreementB={setAddAgreementB}
+            agreementSelectableParties={agreementSelectableParties}
+            addAgreement={addAgreement}
+            agreementValidation={agreementValidation}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -8,6 +8,8 @@ const AppHeader = ({
   currentElection,
   setCurrentElection,
   availableElections,
+  viewMode,
+  setViewMode,
 }) => (
   <header className="header">
     <div>
@@ -19,8 +21,19 @@ const AppHeader = ({
     </div>
     <div className="controls">
       <label>
+        <span>תצוגה</span>
+        <select value={viewMode} onChange={(e) => setViewMode(e.target.value)}>
+          <option value="simulator">סימולטור</option>
+          <option value="summary">סיכום כל הכנסות</option>
+        </select>
+      </label>
+      <label>
         <span>כנסת</span>
-        <select value={currentElection} onChange={(e) => setCurrentElection(e.target.value)}>
+        <select
+          value={currentElection}
+          onChange={(e) => setCurrentElection(e.target.value)}
+          disabled={viewMode === 'summary'}
+        >
           {availableElections.map((election) => (
             <option key={election} value={election}>{election}</option>
           ))}
