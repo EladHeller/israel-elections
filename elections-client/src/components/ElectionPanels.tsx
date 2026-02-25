@@ -1,12 +1,28 @@
 import React from 'react';
-import { numberFormat, getStablePartyColor } from '../lib/ui-helpers.js';
+import { numberFormat, getStablePartyColor } from '../lib/ui-helpers';
+import type { BlocsConfig } from '../types';
 
-const DeltaChip = ({ delta }) => {
+interface DeltaChipProps {
+  delta?: number | null;
+}
+
+const DeltaChip: React.FC<DeltaChipProps> = ({ delta }) => {
   if (!delta) return null;
-  return <span className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>{delta > 0 ? `+${delta}` : delta}</span>;
+  return (
+    <span className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>
+      {delta > 0 ? `+${delta}` : delta}
+    </span>
+  );
 };
 
-const Donut = ({ data, total, colors, labels }) => {
+interface DonutProps {
+  data: number[];
+  total: number;
+  colors: string[];
+  labels: string[];
+}
+
+const Donut: React.FC<DonutProps> = ({ data, total, colors, labels }) => {
   const radius = 80;
   const stroke = 22;
   const circumference = 2 * Math.PI * radius;
@@ -42,17 +58,30 @@ const Donut = ({ data, total, colors, labels }) => {
           />
         );
       })}
-      <text x="110" y="106" textAnchor="middle" className="donut-value">{total}</text>
-      <text x="110" y="130" textAnchor="middle" className="donut-label">מנדטים</text>
+      <text x="110" y="106" textAnchor="middle" className="donut-value">
+        {total}
+      </text>
+      <text x="110" y="130" textAnchor="middle" className="donut-label">
+        מנדטים
+      </text>
     </svg>
   );
 };
 
-const BlocLegend = ({ blocs, totals, deltas }) => (
+interface BlocLegendProps {
+  blocs: BlocsConfig;
+  totals: Record<string, number>;
+  deltas: Record<string, number>;
+}
+
+const BlocLegend: React.FC<BlocLegendProps> = ({ blocs, totals, deltas }) => (
   <div className="legend">
-    {blocs.order.map((key) => (
+    {blocs.order?.map((key) => (
       <div key={key} className="legend-item">
-        <span className="legend-swatch" style={{ background: blocs.blocks[key].color }} />
+        <span
+          className="legend-swatch"
+          style={{ background: blocs.blocks[key].color }}
+        />
         <span>{blocs.blocks[key].label}</span>
         <span className="legend-value">
           {totals[key] || 0}
@@ -63,7 +92,21 @@ const BlocLegend = ({ blocs, totals, deltas }) => (
   </div>
 );
 
-const BlocEditor = ({
+interface PartySummary {
+  party: string;
+  votes: number;
+  mandats: number;
+}
+
+interface BlocEditorProps {
+  blocs: BlocsConfig;
+  partyToBloc: Record<string, string | null | undefined>;
+  parties: PartySummary[];
+  onPartyBlocChange: (party: string, blocKey: string | null) => void;
+  getPartyName: (party: string) => string;
+}
+
+const BlocEditor: React.FC<BlocEditorProps> = ({
   blocs,
   partyToBloc,
   parties,
@@ -78,14 +121,15 @@ const BlocEditor = ({
   const groupA = editableParties.filter((p) => partyToBloc[p.party] === gushAKey);
   const groupB = editableParties.filter((p) => partyToBloc[p.party] === gushBKey);
   const unassigned = editableParties.filter(
-    (p) => !partyToBloc[p.party] || ![gushAKey, gushBKey].includes(partyToBloc[p.party]),
+    (p) =>
+      !partyToBloc[p.party] || ![gushAKey, gushBKey].includes(partyToBloc[p.party] ?? ''),
   );
 
-  const moveTo = (party, key) => {
+  const moveTo = (party: string, key: string) => {
     onPartyBlocChange(party, key);
   };
 
-  const clearFromGroup = (party) => {
+  const clearFromGroup = (party: string) => {
     onPartyBlocChange(party, null);
   };
 
@@ -96,7 +140,9 @@ const BlocEditor = ({
       </div>
       <div className="bloc-editor-columns">
         <div className="bloc-editor-column">
-          <div className="bloc-editor-column-title">{blocs.blocks[gushAKey].label}</div>
+          <div className="bloc-editor-column-title">
+            {blocs.blocks[gushAKey].label}
+          </div>
           <div className="bloc-editor-chips">
             {groupA.map((party) => (
               <button
@@ -142,7 +188,9 @@ const BlocEditor = ({
         </div>
 
         <div className="bloc-editor-column">
-          <div className="bloc-editor-column-title">{blocs.blocks[gushBKey].label}</div>
+          <div className="bloc-editor-column-title">
+            {blocs.blocks[gushBKey].label}
+          </div>
           <div className="bloc-editor-chips">
             {groupB.map((party) => (
               <button
@@ -162,7 +210,19 @@ const BlocEditor = ({
   );
 };
 
-const PartyBars = ({
+interface PartyBarsProps {
+  parties: PartySummary[];
+  blocs: BlocsConfig;
+  partyToBloc: Record<string, string | null | undefined>;
+  maxMandats: number;
+  getPartyName: (party: string) => string;
+  partySeatDeltas: Record<string, number>;
+  useCoalitionColors: boolean;
+  editableVoteData: Record<string, { votes: number }>;
+  onVoteChange: (party: string, next: string) => void;
+}
+
+const PartyBars: React.FC<PartyBarsProps> = ({
   parties,
   blocs,
   partyToBloc,
@@ -177,7 +237,7 @@ const PartyBars = ({
     {parties.map((party) => {
       const blocKey = partyToBloc[party.party] || 'other';
       const color = useCoalitionColors
-        ? (blocs.blocks[blocKey]?.color || 'var(--ink-50)')
+        ? blocs.blocks[blocKey]?.color || 'var(--ink-50)'
         : getStablePartyColor(party.party);
       const width = maxMandats > 0 ? (party.mandats / maxMandats) * 100 : 0;
       return (
@@ -190,7 +250,10 @@ const PartyBars = ({
             </span>
           </div>
           <div className="party-bar">
-            <div className="party-bar-fill" style={{ width: `${width}%`, background: color }} />
+            <div
+              className="party-bar-fill"
+              style={{ width: `${width}%`, background: color }}
+            />
           </div>
           <div className="party-votes">
             <input
@@ -209,19 +272,49 @@ const PartyBars = ({
   </div>
 );
 
-const SeatMargins = ({ margins, getPartyName }) => (
+interface SeatMargin {
+  party: string;
+  gain?: number | null;
+  lose?: number | null;
+}
+
+interface SeatMarginsProps {
+  margins: SeatMargin[];
+  getPartyName: (party: string) => string;
+}
+
+const SeatMargins: React.FC<SeatMarginsProps> = ({ margins, getPartyName }) => (
   <div className="margins">
     {margins.map((m) => (
       <div key={m.party} className="margin-row">
-        <span className="margin-party" title={m.party}>{getPartyName(m.party)}</span>
-        <span className="margin-change gain">+{m.gain ? numberFormat.format(m.gain) : '—'}</span>
-        <span className="margin-change lose">-{m.lose ? numberFormat.format(m.lose) : '—'}</span>
+        <span className="margin-party" title={m.party}>
+          {getPartyName(m.party)}
+        </span>
+        <span className="margin-change gain">
+          +{m.gain ? numberFormat.format(m.gain) : '—'}
+        </span>
+        <span className="margin-change lose">
+          -{m.lose ? numberFormat.format(m.lose) : '—'}
+        </span>
       </div>
     ))}
   </div>
 );
 
-const AgreementsPanel = ({
+interface AgreementsPanelProps {
+  agreements: [string, string][];
+  getPartyName: (party: string) => string;
+  removeAgreement: (a: string, b: string) => void;
+  addAgreementA: string;
+  setAddAgreementA: (value: string) => void;
+  addAgreementB: string;
+  setAddAgreementB: (value: string) => void;
+  agreementSelectableParties: string[];
+  addAgreement: () => void;
+  agreementValidation: { isValid: boolean; errors: string[] };
+}
+
+const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
   agreements,
   getPartyName,
   removeAgreement,
@@ -235,13 +328,21 @@ const AgreementsPanel = ({
 }) => (
   <>
     <div className="scenario-agreements">
-      {agreements.length === 0 && <div className="agreement-empty">אין הסכמי עודפים</div>}
+      {agreements.length === 0 && (
+        <div className="agreement-empty">אין הסכמי עודפים</div>
+      )}
       {agreements.map(([a, b]) => (
         <div key={`${a}-${b}`} className="agreement-edit-item">
           <span>{getPartyName(a)}</span>
           <span className="agreement-plus">+</span>
           <span>{getPartyName(b)}</span>
-          <button type="button" className="ghost danger" onClick={() => removeAgreement(a, b)}>הסר</button>
+          <button
+            type="button"
+            className="ghost danger"
+            onClick={() => removeAgreement(a, b)}
+          >
+            הסר
+          </button>
         </div>
       ))}
     </div>
@@ -250,7 +351,9 @@ const AgreementsPanel = ({
       <select value={addAgreementA} onChange={(e) => setAddAgreementA(e.target.value)}>
         <option value="">מפלגה א׳</option>
         {agreementSelectableParties.map((party) => (
-          <option key={party} value={party}>{getPartyName(party)}</option>
+          <option key={party} value={party}>
+            {getPartyName(party)}
+          </option>
         ))}
       </select>
       <select value={addAgreementB} onChange={(e) => setAddAgreementB(e.target.value)}>
@@ -258,21 +361,48 @@ const AgreementsPanel = ({
         {agreementSelectableParties
           .filter((party) => party !== addAgreementA)
           .map((party) => (
-            <option key={party} value={party}>{getPartyName(party)}</option>
+            <option key={party} value={party}>
+              {getPartyName(party)}
+            </option>
           ))}
       </select>
-      <button type="button" onClick={addAgreement}>הוספת הסכם</button>
+      <button type="button" onClick={addAgreement}>
+        הוספת הסכם
+      </button>
     </div>
 
     {!agreementValidation.isValid && (
       <div className="validation-errors">
-        {agreementValidation.errors.map((msg) => <div key={msg}>{msg}</div>)}
+        {agreementValidation.errors.map((msg) => (
+          <div key={msg}>{msg}</div>
+        ))}
       </div>
     )}
   </>
 );
 
-export const MainPanels = ({
+interface MainPanelsProps {
+  isLatestElection: boolean;
+  parties: PartySummary[];
+  passedParties: PartySummary[];
+  blocs: BlocsConfig;
+  partyToBloc: Record<string, string | null | undefined>;
+  onPartyBlocChange: (party: string, blocKey: string | null) => void;
+  getPartyName: (party: string) => string;
+  partySeatDeltas: Record<string, number>;
+  normalizedScenario: { voteData: Record<string, { votes: number }> };
+  onVoteChange: (party: string, value: string) => void;
+  showBelowBlock: boolean;
+  setShowBelowBlock: (show: boolean) => void;
+  resetScenario: () => void;
+  blocData: number[];
+  blocColors: string[];
+  blocLabels: string[];
+  blocTotals: Record<string, number>;
+  blocSeatDeltas: Record<string, number>;
+}
+
+export const MainPanels: React.FC<MainPanelsProps> = ({
   isLatestElection,
   parties,
   passedParties,
@@ -296,7 +426,9 @@ export const MainPanels = ({
     <div className="panel">
       <div className="panel-head">
         <h2>מפלגות</h2>
-        <button type="button" className="ghost" onClick={resetScenario}>איפוס לתוצאות מקור</button>
+        <button type="button" className="ghost" onClick={resetScenario}>
+          איפוס לתוצאות מקור
+        </button>
       </div>
       <PartyBars
         parties={parties}
@@ -336,7 +468,21 @@ export const MainPanels = ({
   </section>
 );
 
-export const BottomPanels = ({
+interface BottomPanelsProps {
+  margins: SeatMargin[];
+  getPartyName: (party: string) => string;
+  scenarioConfig: { agreements?: [string, string][] };
+  removeAgreement: (a: string, b: string) => void;
+  addAgreementA: string;
+  setAddAgreementA: (value: string) => void;
+  addAgreementB: string;
+  setAddAgreementB: (value: string) => void;
+  agreementSelectableParties: string[];
+  addAgreement: () => void;
+  agreementValidation: { isValid: boolean; errors: string[] };
+}
+
+export const BottomPanels: React.FC<BottomPanelsProps> = ({
   margins,
   getPartyName,
   scenarioConfig,
@@ -377,3 +523,4 @@ export const BottomPanels = ({
     </div>
   </section>
 );
+

@@ -3,23 +3,34 @@ import {
   computeBlocTotals,
   computeSeatMargins,
   computeBlocMap,
-} from './lib/analytics.js';
-import AppHeader from './components/AppHeader.jsx';
-import AllElectionsSummary from './components/AllElectionsSummary.jsx';
-import SummarySection from './components/SummarySection.jsx';
-import SecondarySummarySection from './components/SecondarySummarySection.jsx';
-import ElectionStatsSection from './components/ElectionStatsSection.jsx';
-import { BottomPanels, MainPanels } from './components/ElectionPanels.jsx';
-import CalcDetailsCard from './components/CalcDetailsCard.jsx';
-import { useElectionData } from './hooks/use-election-data.js';
-import { useScenario } from './hooks/use-scenario.js';
+} from './lib/analytics';
+import AppHeader from './components/AppHeader';
+import AllElectionsSummary from './components/AllElectionsSummary';
+import SummarySection from './components/SummarySection';
+import SecondarySummarySection from './components/SecondarySummarySection';
+import ElectionStatsSection from './components/ElectionStatsSection';
+import { BottomPanels, MainPanels } from './components/ElectionPanels';
+import CalcDetailsCard from './components/CalcDetailsCard';
+import { useElectionData } from './hooks/use-election-data';
+import { useScenario } from './hooks/use-scenario';
+import type { PartyResult, ResultsMap, VoteData } from './types';
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
+const sumVotes = (data: VoteData): number =>
+  Object.values(data).reduce((acc, { votes }) => acc + votes, 0);
+
+const filterRealParties = (data: VoteData) =>
+  Object.entries(data)
+    .filter(([party]) => !NON_PARTY_KEYS.has(party))
+    .filter(([, value]) => value && value.votes > 0);
+
 export default function App() {
   const [showBelowBlock, setShowBelowBlock] = useState(false);
-  const [viewMode, setViewMode] = useState('simulator');
-  const [partyToBlocOverrides, setPartyToBlocOverrides] = useState({});
+  const [viewMode, setViewMode] = useState<'simulator' | 'summary'>('simulator');
+  const [partyToBlocOverrides, setPartyToBlocOverrides] = useState<
+    Record<string, Record<string, string | null>>
+  >({});
 
   const {
     availableElections,
@@ -59,7 +70,7 @@ export default function App() {
     addAgreement,
     isEdited,
   } = useScenario({
-    results,
+    results: results as any,
     electionConfig,
     currentElection,
   });
@@ -73,7 +84,13 @@ export default function App() {
     );
   }
 
-  if (!results || !currentElection || !scenarioConfig || !scenarioVoteData || !normalizedScenario) {
+  if (
+    !results ||
+    !currentElection ||
+    !scenarioConfig ||
+    !scenarioVoteData ||
+    !normalizedScenario
+  ) {
     return (
       <div className="screen loading">
         <h1>טוען נתונים...</h1>
@@ -81,54 +98,62 @@ export default function App() {
     );
   }
 
-  const realResults = activeResults.realResults || {};
-  const voteData = activeVoteData || {};
-  const partyNameOverrides = Object.fromEntries(
+  const realResults: ResultsMap = activeResults.realResults || {};
+  const voteData: VoteData = activeVoteData || {};
+
+  const partyNameOverrides: Record<string, string> = Object.fromEntries(
     Object.entries(voteData)
       .filter(([, data]) => data && data.name)
-      .map(([party, data]) => [party, data.name]),
+      .map(([party, data]) => [party, data!.name as string]),
   );
-  const getPartyName = (party) => partyNames[party] || partyNameOverrides[party] || party;
 
-  const sumVotes = Object.values(voteData).reduce((acc, { votes }) => acc + votes, 0);
-  const blockThreshold = Math.ceil(sumVotes * activeConfig.blockPercentage);
-  const configTotalVotes = electionConfig.totalVotes ?? sumVotes;
-  const invalidVotesDerived = Math.max(0, configTotalVotes - sumVotes);
+  const getPartyName = (party: string): string =>
+    partyNames[party] || partyNameOverrides[party] || party;
 
-  const allParties = Object.entries(voteData)
-    .filter(([party]) => !NON_PARTY_KEYS.has(party))
-    .filter(([, data]) => data && data.votes > 0)
+  const totalVotes = sumVotes(voteData);
+  const blockThreshold = Math.ceil(totalVotes * activeConfig.blockPercentage);
+  const configTotalVotes = electionConfig.totalVotes ?? totalVotes;
+  const invalidVotesDerived = Math.max(0, configTotalVotes - totalVotes);
+
+  const allParties = filterRealParties(voteData)
     .map(([party, { votes }]) => ({
       party,
       votes,
-      mandats: realResults[party]?.mandats || 0,
+      mandats: (realResults[party] as PartyResult | undefined)?.mandats || 0,
       passed: votes >= blockThreshold,
     }))
     .sort((a, b) => b.mandats - a.mandats || b.votes - a.votes);
+
   const passedParties = allParties.filter((party) => party.passed);
   const parties = showBelowBlock ? allParties : passedParties;
 
-  const baseSumVotes = Object.values(baseVoteData).reduce((acc, { votes }) => acc + votes, 0);
+  const baseSumVotes = sumVotes(baseVoteData);
   const baseBlockThreshold = Math.ceil(baseSumVotes * baseConfig.blockPercentage);
 
-  const nonParticipatingVotes = Object.entries(voteData)
-    .filter(([party]) => !NON_PARTY_KEYS.has(party))
-    .reduce((acc, [, data]) => {
+  const nonParticipatingVotes = filterRealParties(voteData).reduce(
+    (acc, [, data]) => {
       const votes = data?.votes || 0;
       if (votes < blockThreshold) return acc + votes;
       return acc;
-    }, 0);
-  const nonParticipatingPercent = sumVotes > 0 ? (nonParticipatingVotes / sumVotes) * 100 : 0;
-  const participatingVotes = sumVotes - nonParticipatingVotes;
-  const votesPerMandate = participatingVotes > 0 ? Math.round(participatingVotes / 120) : 0;
+    },
+    0,
+  );
 
+  const nonParticipatingPercent =
+    totalVotes > 0 ? (nonParticipatingVotes / totalVotes) * 100 : 0;
+  const participatingVotes = totalVotes - nonParticipatingVotes;
+  const votesPerMandate =
+    participatingVotes > 0 ? Math.round(participatingVotes / 120) : 0;
+
+  const basePartyToBloc = computeBlocMap(blocs);
   const electionKey = currentElection;
   const electionOverrides = partyToBlocOverrides[electionKey] || {};
-  const partyToBloc = { ...electionOverrides };
+  const partyToBloc = { ...basePartyToBloc, ...electionOverrides };
 
   const baseBlocTotals = computeBlocTotals(baseResults.realResults || {}, blocs, partyToBloc);
   const blocTotals = computeBlocTotals(activeResults.realResults || {}, blocs, partyToBloc);
-  const blocSeatDeltas = Object.fromEntries(
+
+  const blocSeatDeltas: Record<string, number> = Object.fromEntries(
     Object.keys(blocTotals).map((blocKey) => [
       blocKey,
       (blocTotals[blocKey] || 0) - (baseBlocTotals[blocKey] || 0),
@@ -139,32 +164,32 @@ export default function App() {
   const blocDataRaw = blocOrder.map((key) => blocTotals[key] || 0);
   const blocColorsRaw = blocOrder.map((key) => blocs.blocks[key].color);
   const blocLabelsRaw = blocOrder.map((key) => blocs.blocks[key].label);
-  const blocFiltered = blocDataRaw.map((value, i) => ({
-    value,
-    color: blocColorsRaw[i],
-    label: blocLabelsRaw[i],
-  })).filter((item) => item.value > 0);
+
+  const blocFiltered = blocDataRaw
+    .map((value, i) => ({
+      value,
+      color: blocColorsRaw[i],
+      label: blocLabelsRaw[i],
+    }))
+    .filter((item) => item.value > 0);
+
   const blocData = blocFiltered.map((item) => item.value);
   const blocColors = blocFiltered.map((item) => item.color);
   const blocLabels = blocFiltered.map((item) => item.label);
 
-  const margins = computeSeatMargins(realResults, voteData, activeConfig)
-    .sort((a, b) => (a.gain || Infinity) - (b.gain || Infinity));
+  const margins = computeSeatMargins(realResults, voteData, activeConfig).sort(
+    (a, b) => (a.gain ?? Infinity) - (b.gain ?? Infinity),
+  );
 
-  const handlePartyBlocChange = (party, blocKey) => {
+  const handlePartyBlocChange = (party: string, blocKey: string | null) => {
     if (!electionKey) return;
-    setPartyToBlocOverrides((prev) => {
-      const current = { ...(prev[electionKey] || {}) };
-      if (!blocKey) {
-        delete current[party];
-      } else {
-        current[party] = blocKey;
-      }
-      return {
-        ...prev,
-        [electionKey]: current,
-      };
-    });
+    setPartyToBlocOverrides((prev) => ({
+      ...prev,
+      [electionKey]: {
+        ...(prev[electionKey] || {}),
+        [party]: blocKey,
+      },
+    }));
   };
 
   return (
@@ -185,7 +210,7 @@ export default function App() {
       ) : (
         <>
           <SummarySection
-            sumVotes={sumVotes}
+            sumVotes={totalVotes}
             baseSumVotes={baseSumVotes}
             blockThreshold={blockThreshold}
             baseBlockThreshold={baseBlockThreshold}
@@ -201,7 +226,6 @@ export default function App() {
             participatingVotes={participatingVotes}
             votesPerMandate={votesPerMandate}
           />
-
 
           <ElectionStatsSection
             turnoutPercentage={electionConfig.turnoutPercentage}
@@ -254,3 +278,4 @@ export default function App() {
     </div>
   );
 }
+

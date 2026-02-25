@@ -1,37 +1,53 @@
-import { calcVotesResults } from './calc.js';
+import { calcVotesResults, type CalcVoteData, type CalcResults } from './calc';
+import type { AgreementValidation, ScenarioState } from '../types';
 
-const cloneAgreements = (agreements = []) => agreements.map(([a, b]) => [a, b]);
+const cloneAgreements = (agreements: [string, string][] = []): [string, string][] =>
+  agreements.map(([a, b]) => [a, b]);
 
-const normalizeVotes = (voteData = {}) => Object.fromEntries(
-  Object.entries(voteData).map(([party, data]) => {
-    const nextVotes = Number.parseInt(data?.votes, 10);
-    return [party, { votes: Number.isFinite(nextVotes) && nextVotes > 0 ? nextVotes : 0 }];
-  }),
-);
+const normalizeVotes = (voteData: CalcVoteData = {} as CalcVoteData): CalcVoteData =>
+  Object.fromEntries(
+    Object.entries(voteData).map(([party, data]) => {
+      const nextVotes = Number.parseInt(String(data?.votes), 10);
+      return [party, { votes: Number.isFinite(nextVotes) && nextVotes > 0 ? nextVotes : 0, mandats: 0 }];
+    }),
+  ) satisfies CalcVoteData;
 
-const normalizeBlockPercentage = (value, fallback = 0) => {
-  const next = Number.parseFloat(value);
+const normalizeBlockPercentage = (value: number, fallback: number = 0): number => {
+  const next = Number.parseFloat(String(value));
   if (!Number.isFinite(next)) return fallback;
   if (next < 0) return 0;
   if (next > 1) return 1;
   return next;
 };
 
-const makeAgreementKey = (a, b) => [a, b].sort().join('|');
+const makeAgreementKey = (a: string, b: string): string => [a, b].sort().join('|');
 
 export const normalizeScenarioInput = ({
   baseVoteData,
   scenarioVoteData,
   baseConfig,
   scenarioConfig,
-}) => {
+}: {
+  baseVoteData: CalcVoteData;
+  scenarioVoteData?: CalcVoteData | null;
+  baseConfig: {
+    algorithm: 'baderOffer' | 'ceilRound';
+    blockPercentage: number;
+    agreements: [string, string][];
+  };
+  scenarioConfig?: {
+    algorithm?: 'baderOffer' | 'ceilRound';
+    blockPercentage?: number;
+    agreements?: [string, string][];
+  } | null;
+}): ScenarioState => {
   const normalizedVoteData = normalizeVotes(scenarioVoteData || baseVoteData);
   return {
     voteData: normalizedVoteData,
     config: {
       algorithm: scenarioConfig?.algorithm || baseConfig.algorithm,
       blockPercentage: normalizeBlockPercentage(
-        scenarioConfig?.blockPercentage,
+        scenarioConfig?.blockPercentage ?? baseConfig.blockPercentage,
         baseConfig.blockPercentage,
       ),
       agreements: cloneAgreements(scenarioConfig?.agreements || baseConfig.agreements || []),
@@ -39,15 +55,18 @@ export const normalizeScenarioInput = ({
   };
 };
 
-export const validateAgreements = (agreements, voteData) => {
+export const validateAgreements = (
+  agreements: [string, string][],
+  voteData: CalcVoteData,
+): AgreementValidation => {
   if (!Array.isArray(agreements)) {
     return { isValid: false, errors: ['פורמט הסכמי העודפים אינו תקין.'] };
   }
 
   const existingParties = new Set(Object.keys(voteData));
-  const usedParties = new Set();
-  const seenPairs = new Set();
-  const errors = [];
+  const usedParties = new Set<string>();
+  const seenPairs = new Set<string>();
+  const errors: string[] = [];
 
   agreements.forEach((pair, index) => {
     if (!Array.isArray(pair) || pair.length !== 2) {
@@ -86,33 +105,42 @@ export const validateAgreements = (agreements, voteData) => {
   return { isValid: errors.length === 0, errors };
 };
 
-export const computeScenarioResults = (voteData, config) => calcVotesResults(
-  voteData,
-  config.blockPercentage,
-  config.agreements,
-  config.algorithm,
-);
+export const computeScenarioResults = (
+  voteData: CalcVoteData,
+  config: {
+    blockPercentage: number;
+    agreements: [string, string][];
+    algorithm: 'baderOffer' | 'ceilRound';
+  },
+): CalcResults =>
+  calcVotesResults(voteData, config.blockPercentage, config.agreements, config.algorithm);
 
-export const computeSeatDeltas = (baseResults, scenarioResults) => {
+export const computeSeatDeltas = (
+  baseResults: CalcResults['realResults'],
+  scenarioResults: CalcResults['realResults'],
+): Record<string, number> => {
   const parties = new Set([
     ...Object.keys(baseResults || {}),
     ...Object.keys(scenarioResults || {}),
   ]);
-  return Object.fromEntries(Array.from(parties).map((party) => {
-    const baseSeats = baseResults?.[party]?.mandats || 0;
-    const scenarioSeats = scenarioResults?.[party]?.mandats || 0;
-    return [party, scenarioSeats - baseSeats];
-  }));
+  return Object.fromEntries(
+    Array.from(parties).map((party) => {
+      const baseSeats = baseResults?.[party]?.mandats || 0;
+      const scenarioSeats = scenarioResults?.[party]?.mandats || 0;
+      return [party, scenarioSeats - baseSeats];
+    }),
+  );
 };
 
-export const isScenarioEdited = (base, scenario) => {
+export const isScenarioEdited = (base: ScenarioState, scenario: ScenarioState): boolean => {
   if (base.config.algorithm !== scenario.config.algorithm) {
     return true;
   }
 
-  if (normalizeBlockPercentage(base.config.blockPercentage) !== normalizeBlockPercentage(
-    scenario.config.blockPercentage,
-  )) {
+  if (
+    normalizeBlockPercentage(base.config.blockPercentage) !==
+    normalizeBlockPercentage(scenario.config.blockPercentage)
+  ) {
     return true;
   }
 
@@ -120,15 +148,18 @@ export const isScenarioEdited = (base, scenario) => {
     ...Object.keys(base.voteData || {}),
     ...Object.keys(scenario.voteData || {}),
   ]);
-  const hasVoteChange = Array.from(baseParties)
-    .some((p) => (base.voteData?.[p]?.votes || 0) !== (scenario.voteData?.[p]?.votes || 0));
+  const hasVoteChange = Array.from(baseParties).some(
+    (p) => (base.voteData?.[p]?.votes || 0) !== (scenario.voteData?.[p]?.votes || 0),
+  );
   if (hasVoteChange) return true;
 
   if ((base.config.agreements || []).length !== (scenario.config.agreements || []).length) {
     return true;
   }
 
-  const baseKeys = new Set((base.config.agreements || []).map(([a, b]) => makeAgreementKey(a, b)));
+  const baseKeys = new Set(
+    (base.config.agreements || []).map(([a, b]) => makeAgreementKey(a, b)),
+  );
   const scenarioKeys = new Set(
     (scenario.config.agreements || []).map(([a, b]) => makeAgreementKey(a, b)),
   );
@@ -138,3 +169,4 @@ export const isScenarioEdited = (base, scenario) => {
   }
   return Array.from(baseKeys).some((key) => !scenarioKeys.has(key));
 };
+
