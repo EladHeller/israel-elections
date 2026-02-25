@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
