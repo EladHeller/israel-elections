@@ -53,7 +53,7 @@
     "blockPercentage": 0.01,
     "agreements": [],
     "turnoutPercentage": 81.57,
-    "totalVotes": 1006964
+    "totalVotes": 1037030
   },
   "6": {
     "algorithm": "ceilRound",
