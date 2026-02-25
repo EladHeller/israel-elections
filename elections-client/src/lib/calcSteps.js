@@ -96,6 +96,10 @@ export const buildCalcSteps = (voteData, config) => {
     const totalWhole = sumBy(Object.values(withMandats), 'mandats');
     const remainingMandats = MANDATS - totalWhole;
 
+    const wholeMandatesByParty = Object.fromEntries(
+        Object.entries(withMandats).map(([party, { mandats }]) => [party, mandats]),
+    );
+
     const wholeMandatesRows = Object.entries(withMandats)
         .map(([party, { votes, mandats }]) => ({
             party,
@@ -142,18 +146,56 @@ export const buildCalcSteps = (voteData, config) => {
         afterRemainders = ceilRound(MANDATS, withAgreements);
     }
 
-    // ── Step 6: split agreements ─────────────────────────────────────────────
     const splitAlgo = algorithm === 'baderOffer' ? baderOffer : ceilRound;
+    const realResults = splitAgreements(withMandats, afterRemainders, splitAlgo);
+
+    // ── Step 6: split agreements ─────────────────────────────────────────────
     const agreementSplits = agreements
         .filter(([a, b]) => a in withMandats && b in withMandats)
         .map(([a, b]) => {
             const agreementKey = `${a}+${b}`;
             const totalMandats = afterRemainders[agreementKey]?.mandats ?? 0;
-            const aWholeMandats = withMandats[a].mandats;
-            const bWholeMandats = withMandats[b].mandats;
-            const remainingAfterWhole = totalMandats - aWholeMandats - bWholeMandats;
-            const pairVoteData = { [a]: withMandats[a], [b]: withMandats[b] };
-            const splitResult = splitAlgo(totalMandats, pairVoteData);
+
+            // Start from the global whole mandates (step 3) as a fallback baseline
+            const globalAWhole = wholeMandatesByParty[a] ?? 0;
+            const globalBWhole = wholeMandatesByParty[b] ?? 0;
+
+            const aVotes = withMandats[a]?.votes ?? 0;
+            const bVotes = withMandats[b]?.votes ?? 0;
+            const pairVotes = aVotes + bVotes;
+
+            // Re‑compute the "whole mandates" *inside* the agreement, based on the
+            // pair's total mandates. For two parties this guarantees that the number
+            // of spare mandates is at most 1.
+            let aWholeInAgreement = globalAWhole;
+            let bWholeInAgreement = globalBWhole;
+            let remainingAfterWhole = 0;
+            let agreementModed = 0;
+
+            if (totalMandats > 0 && pairVotes > 0) {
+                agreementModed = pairVotes / totalMandats;
+                aWholeInAgreement = Math.floor(aVotes / agreementModed);
+                bWholeInAgreement = Math.floor(bVotes / agreementModed);
+
+                // Guard against rare floating‑point overflow of whole mandates
+                let sumWhole = aWholeInAgreement + bWholeInAgreement;
+                if (sumWhole > totalMandats) {
+                    const overflow = sumWhole - totalMandats;
+                    if (aWholeInAgreement >= overflow) {
+                        aWholeInAgreement -= overflow;
+                    } else {
+                        bWholeInAgreement -= overflow;
+                    }
+                    sumWhole = aWholeInAgreement + bWholeInAgreement;
+                }
+
+                remainingAfterWhole = Math.max(0, totalMandats - sumWhole);
+            }
+
+            const pairVoteData = {
+                [a]: { votes: aVotes, mandats: aWholeInAgreement },
+                [b]: { votes: bVotes, mandats: bWholeInAgreement },
+            };
 
             // For baderOffer: only simulate the DELTA rounds (the whole mandates are
             // already in pairVoteData.mandats, so simulateBaderOfferRounds runs the
@@ -165,19 +207,21 @@ export const buildCalcSteps = (voteData, config) => {
             return {
                 parties: [a, b],
                 totalMandats,
-                aWholeMandats,
-                bWholeMandats,
+                aWholeMandats: aWholeInAgreement,
+                bWholeMandats: bWholeInAgreement,
                 remainingAfterWhole,
-                aResult: splitResult[a],
-                bResult: splitResult[b],
+                aVotes,
+                bVotes,
+                pairVotes,
+                agreementModed,
+                aResult: realResults[a] ?? { votes: withMandats[a]?.votes ?? 0, mandats: aWholeInAgreement },
+                bResult: realResults[b] ?? { votes: withMandats[b]?.votes ?? 0, mandats: bWholeInAgreement },
                 splitRounds,
                 algorithmUsed: algorithm,
             };
         });
 
     // ── Step 7: final results ─────────────────────────────────────────────────
-    const realResults = splitAgreements(withMandats, afterRemainders, splitAlgo);
-
     const finalResults = Object.entries(realResults)
         .map(([party, { mandats }]) => {
             const wholeMandats = withMandats[party]?.mandats ?? 0;
