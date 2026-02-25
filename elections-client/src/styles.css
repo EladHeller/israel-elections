@@ -346,7 +346,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+}
+
+.blocs-display {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.bloc-legend-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .donut {
@@ -689,6 +702,11 @@ body {
 
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .blocs-display {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .scenario-columns {
