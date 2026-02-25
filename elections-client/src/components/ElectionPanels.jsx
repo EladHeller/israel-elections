@@ -63,6 +63,105 @@ const BlocLegend = ({ blocs, totals, deltas }) => (
   </div>
 );
 
+const BlocEditor = ({
+  blocs,
+  partyToBloc,
+  parties,
+  onPartyBlocChange,
+  getPartyName,
+}) => {
+  const editableParties = parties || [];
+  if (editableParties.length === 0) return null;
+
+  const [gushAKey, gushBKey] = blocs.order || Object.keys(blocs.blocks);
+
+  const groupA = editableParties.filter((p) => partyToBloc[p.party] === gushAKey);
+  const groupB = editableParties.filter((p) => partyToBloc[p.party] === gushBKey);
+  const unassigned = editableParties.filter(
+    (p) => !partyToBloc[p.party] || ![gushAKey, gushBKey].includes(partyToBloc[p.party]),
+  );
+
+  const moveTo = (party, key) => {
+    onPartyBlocChange(party, key);
+  };
+
+  const clearFromGroup = (party) => {
+    onPartyBlocChange(party, null);
+  };
+
+  return (
+    <div className="bloc-editor">
+      <div className="bloc-editor-head">
+        <span className="bloc-editor-title">שיוך מפלגות לגוש א / גוש ב</span>
+      </div>
+      <div className="bloc-editor-columns">
+        <div className="bloc-editor-column">
+          <div className="bloc-editor-column-title">{blocs.blocks[gushAKey].label}</div>
+          <div className="bloc-editor-chips">
+            {groupA.map((party) => (
+              <button
+                key={party.party}
+                type="button"
+                className="bloc-chip"
+                onClick={() => clearFromGroup(party.party)}
+                title="הסר מהגוש"
+              >
+                {getPartyName(party.party)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bloc-editor-column bloc-editor-column-unassigned">
+          <div className="bloc-editor-column-title">ללא גוש</div>
+          <div className="bloc-editor-chips">
+            {unassigned.map((party) => (
+              <div key={party.party} className="bloc-editor-unassigned-row">
+                <span className="bloc-editor-party" title={party.party}>
+                  {getPartyName(party.party)}
+                </span>
+                <div className="bloc-editor-actions">
+                  <button
+                    type="button"
+                    className="bloc-chip small"
+                    onClick={() => moveTo(party.party, gushAKey)}
+                  >
+                    {blocs.blocks[gushAKey].label}
+                  </button>
+                  <button
+                    type="button"
+                    className="bloc-chip small"
+                    onClick={() => moveTo(party.party, gushBKey)}
+                  >
+                    {blocs.blocks[gushBKey].label}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bloc-editor-column">
+          <div className="bloc-editor-column-title">{blocs.blocks[gushBKey].label}</div>
+          <div className="bloc-editor-chips">
+            {groupB.map((party) => (
+              <button
+                key={party.party}
+                type="button"
+                className="bloc-chip"
+                onClick={() => clearFromGroup(party.party)}
+                title="הסר מהגוש"
+              >
+                {getPartyName(party.party)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PartyBars = ({
   parties,
   blocs,
@@ -179,6 +278,7 @@ export const MainPanels = ({
   passedParties,
   blocs,
   partyToBloc,
+  onPartyBlocChange,
   getPartyName,
   partySeatDeltas,
   normalizedScenario,
@@ -192,7 +292,7 @@ export const MainPanels = ({
   blocTotals,
   blocSeatDeltas,
 }) => (
-  <section className={`grid ${isLatestElection ? '' : 'grid-single'}`}>
+  <section className="grid">
     <div className="panel">
       <div className="panel-head">
         <h2>מפלגות</h2>
@@ -219,15 +319,20 @@ export const MainPanels = ({
       </label>
     </div>
 
-    {isLatestElection && (
-      <div className="panel">
-        <h2>חלוקת גושים</h2>
-        <div className="donut-wrap">
-          <Donut data={blocData} total={120} colors={blocColors} labels={blocLabels} />
-        </div>
-        <BlocLegend blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas} />
+    <div className="panel">
+      <h2>חלוקת גושים</h2>
+      <div className="donut-wrap">
+        <Donut data={blocData} total={120} colors={blocColors} labels={blocLabels} />
       </div>
-    )}
+      <BlocLegend blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas} />
+      <BlocEditor
+        blocs={blocs}
+        partyToBloc={partyToBloc}
+        parties={passedParties}
+        onPartyBlocChange={onPartyBlocChange}
+        getPartyName={getPartyName}
+      />
+    </div>
   </section>
 );
 
