@@ -9,6 +9,7 @@ import SummarySection from './components/SummarySection.jsx';
 import SecondarySummarySection from './components/SecondarySummarySection.jsx';
 import ElectionStatsSection from './components/ElectionStatsSection.jsx';
 import { BottomPanels, MainPanels } from './components/ElectionPanels.jsx';
+import CalcDetailsCard from './components/CalcDetailsCard.jsx';
 import { useElectionData } from './hooks/use-election-data.js';
 import { useScenario } from './hooks/use-scenario.js';
 
@@ -223,6 +224,12 @@ export default function App() {
             agreementSelectableParties={agreementSelectableParties}
             addAgreement={addAgreement}
             agreementValidation={agreementValidation}
+          />
+
+          <CalcDetailsCard
+            voteData={voteData}
+            activeConfig={activeConfig}
+            getPartyName={getPartyName}
           />
         </>
       )}
