@@ -180,6 +180,7 @@ body {
 
 .block-percentage-input[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .block-percentage-suffix {
@@ -618,7 +619,12 @@ body {
   }
 
   .party-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+
+  .party-bar {
+    display: none;
   }
 
   .party-votes {
