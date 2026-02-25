@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint:test": "eslint . --max-warnings 0",
-    "test": "tsx --test ./election-results-listener/**/*.test.ts ./elections-client/src/**/*.test.js",
+    "test": "tsx --test ./election-results-listener/**/*.test.ts ./elections-client/src/**/*.test.ts",
     "test:coverage": "c8 -r=lcov -r=json-summary npm test",
     "check-coverage": "tsx ./infra/CI/check-coverage.ts",
     "upload-coverage": "tsx ./infra/CI/upload-coverage-s3.ts",

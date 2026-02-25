@@ -26,7 +26,7 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
         </div>
       </div>
       <div className="card">
-        <div className="card-label">סה\"כ קולות</div>
+        <div className="card-label">סה"כ קולות</div>
         <div className="card-value">
           {totalVotes != null ? numberFormat.format(totalVotes) : '—'}
         </div>
