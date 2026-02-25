@@ -195,36 +195,37 @@ const Step5RemainderRounds = ({
                 <p className="calc-step-desc">
                     שיטת <strong>בדר–עופר</strong>: בכל סיבוב מחולק המנדט הנוסף למפלגה/הסכם עם
                     היחס הגבוה ביותר (קולות ÷ (מנדטים+1)). חוזרים {remainingMandats} פעמים.
-                    בכל סיבוב מוצג היחס של כל המועמדים; הזוכה (היחס הגבוה ביותר) מודגש בצהוב.
+                    בכל סיבוב מוצג היחס של כל המועמדים; הזוכה (היחס הגבוה ביותר) מודגש בטבלה.
                 </p>
                 <table className="calc-table">
                     <thead>
                         <tr>
-                            <th style={{ width: 48 }}>סיבוב</th>
-                            <th>יחסי כל המועמדים (מסודר מהגבוה לנמוך)</th>
+                            <th>מפלגה</th>
+                            <th>קולות</th>
+                            <th>מנדטים נוכחיים</th>
+                            <th>מכנה</th>
+                            <th>יחס</th>
                         </tr>
                     </thead>
                     <tbody>
                         {remainderRounds.map((r) => (
-                            <tr key={r.round}>
-                                <td style={{ fontWeight: 700, verticalAlign: 'top', paddingTop: 10 }}>{r.round}</td>
-                                <td>
-                                    <div className="calc-ratio-chips">
-                                        {r.allCandidates.map((c, i) => (
-                                            <span
-                                                key={c.party}
-                                                className={`calc-ratio-chip${i === 0 ? ' calc-ratio-winner' : ''}`}
-                                                title={`${getPartyName(c.party)}: ${numberFormat.format(c.votes)} ÷ ${c.divisor}`}
-                                            >
-                                                <span className="calc-ratio-name">{getPartyName(c.party)}</span>
-                                                <span className="calc-ratio-formula">
-                                                    {numberFormat.format(c.votes)}÷{c.divisor}=<strong>{ratioFmt.format(c.ratio)}</strong>
-                                                </span>
-                                            </span>
-                                        ))}
-                                    </div>
-                                </td>
-                            </tr>
+                            <React.Fragment key={`round-${r.round}`}>
+                                <tr className="calc-round-divider">
+                                    <td colSpan={5}>סיבוב {r.round}</td>
+                                </tr>
+                                {r.allCandidates.map((c) => (
+                                    <tr
+                                        key={`${r.round}-${c.party}`}
+                                        className={c.party === r.winner ? 'calc-row-pass' : ''}
+                                    >
+                                        <td>{getPartyName(c.party)}</td>
+                                        <td>{numberFormat.format(c.votes)}</td>
+                                        <td>{c.mandats}</td>
+                                        <td>{c.divisor}</td>
+                                        <td>{ratioFmt.format(c.ratio)}</td>
+                                    </tr>
+                                ))}
+                            </React.Fragment>
                         ))}
                     </tbody>
                 </table>
@@ -276,22 +277,68 @@ const AgreementSplitDetail = ({ split, getPartyName }) => {
     const {
         parties: [a, b], totalMandats,
         aWholeMandats = 0, bWholeMandats = 0, remainingAfterWhole = totalMandats,
+        aVotes = 0, bVotes = 0, pairVotes = 0, agreementModed = 0,
         aResult, bResult, splitRounds, algorithmUsed,
     } = split;
 
     const aName = getPartyName(a);
     const bName = getPartyName(b);
+    const totalVotes = pairVotes || (aVotes + bVotes);
 
-    // Baseline: whole mandates before algorithm runs
+    // Baseline: show how whole mandates inside the agreement are calculated
     const baseline = (
         <div className="calc-split-baseline">
             <div className="calc-split-baseline-row">
-                <span>{aName}</span>
-                <span className="calc-tag calc-tag-whole">{aWholeMandats} מנדטים שלמים</span>
+                <span className="calc-step-desc">
+                    מודד ההסכם:
+                </span>
+                <div className="calc-formula-row">
+                    <span className="calc-formula-num">
+                        {numberFormat.format(aVotes)} + {numberFormat.format(bVotes)}
+                    </span>
+                    <span className="calc-formula-op">=</span>
+                    <span className="calc-formula-num">
+                        {numberFormat.format(totalVotes)}
+                    </span>
+                </div>
+                <div className="calc-formula-row">
+                    <span className="calc-formula-num">
+                        {numberFormat.format(totalVotes)}
+                    </span>
+                    <span className="calc-formula-op">÷</span>
+                    <span className="calc-formula-num">{totalMandats}</span>
+                    <span className="calc-formula-op">=</span>
+                    <span className="calc-formula-num">
+                        {ratioFmt.format(agreementModed || 0)}
+                    </span>
+                    <span className="calc-formula-label">קולות למנדט (מודד ההסכם)</span>
+                </div>
             </div>
             <div className="calc-split-baseline-row">
-                <span>{bName}</span>
-                <span className="calc-tag calc-tag-whole">{bWholeMandats} מנדטים שלמים</span>
+                <span className="calc-step-desc">
+                    {aName}:
+                </span>
+                <div className="calc-formula-row">
+                    <span className="calc-formula-num">{numberFormat.format(aVotes)}</span>
+                    <span className="calc-formula-op">÷</span>
+                    <span className="calc-formula-num">{ratioFmt.format(agreementModed || 0)}</span>
+                    <span className="calc-formula-op">≈</span>
+                    <span className="calc-formula-num">{aWholeMandats}</span>
+                    <span className="calc-formula-label">מנדטים שלמים</span>
+                </div>
+            </div>
+            <div className="calc-split-baseline-row">
+                <span className="calc-step-desc">
+                    {bName}:
+                </span>
+                <div className="calc-formula-row">
+                    <span className="calc-formula-num">{numberFormat.format(bVotes)}</span>
+                    <span className="calc-formula-op">÷</span>
+                    <span className="calc-formula-num">{ratioFmt.format(agreementModed || 0)}</span>
+                    <span className="calc-formula-op">≈</span>
+                    <span className="calc-formula-num">{bWholeMandats}</span>
+                    <span className="calc-formula-label">מנדטים שלמים</span>
+                </div>
             </div>
             <div className="calc-split-baseline-remaining">
                 נותרים לחלוקה: <strong>{remainingAfterWhole}</strong>{' '}
@@ -310,36 +357,38 @@ const AgreementSplitDetail = ({ split, getPartyName }) => {
                 {remainingAfterWhole > 0 && (
                     <>
                         <p className="calc-step-desc" style={{ marginTop: 8 }}>
-                            שיטת בדר–עופר לחלוקת {remainingAfterWhole}{' '}
-                            {remainingAfterWhole === 1 ? 'מנדט' : 'מנדטים'} עודפים:
+                            שיטת <strong>בדר–עופר</strong> לחלוקת {remainingAfterWhole}{' '}
+                            {remainingAfterWhole === 1 ? 'מנדט' : 'מנדטים'} עודפים בין המפלגות בהסכם.
                         </p>
                         <table className="calc-table">
                             <thead>
                                 <tr>
-                                    <th style={{ width: 48 }}>סיבוב</th>
-                                    <th>יחסי מועמדי ההסכם (מסודר מהגבוה לנמוך)</th>
+                                    <th>מפלגה</th>
+                                    <th>קולות</th>
+                                    <th>מנדטים נוכחיים</th>
+                                    <th>מכנה</th>
+                                    <th>יחס</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {splitRounds.map((r) => (
-                                    <tr key={r.round}>
-                                        <td style={{ fontWeight: 700, verticalAlign: 'top', paddingTop: 10 }}>{r.round}</td>
-                                        <td>
-                                            <div className="calc-ratio-chips">
-                                                {r.allCandidates.map((c, i) => (
-                                                    <span
-                                                        key={c.party}
-                                                        className={`calc-ratio-chip${i === 0 ? ' calc-ratio-winner' : ''}`}
-                                                    >
-                                                        <span className="calc-ratio-name">{getPartyName(c.party)}</span>
-                                                        <span className="calc-ratio-formula">
-                                                            {numberFormat.format(c.votes)}÷{c.divisor}=<strong>{ratioFmt.format(c.ratio)}</strong>
-                                                        </span>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <React.Fragment key={`split-round-${r.round}`}>
+                                        <tr className="calc-round-divider">
+                                            <td colSpan={5}>סיבוב {r.round}</td>
+                                        </tr>
+                                        {r.allCandidates.map((c) => (
+                                            <tr
+                                                key={`${r.round}-${c.party}`}
+                                                className={c.party === r.winner ? 'calc-row-pass' : ''}
+                                            >
+                                                <td>{getPartyName(c.party)}</td>
+                                                <td>{numberFormat.format(c.votes)}</td>
+                                                <td>{c.mandats}</td>
+                                                <td>{c.divisor}</td>
+                                                <td>{ratioFmt.format(c.ratio)}</td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>

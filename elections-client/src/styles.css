@@ -779,6 +779,16 @@ body {
   color: var(--ink-50);
 }
 
+/* Softer formula styling inside agreement split (step 6) */
+.calc-agreement-split .calc-formula-row .calc-formula-num {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.calc-agreement-split .calc-formula-row .calc-formula-op {
+  font-size: 16px;
+}
+
 /* ── tables ── */
 .calc-table {
   width: 100%;
@@ -808,6 +818,14 @@ body {
 .calc-row-fail td {
   background: rgba(178, 0, 0, 0.05);
   color: var(--ink-50);
+}
+
+.calc-round-divider td {
+  font-weight: 700;
+  border-bottom: 1px solid var(--ink-20);
+  background: var(--ink-02);
+  padding-top: 12px;
+  padding-bottom: 4px;
 }
 
 /* ── tags ── */
