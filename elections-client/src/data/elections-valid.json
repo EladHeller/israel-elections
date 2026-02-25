@@ -1,103 +1,77 @@
 {
   "1": {
-    "validVotes": 434677,
-    "invalidVotes": 5418
+    "validVotes": 434677
   },
   "2": {
-    "validVotes": 687492,
-    "invalidVotes": 15030
+    "validVotes": 687492
   },
   "3": {
-    "validVotes": 853219,
-    "invalidVotes": 22847
+    "validVotes": 853219
   },
   "4": {
-    "validVotes": 969337,
-    "invalidVotes": 24969
+    "validVotes": 969337
   },
   "5": {
-    "validVotes": 1006964,
-    "invalidVotes": 30023
+    "validVotes": 1006964
   },
   "6": {
-    "validVotes": 1206728,
-    "invalidVotes": 0
+    "validVotes": 1206728
   },
   "7": {
-    "validVotes": 1367743,
-    "invalidVotes": 60254
+    "validVotes": 1367743
   },
   "8": {
-    "validVotes": 1566855,
-    "invalidVotes": 0
+    "validVotes": 1566855
   },
   "9": {
-    "validVotes": 1747820,
-    "invalidVotes": 264766
+    "validVotes": 1747820
   },
   "10": {
-    "validVotes": 1937366,
-    "invalidVotes": 184968
+    "validVotes": 1937366
   },
   "11": {
-    "validVotes": 2073321,
-    "invalidVotes": 469510
+    "validVotes": 2073321
   },
   "12": {
-    "validVotes": 2283118,
-    "invalidVotes": 22449
+    "validVotes": 2283118
   },
   "13": {
-    "validVotes": 2616841,
-    "invalidVotes": 21102
-
+    "validVotes": 2616841
   },
   "14": {
-    "validVotes": 3052130,
-    "invalidVotes": 67702
+    "validVotes": 3052130
   },
   "15": {
-    "validVotes": 3309416,
-    "invalidVotes": 64332
+    "validVotes": 3309416
   },
   "16": {
-    "validVotes": 3148364,
-    "invalidVotes": 52409
+    "validVotes": 3148364
   },
   "17": {
-    "validVotes": 3137064,
-    "invalidVotes": 49675
+    "validVotes": 3137064
   },
   "18": {
-    "validVotes": 3373490,
-    "invalidVotes": 49684
+    "validVotes": 3373490
   },
   "19": {
-    "validVotes": 3792742,
-    "invalidVotes": 40904
+    "validVotes": 3792742
   },
   "20": {
-    "validVotes": 4210884,
-    "invalidVotes": 3927
+    "validVotes": 4210884
   },
   "21": {
-    "validVotes": 4309054,
-    "invalidVotes": 30983
+    "validVotes": 4309054
   },
   "22": {
-    "validVotes": 4436806,
-    "invalidVotes": 28362
+    "validVotes": 4436806
   },
   "23": {
-    "validVotes": 4590062,
-    "invalidVotes": 25073
+    "validVotes": 4590062
   },
   "24": {
-    "validVotes": 4410052,
-    "invalidVotes": 26313
+    "validVotes": 4410052
   },
   "25": {
-    "validVotes": 4764742,
-    "invalidVotes": 29851
+    "validVotes": 4764742
   }
 }

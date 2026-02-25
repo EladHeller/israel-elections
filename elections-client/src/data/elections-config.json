@@ -39,7 +39,7 @@
     "blockPercentage": 0.01,
     "agreements": [],
     "turnoutPercentage": 82.82,
-    "totalVotes": 876066
+    "totalVotes": 876085
   },
   "4": {
     "algorithm": "ceilRound",
@@ -53,14 +53,14 @@
     "blockPercentage": 0.01,
     "agreements": [],
     "turnoutPercentage": 81.57,
-    "totalVotes": 1036987
+    "totalVotes": 1006964
   },
   "6": {
     "algorithm": "ceilRound",
     "blockPercentage": 0.01,
     "agreements": [],
     "turnoutPercentage": 83,
-    "totalVotes": 1067971
+    "totalVotes": 1244706
   },
   "7": {
     "algorithm": "ceilRound",
@@ -72,14 +72,14 @@
       ]
     ],
     "turnoutPercentage": 81.66,
-    "totalVotes": 1427997
+    "totalVotes": 1427981
   },
   "8": {
     "algorithm": "baderOffer",
     "blockPercentage": 0.01,
     "agreements": [],
     "turnoutPercentage": 78.58,
-    "totalVotes": 1490014
+    "totalVotes": 1601098
   },
   "9": {
     "algorithm": "baderOffer",
@@ -111,7 +111,7 @@
       ]
     ],
     "turnoutPercentage": 79.23,
-    "totalVotes": 2012586
+    "totalVotes": 1771726
   },
   "10": {
     "algorithm": "baderOffer",
@@ -131,7 +131,7 @@
       ]
     ],
     "turnoutPercentage": 78.5,
-    "totalVotes": 2122334
+    "totalVotes": 1954609
   },
   "11": {
     "algorithm": "baderOffer",
@@ -155,7 +155,7 @@
       ]
     ],
     "turnoutPercentage": 78.78,
-    "totalVotes": 2542831
+    "totalVotes": 2091402
   },
   "12": {
     "algorithm": "baderOffer",
