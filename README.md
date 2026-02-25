@@ -2,73 +2,89 @@
 
 [![CI](https://github.com/EladHeller/israel-elections/actions/workflows/linter.yml/badge.svg)](https://github.com/EladHeller/israel-elections/actions/workflows/linter.yml)
 [![CD](https://github.com/EladHeller/israel-elections/actions/workflows/deploy.yml/badge.svg)](https://github.com/EladHeller/israel-elections/actions/workflows/deploy.yml)
-[![codecov](https://codecov.io/gh/EladHeller/israel-elections/branch/develop/graph/badge.svg)](https://codecov.io/gh/EladHeller/israel-elections)
 
-A Node/TypeScript project that collects Israeli election results and exposes them through
-an AWS Lambda and a lightweight web client.  Historic data and live results are
-stored in S3 and served via CloudFront.
+A comprehensive platform for collecting, analyzing, and visualizing Israeli election results. The system features a backend listener for data ingestion and a modern web dashboard for interactive simulation and analysis.
 
 ## Repository Layout
 
 ```
-/election-results-listener    Lambda source (TypeScript)
-/elections-client             Static web client
-/infra                        Infrastructure and deployment scripts
+/election-results-listener    Lambda source (TypeScript) - Data ingestion and calculation
+/elections-client             React application (Vite + TypeScript) - Interactive dashboard
+/infra                        Infrastructure (S3, CloudFront) and CI/CD scripts
+/scripts                      Utility scripts
 .github/workflows             CI/CD pipelines
 ```
 
 ### election-results-listener
 
-The Lambda handles two modes:
+A TypeScript AWS Lambda that operates in two modes:
 
-* **Scheduled run** – downloads the official CSV results, converts them to seat
-  allocation and uploads JSON output to S3 (see `csv-monitor.ts`).
-* **HTTP invocation** – accepts vote data in the request body and returns the
-  calculated seat distribution (handled in `index.ts`).
+*   **Scheduled Monitor**: Automatically downloads official results from the Central Elections Committee, calculates seat distribution, and persists data to S3.
+*   **On-demand Calculator**: Exposes an API to perform mandate calculations for arbitrary vote distributions using the official Bader–Ofer algorithm.
 
-Seat allocation is calculated in `calc-elections.ts` using the
-Bader–Ofer (with optional round up) algorithm. Configuration for each election
-resides in `config-elections.json` and is loaded via `config.ts`.
+Seat allocation logic is centralized in `calc-elections.ts`, supporting both the historical Bader–Ofer method and modern simulation scenarios.
 
 ### elections-client
 
-A static HTML/JS app that fetches the relevant `allResults.json` file from S3 and
-uses D3.js to draw a bar chart of seats per party. Each subdirectory (`1`, `2`, …)
-contains the results for a single election.
+A sophisticated React dashboard that allows users to explore election results in depth:
+
+*   **Real-time Simulator**: Adjust vote counts for individual parties and see the impact on seat distribution instantly.
+*   **Bloc Analysis**: Visualize coalition possibilities and bloc totals with interactive donut charts.
+*   **Surplus Agreements**: Configure and test different surplus agreement scenarios between parties.
+*   **Calculation Transparency**: Includes a "Step-by-step" breakdown that explains exactly how seats were allocated according to the law.
+*   **Historical Data**: Access and compare results from all Israeli Knesset elections (1-25).
 
 ### infra
 
-Deployment and helper scripts:
+Cloud-native infrastructure management:
 
-* **CI** – coverage checks and uploads.
-* **CD** – CloudFormation templates and scripts for uploading Lambda code,
-  invalidating CloudFront caches and updating environment variables.
+*   **CI**: Automated linting, type-checking, and unit testing with coverage reporting.
+*   **CD**: Shell scripts and TypeScript utilities to manage AWS CloudFormation stacks, Lambda updates, S3 synchronization, and CloudFront invalidation.
 
 ## Development
 
-Install dependencies and run the unit tests:
+### Prerequisites
+
+*   Node.js (v18+)
+*   AWS CLI (configured for deployment)
+
+### Setup
 
 ```bash
+# Install root dependencies
 npm install
-npm test
+
+# Install client dependencies
+cd elections-client && npm install
 ```
 
-Additional scripts are defined in `package.json`, for example `npm run type-check`
-for TypeScript compilation and `npm run lint:test` for ESLint.
-
-### Deploy
-
-The `infra/CD/deploy.sh` script builds the Lambda into `dist`, zips the client and
-Lambda artifacts, uploads them to S3 buckets and invalidates the CDN cache.
-Make sure your AWS credentials are configured before running:
+### Running Tests
 
 ```bash
+# Run all tests (backend and frontend)
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Local Development (Client)
+
+```bash
+cd elections-client
+npm run dev
+```
+
+## Deployment
+
+The project is fully automated via GitHub Actions. For manual deployments:
+
+```bash
+# Build and deploy everything
 npm run deploy
 ```
 
 ## Live Demo
 
-The client is hosted at:
-
-https://d2dtitluek3vlq.cloudfront.net/
-
+The latest version is deployed at:
+[https://d2dtitluek3vlq.cloudfront.net/](https://d2dtitluek3vlq.cloudfront.net/)

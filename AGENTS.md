@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - `election-results-listener/`: TypeScript AWS Lambda source. Core logic in `calc-elections.ts`, config in `config-elections.json`, handlers in `index.ts` and `csv-monitor.ts`.
-- `elections-client/`: Static web client (HTML/CSS/JS) plus per-election data folders (`1/`, `2/`, …).
+- `elections-client/`: Modern React application (Vite + TypeScript). Contains the interactive dashboard logic and historical election data.
 - `infra/`: CI/CD and deployment tooling (`CI/`, `CD/`, and shared helpers like `s3.ts`).
 - Root config: `package.json`, `tsconfig.json`, ESLint configs, and GitHub workflows under `.github/workflows`.
 
@@ -32,7 +32,7 @@ Generating `package-lock.json` on a Mac (arm64/x64) may omit binary dependencies
 
 ## Testing Guidelines
 - Framework: Node’s native test runner via `tsx --test`.
-- Tests live in `__tests__` folders and follow `*.test.ts` (backend) or `*.test.js` (client) naming.
+- Tests live in `__tests__` folders (backend) or `*.test.ts` files (client).
 - Coverage: `npm run test:coverage` generates reports via `c8`. CI checks coverage goals via `infra/CI/check-coverage.ts`.
 
 ## Security Strategy
