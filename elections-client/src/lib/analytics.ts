@@ -1,7 +1,8 @@
-import { calcVotesResults } from './calc.js';
+import { calcVotesResults, type CalcVoteData } from './calc';
+import type { ResultsMap, VoteData, ElectionConfig, BlocsConfig } from '../types';
 
-export const computeBlocMap = (blocsConfig) => {
-  const partyToBloc = {};
+export const computeBlocMap = (blocsConfig: BlocsConfig): Record<string, string> => {
+  const partyToBloc: Record<string, string> = {};
   Object.entries(blocsConfig.blocks).forEach(([blocKey, bloc]) => {
     bloc.parties.forEach((party) => {
       partyToBloc[party] = blocKey;
@@ -10,9 +11,13 @@ export const computeBlocMap = (blocsConfig) => {
   return partyToBloc;
 };
 
-export const computeBlocTotals = (results, blocsConfig, partyToBlocOverride) => {
+export const computeBlocTotals = (
+  results: ResultsMap,
+  blocsConfig: BlocsConfig,
+  partyToBlocOverride?: Record<string, string | null>,
+): Record<string, number> => {
   const partyToBloc = partyToBlocOverride || computeBlocMap(blocsConfig);
-  const totals = {};
+  const totals: Record<string, number> = {};
 
   Object.keys(blocsConfig.blocks).forEach((blocKey) => {
     totals[blocKey] = 0;
@@ -27,8 +32,18 @@ export const computeBlocTotals = (results, blocsConfig, partyToBlocOverride) => 
   return totals;
 };
 
-const hasSeatChange = (voteData, config, party, delta) => {
-  const nextVoteData = { ...voteData, [party]: { votes: voteData[party].votes + delta } };
+const hasSeatChange = (
+  voteData: CalcVoteData,
+  config: Pick<ElectionConfig, 'blockPercentage' | 'agreements' | 'algorithm'>,
+  party: string,
+  delta: number,
+): number => {
+  const current = voteData[party];
+  if (!current) return 0;
+  const nextVoteData: VoteData = {
+    ...voteData,
+    [party]: { ...current, votes: current.votes + delta },
+  };
   const next = calcVotesResults(
     nextVoteData,
     config.blockPercentage,
@@ -38,7 +53,13 @@ const hasSeatChange = (voteData, config, party, delta) => {
   return next.realResults[party]?.mandats || 0;
 };
 
-const findGainMargin = (voteData, config, party, currentSeats, sumVotes) => {
+const findGainMargin = (
+  voteData: CalcVoteData,
+  config: Pick<ElectionConfig, 'blockPercentage' | 'agreements' | 'algorithm'>,
+  party: string,
+  currentSeats: number,
+  sumVotes: number,
+): number | null => {
   const maxDelta = sumVotes;
   const seatsAtMax = hasSeatChange(voteData, config, party, maxDelta);
   if (seatsAtMax <= currentSeats) return null;
@@ -57,8 +78,15 @@ const findGainMargin = (voteData, config, party, currentSeats, sumVotes) => {
   return high;
 };
 
-const findLoseMargin = (voteData, config, party, currentSeats) => {
-  const maxDelta = voteData[party].votes;
+const findLoseMargin = (
+  voteData: VoteData,
+  config: Pick<ElectionConfig, 'blockPercentage' | 'agreements' | 'algorithm'>,
+  party: string,
+  currentSeats: number,
+): number | null => {
+  const current = voteData[party];
+  if (!current) return null;
+  const maxDelta = current.votes;
   const seatsAtMax = hasSeatChange(voteData, config, party, -maxDelta);
   if (seatsAtMax >= currentSeats) return null;
 
@@ -76,7 +104,18 @@ const findLoseMargin = (voteData, config, party, currentSeats) => {
   return high;
 };
 
-export const computeSeatMargins = (results, voteData, config) => {
+export interface SeatMargin {
+  party: string;
+  mandats: number;
+  gain: number | null;
+  lose: number | null;
+}
+
+export const computeSeatMargins = (
+  results: ResultsMap,
+  voteData: VoteData,
+  config: Pick<ElectionConfig, 'blockPercentage' | 'agreements' | 'algorithm'>,
+): SeatMargin[] => {
   const sumVotes = Object.values(voteData).reduce((acc, { votes }) => acc + votes, 0);
   const margins = Object.entries(results).map(([party, { mandats }]) => {
     const gain = findGainMargin(voteData, config, party, mandats, sumVotes);
@@ -90,3 +129,4 @@ export const computeSeatMargins = (results, voteData, config) => {
   });
   return margins;
 };
+

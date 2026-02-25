@@ -409,20 +409,6 @@ body {
   color: var(--ink-50);
 }
 
-.bloc-editor-list {
-  max-height: 220px;
-  overflow: auto;
-  display: grid;
-  gap: 6px;
-}
-
-.bloc-editor-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px;
-  gap: 8px;
-  align-items: center;
-}
-
 .bloc-editor-party {
   font-size: 14px;
   font-weight: 700;
@@ -431,13 +417,59 @@ body {
   text-overflow: ellipsis;
 }
 
-.bloc-editor-select {
-  font-family: 'Assistant', sans-serif;
-  font-size: 14px;
-  border-radius: 10px;
+.bloc-editor-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bloc-editor-column-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-70);
+  margin-bottom: 6px;
+}
+
+.bloc-editor-chips {
+  display: grid;
+  gap: 6px;
+  max-height: 210px;
+  overflow: auto;
+}
+
+.bloc-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
   border: 1px solid var(--ink-20);
-  padding: 6px 8px;
-  background: #fff;
+  background: #f5f7fb;
+  color: var(--ink-70);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bloc-chip.small {
+  font-size: 12px;
+  padding: 3px 6px;
+}
+
+.bloc-editor-unassigned-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.bloc-editor-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.bloc-editor-column-unassigned .bloc-editor-chips {
+  max-height: 260px;
 }
 
 .margins-head {

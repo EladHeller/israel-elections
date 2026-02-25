@@ -1,7 +1,19 @@
 import React from 'react';
-import { algorithmLabel, numberFormat } from '../lib/ui-helpers.js';
+import { algorithmLabel, numberFormat } from '../lib/ui-helpers';
+import type { ElectionConfig } from '../types';
 
-const SummarySection = ({
+interface SummarySectionProps {
+  sumVotes: number;
+  baseSumVotes: number;
+  blockThreshold: number;
+  baseBlockThreshold: number;
+  activeConfig: ElectionConfig;
+  isEdited: boolean;
+  onBlockPercentageChange: (value: string) => void;
+  onAlgorithmChange: (algorithm: ElectionConfig['algorithm']) => void;
+}
+
+const SummarySection: React.FC<SummarySectionProps> = ({
   sumVotes,
   baseSumVotes,
   blockThreshold,
@@ -13,9 +25,11 @@ const SummarySection = ({
 }) => (
   <section className="summary">
     <div className="card">
-      <div className="card-label">סה"כ קולות כשרים</div>
+      <div className="card-label">סה\"כ קולות כשרים</div>
       <div className="card-value">{numberFormat.format(sumVotes)}</div>
-      {isEdited && <div className="card-sub">בסיס: {numberFormat.format(baseSumVotes)}</div>}
+      {isEdited && (
+        <div className="card-sub">בסיס: {numberFormat.format(baseSumVotes)}</div>
+      )}
     </div>
     <div className="card">
       <div className="card-label">אחוז חסימה</div>
@@ -32,16 +46,22 @@ const SummarySection = ({
           />
           <span className="block-percentage-suffix">%</span>
         </label>
-        <div className="block-threshold-value">({numberFormat.format(blockThreshold)})</div>
+        <div className="block-threshold-value">
+          ({numberFormat.format(blockThreshold)})
+        </div>
       </div>
-      {isEdited && <div className="card-sub">בסיס: ({numberFormat.format(baseBlockThreshold)})</div>}
+      {isEdited && (
+        <div className="card-sub">
+          בסיס: ({numberFormat.format(baseBlockThreshold)})
+        </div>
+      )}
     </div>
     <div className="card">
       <div className="card-label">שיטת חישוב</div>
       <select
         className="algorithm-select"
         value={activeConfig.algorithm}
-        onChange={(e) => onAlgorithmChange(e.target.value)}
+        onChange={(e) => onAlgorithmChange(e.target.value as ElectionConfig['algorithm'])}
       >
         <option value="baderOffer">{algorithmLabel('baderOffer')}</option>
         <option value="ceilRound">{algorithmLabel('ceilRound')}</option>
@@ -51,3 +71,4 @@ const SummarySection = ({
 );
 
 export default SummarySection;
+
