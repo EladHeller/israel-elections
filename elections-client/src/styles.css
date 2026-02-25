@@ -391,6 +391,55 @@ body {
   font-weight: 700;
 }
 
+.bloc-editor {
+  margin-top: 16px;
+  border-top: 1px solid var(--ink-20);
+  padding-top: 12px;
+}
+
+.bloc-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.bloc-editor-title {
+  font-size: 14px;
+  color: var(--ink-50);
+}
+
+.bloc-editor-list {
+  max-height: 220px;
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+}
+
+.bloc-editor-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 8px;
+  align-items: center;
+}
+
+.bloc-editor-party {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bloc-editor-select {
+  font-family: 'Assistant', sans-serif;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ink-20);
+  padding: 6px 8px;
+  background: #fff;
+}
+
 .margins-head {
   display: grid;
   grid-template-columns: 1fr 90px 90px;

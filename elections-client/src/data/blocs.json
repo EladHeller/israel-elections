@@ -1,30 +1,15 @@
 {
   "25": {
-    "order": ["right", "center", "left", "arab", "other"],
+    "order": ["gushA", "gushB"],
     "blocks": {
-      "right": {
-        "label": "ימין",
+      "gushA": {
+        "label": "גוש א",
         "color": "#2563eb",
-        "parties": ["מחל", "ט", "שס", "ג", "ב"]
+        "parties": []
       },
-      "center": {
-        "label": "מרכז",
-        "color": "#facc15",
-        "parties": ["פה", "כן", "ל"]
-      },
-      "left": {
-        "label": "שמאל",
+      "gushB": {
+        "label": "גוש ב",
         "color": "#dc2626",
-        "parties": ["אמת", "מרצ", "צרץ"]
-      },
-      "arab": {
-        "label": "ערביות",
-        "color": "#16a34a",
-        "parties": ["עם", "ום", "ד"]
-      },
-      "other": {
-        "label": "אחר",
-        "color": "#adb5bd",
         "parties": []
       }
     }

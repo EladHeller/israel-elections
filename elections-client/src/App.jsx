@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   computeBlocTotals,
   computeSeatMargins,
+  computeBlocMap,
 } from './lib/analytics.js';
 import AppHeader from './components/AppHeader.jsx';
 import AllElectionsSummary from './components/AllElectionsSummary.jsx';
@@ -18,6 +19,7 @@ const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 export default function App() {
   const [showBelowBlock, setShowBelowBlock] = useState(false);
   const [viewMode, setViewMode] = useState('simulator');
+  const [partyToBlocOverrides, setPartyToBlocOverrides] = useState({});
 
   const {
     availableElections,
@@ -120,8 +122,12 @@ export default function App() {
   const participatingVotes = sumVotes - nonParticipatingVotes;
   const votesPerMandate = participatingVotes > 0 ? Math.round(participatingVotes / 120) : 0;
 
-  const baseBlocTotals = computeBlocTotals(baseResults.realResults || {}, blocs);
-  const blocTotals = computeBlocTotals(activeResults.realResults || {}, blocs);
+  const electionKey = currentElection;
+  const electionOverrides = partyToBlocOverrides[electionKey] || {};
+  const partyToBloc = { ...electionOverrides };
+
+  const baseBlocTotals = computeBlocTotals(baseResults.realResults || {}, blocs, partyToBloc);
+  const blocTotals = computeBlocTotals(activeResults.realResults || {}, blocs, partyToBloc);
   const blocSeatDeltas = Object.fromEntries(
     Object.keys(blocTotals).map((blocKey) => [
       blocKey,
@@ -145,10 +151,21 @@ export default function App() {
   const margins = computeSeatMargins(realResults, voteData, activeConfig)
     .sort((a, b) => (a.gain || Infinity) - (b.gain || Infinity));
 
-  const partyToBloc = (blocs.order || []).reduce((acc, key) => {
-    blocs.blocks[key].parties.forEach((party) => { acc[party] = key; });
-    return acc;
-  }, {});
+  const handlePartyBlocChange = (party, blocKey) => {
+    if (!electionKey) return;
+    setPartyToBlocOverrides((prev) => {
+      const current = { ...(prev[electionKey] || {}) };
+      if (!blocKey) {
+        delete current[party];
+      } else {
+        current[party] = blocKey;
+      }
+      return {
+        ...prev,
+        [electionKey]: current,
+      };
+    });
+  };
 
   return (
     <div className="screen">
@@ -198,6 +215,7 @@ export default function App() {
             passedParties={passedParties}
             blocs={blocs}
             partyToBloc={partyToBloc}
+            onPartyBlocChange={handlePartyBlocChange}
             getPartyName={getPartyName}
             partySeatDeltas={partySeatDeltas}
             normalizedScenario={normalizedScenario}

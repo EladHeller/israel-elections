@@ -10,17 +10,20 @@ export const computeBlocMap = (blocsConfig) => {
   return partyToBloc;
 };
 
-export const computeBlocTotals = (results, blocsConfig) => {
-  const partyToBloc = computeBlocMap(blocsConfig);
+export const computeBlocTotals = (results, blocsConfig, partyToBlocOverride) => {
+  const partyToBloc = partyToBlocOverride || computeBlocMap(blocsConfig);
   const totals = {};
+
   Object.keys(blocsConfig.blocks).forEach((blocKey) => {
     totals[blocKey] = 0;
   });
+
   Object.entries(results).forEach(([party, { mandats }]) => {
-    const blocKey = partyToBloc[party] || 'other';
-    if (!totals[blocKey]) totals[blocKey] = 0;
+    const blocKey = partyToBloc[party];
+    if (!blocKey || !(blocKey in totals)) return;
     totals[blocKey] += mandats;
   });
+
   return totals;
 };
 
