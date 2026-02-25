@@ -219,7 +219,7 @@ interface PartyBarsProps {
   partySeatDeltas: Record<string, number>;
   useCoalitionColors: boolean;
   editableVoteData: Record<string, { votes: number }>;
-  onVoteChange: (party: string, next: string) => void;
+  onVoteChange: (party: string, value: string) => void;
 }
 
 const PartyBars: React.FC<PartyBarsProps> = ({
@@ -381,13 +381,12 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
   </>
 );
 
-interface MainPanelsProps {
+interface PartyPanelProps {
   isLatestElection: boolean;
   parties: PartySummary[];
   passedParties: PartySummary[];
   blocs: BlocsConfig;
   partyToBloc: Record<string, string | null | undefined>;
-  onPartyBlocChange: (party: string, blocKey: string | null) => void;
   getPartyName: (party: string) => string;
   partySeatDeltas: Record<string, number>;
   normalizedScenario: { voteData: Record<string, { votes: number }> };
@@ -395,20 +394,14 @@ interface MainPanelsProps {
   showBelowBlock: boolean;
   setShowBelowBlock: (show: boolean) => void;
   resetScenario: () => void;
-  blocData: number[];
-  blocColors: string[];
-  blocLabels: string[];
-  blocTotals: Record<string, number>;
-  blocSeatDeltas: Record<string, number>;
 }
 
-export const MainPanels: React.FC<MainPanelsProps> = ({
+export const PartyPanel: React.FC<PartyPanelProps> = ({
   isLatestElection,
   parties,
   passedParties,
   blocs,
   partyToBloc,
-  onPartyBlocChange,
   getPartyName,
   partySeatDeltas,
   normalizedScenario,
@@ -416,56 +409,79 @@ export const MainPanels: React.FC<MainPanelsProps> = ({
   showBelowBlock,
   setShowBelowBlock,
   resetScenario,
+}) => (
+  <div className="panel">
+    <div className="panel-head">
+      <h2>מפלגות</h2>
+      <button type="button" className="ghost" onClick={resetScenario}>
+        איפוס לתוצאות מקור
+      </button>
+    </div>
+    <PartyBars
+      parties={parties}
+      blocs={blocs}
+      partyToBloc={partyToBloc}
+      maxMandats={passedParties[0]?.mandats || 0}
+      getPartyName={getPartyName}
+      partySeatDeltas={partySeatDeltas}
+      useCoalitionColors={isLatestElection}
+      editableVoteData={normalizedScenario.voteData}
+      onVoteChange={onVoteChange}
+    />
+    <label className="toggle">
+      <input
+        type="checkbox"
+        checked={showBelowBlock}
+        onChange={(event) => setShowBelowBlock(event.target.checked)}
+      />
+      <span>הראה מפלגות שלא עברו את אחוז החסימה</span>
+    </label>
+  </div>
+);
+
+interface BlocsDistributionPanelProps {
+  blocs: BlocsConfig;
+  blocData: number[];
+  blocColors: string[];
+  blocLabels: string[];
+  blocTotals: Record<string, number>;
+  blocSeatDeltas: Record<string, number>;
+  partyToBloc: Record<string, string | null | undefined>;
+  onPartyBlocChange: (party: string, blocKey: string | null) => void;
+  getPartyName: (party: string) => string;
+  passedParties: PartySummary[];
+}
+
+export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
+  blocs,
   blocData,
   blocColors,
   blocLabels,
   blocTotals,
   blocSeatDeltas,
+  partyToBloc,
+  onPartyBlocChange,
+  getPartyName,
+  passedParties,
 }) => (
-  <section className="grid">
-    <div className="panel">
-      <div className="panel-head">
-        <h2>מפלגות</h2>
-        <button type="button" className="ghost" onClick={resetScenario}>
-          איפוס לתוצאות מקור
-        </button>
-      </div>
-      <PartyBars
-        parties={parties}
-        blocs={blocs}
-        partyToBloc={partyToBloc}
-        maxMandats={passedParties[0]?.mandats || 0}
-        getPartyName={getPartyName}
-        partySeatDeltas={partySeatDeltas}
-        useCoalitionColors={isLatestElection}
-        editableVoteData={normalizedScenario.voteData}
-        onVoteChange={onVoteChange}
-      />
-      <label className="toggle">
-        <input
-          type="checkbox"
-          checked={showBelowBlock}
-          onChange={(event) => setShowBelowBlock(event.target.checked)}
-        />
-        <span>הראה מפלגות שלא עברו את אחוז החסימה</span>
-      </label>
-    </div>
-
-    <div className="panel">
-      <h2>חלוקת גושים</h2>
+  <div className="panel">
+    <h2>חלוקת גושים</h2>
+    <div className="blocs-display">
       <div className="donut-wrap">
         <Donut data={blocData} total={120} colors={blocColors} labels={blocLabels} />
       </div>
-      <BlocLegend blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas} />
-      <BlocEditor
-        blocs={blocs}
-        partyToBloc={partyToBloc}
-        parties={passedParties}
-        onPartyBlocChange={onPartyBlocChange}
-        getPartyName={getPartyName}
-      />
+      <div className="bloc-legend-container">
+        <BlocLegend blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas} />
+      </div>
     </div>
-  </section>
+    <BlocEditor
+      blocs={blocs}
+      partyToBloc={partyToBloc}
+      parties={passedParties}
+      onPartyBlocChange={onPartyBlocChange}
+      getPartyName={getPartyName}
+    />
+  </div>
 );
 
 interface BottomPanelsProps {
@@ -523,4 +539,3 @@ export const BottomPanels: React.FC<BottomPanelsProps> = ({
     </div>
   </section>
 );
-

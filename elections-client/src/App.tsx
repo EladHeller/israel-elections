@@ -9,8 +9,7 @@ import AllElectionsSummary from './components/AllElectionsSummary';
 import SummarySection from './components/SummarySection';
 import SecondarySummarySection from './components/SecondarySummarySection';
 import ElectionStatsSection from './components/ElectionStatsSection';
-import { BottomPanels, MainPanels } from './components/ElectionPanels';
-import CalcDetailsCard from './components/CalcDetailsCard';
+import { BottomPanels, PartyPanel, BlocsDistributionPanel } from './components/ElectionPanels';
 import { useElectionData } from './hooks/use-election-data';
 import { useScenario } from './hooks/use-scenario';
 import type { PartyResult, ResultsMap, VoteData } from './types';
@@ -233,26 +232,22 @@ export default function App() {
             invalidVotes={invalidVotesDerived}
           />
 
-          <MainPanels
-            isLatestElection={isLatestElection}
-            parties={parties}
-            passedParties={passedParties}
-            blocs={blocs}
-            partyToBloc={partyToBloc}
-            onPartyBlocChange={handlePartyBlocChange}
-            getPartyName={getPartyName}
-            partySeatDeltas={partySeatDeltas}
-            normalizedScenario={normalizedScenario}
-            onVoteChange={onVoteChange}
-            showBelowBlock={showBelowBlock}
-            setShowBelowBlock={setShowBelowBlock}
-            resetScenario={resetScenario}
-            blocData={blocData}
-            blocColors={blocColors}
-            blocLabels={blocLabels}
-            blocTotals={blocTotals}
-            blocSeatDeltas={blocSeatDeltas}
-          />
+          <section className="grid grid-single">
+            <PartyPanel
+              isLatestElection={isLatestElection}
+              parties={parties}
+              passedParties={passedParties}
+              blocs={blocs}
+              partyToBloc={partyToBloc}
+              getPartyName={getPartyName}
+              partySeatDeltas={partySeatDeltas}
+              normalizedScenario={normalizedScenario}
+              onVoteChange={onVoteChange}
+              showBelowBlock={showBelowBlock}
+              setShowBelowBlock={setShowBelowBlock}
+              resetScenario={resetScenario}
+            />
+          </section>
 
           <BottomPanels
             margins={margins}
@@ -268,14 +263,22 @@ export default function App() {
             agreementValidation={agreementValidation}
           />
 
-          <CalcDetailsCard
-            voteData={voteData}
-            activeConfig={activeConfig}
-            getPartyName={getPartyName}
-          />
+          <section className="grid grid-single">
+            <BlocsDistributionPanel
+              blocs={blocs}
+              blocData={blocData}
+              blocColors={blocColors}
+              blocLabels={blocLabels}
+              blocTotals={blocTotals}
+              blocSeatDeltas={blocSeatDeltas}
+              partyToBloc={partyToBloc}
+              onPartyBlocChange={handlePartyBlocChange}
+              getPartyName={getPartyName}
+              passedParties={passedParties}
+            />
+          </section>
         </>
       )}
     </div>
   );
 }
-
