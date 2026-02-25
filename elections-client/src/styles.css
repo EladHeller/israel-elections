@@ -454,19 +454,19 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 8px;
+  padding: 10px 20px;
   border-radius: 999px;
   border: 1px solid var(--ink-20);
   background: #f5f7fb;
   color: var(--ink-70);
-  font-size: 13px;
+  font-size: 16px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .bloc-chip.small {
-  font-size: 12px;
-  padding: 3px 6px;
+  font-size: 14px;
+  padding: 6px 12px;
 }
 
 .bloc-editor-unassigned-row {

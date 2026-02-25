@@ -10,6 +10,7 @@ import SummarySection from './components/SummarySection';
 import SecondarySummarySection from './components/SecondarySummarySection';
 import ElectionStatsSection from './components/ElectionStatsSection';
 import { BottomPanels, PartyPanel, BlocsDistributionPanel } from './components/ElectionPanels';
+import CalcDetailsCard from './components/CalcDetailsCard';
 import { useElectionData } from './hooks/use-election-data';
 import { useScenario } from './hooks/use-scenario';
 import type { PartyResult, ResultsMap, VoteData } from './types';
@@ -277,6 +278,12 @@ export default function App() {
               passedParties={passedParties}
             />
           </section>
+
+          <CalcDetailsCard
+            voteData={voteData}
+            activeConfig={activeConfig}
+            getPartyName={getPartyName}
+          />
         </>
       )}
     </div>
