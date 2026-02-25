@@ -25,7 +25,7 @@ const SummarySection: React.FC<SummarySectionProps> = ({
 }) => (
   <section className="summary">
     <div className="card">
-      <div className="card-label">סה\"כ קולות כשרים</div>
+      <div className="card-label">סה"כ קולות כשרים</div>
       <div className="card-value">{numberFormat.format(sumVotes)}</div>
       {isEdited && (
         <div className="card-sub">בסיס: {numberFormat.format(baseSumVotes)}</div>
