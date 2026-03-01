@@ -37,7 +37,7 @@
     "@aws-sdk/client-cloudfront": "^3.987.0",
     "@aws-sdk/client-lambda": "^3.987.0",
     "@aws-sdk/client-s3": "^3.1000.0",
-    "@aws-sdk/lib-storage": "^3.987.0",
+    "@aws-sdk/lib-storage": "^3.1000.0",
     "convict": "^6.2.4",
     "csv-parse": "^6.1.0",
     "encoding": "^0.1.13",
