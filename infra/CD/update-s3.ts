@@ -1,3 +1,4 @@
+import fs from 'fs/promises';
 import { FileData, getAllDirsFiles, upload } from '../s3';
 
 const bucketCodeName = process.env.CODE_BUCKET;
@@ -8,22 +9,35 @@ async function main() {
     throw new Error('Bucket code variable is empty!');
   }
 
-  await upload(bucketCodeName, 'dist.zip', './dist.zip');
+  const updatedFiles: string[] = [];
+
+  const updatedZip = await upload(bucketCodeName, 'dist.zip', './dist.zip');
+  if (updatedZip) {
+    updatedFiles.push('/dist.zip');
+  }
 
   const basePath = './elections-client/dist';
   const files = await getAllDirsFiles([basePath]);
   await Promise.all(files.map(async ({ file }: FileData) => {
-    console.log(file);
-    await upload(
+    const key = file.replace(`${basePath}/`, '');
+    const updated = await upload(
       clientCodeName,
-      file.replace(`${basePath}/`, ''),
+      key,
       file,
       'public-read',
     );
+    if (updated) {
+      updatedFiles.push(`/${key}`);
+    }
   }));
-  console.log('finish');
 
-  await upload(clientCodeName, 'client.zip', './client.zip', 'public-read');
+  const updatedClientZip = await upload(clientCodeName, 'client.zip', './client.zip', 'public-read');
+  if (updatedClientZip) {
+    updatedFiles.push('/client.zip');
+  }
+
+  await fs.writeFile('updated-files.json', JSON.stringify(updatedFiles));
+  console.log('finish');
 }
 
 main();

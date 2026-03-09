@@ -49,7 +49,7 @@ async function getEtagOfFile(stream: Buffer): Promise<string> {
   return `${md5(Buffer.from(md5Chunks.join(''), 'hex'))}-${chunksNumber}`;
 }
 
-export async function upload(bucket: string, key: string, filePath: string, acl: ObjectCannedACL = 'private') {
+export async function upload(bucket: string, key: string, filePath: string, acl: ObjectCannedACL = 'private'): Promise<boolean> {
   const s3Object = await s3.send(new HeadObjectCommand({
     Bucket: bucket,
     Key: key,
@@ -58,7 +58,7 @@ export async function upload(bucket: string, key: string, filePath: string, acl:
   const etag = await getEtagOfFile(file);
   if (etag === JSON.parse(s3Object.ETag ?? '""')) {
     console.log(`${key} already up to date`);
-    return;
+    return false;
   }
 
   const contentType = mime.contentType(path.extname(key));
@@ -77,4 +77,5 @@ export async function upload(bucket: string, key: string, filePath: string, acl:
   await parallelUploads3.done();
 
   console.log(`${key} updated`);
+  return true;
 }

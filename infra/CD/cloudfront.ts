@@ -10,23 +10,6 @@ const cf = new CloudFrontClient({});
 const setTimoutPromise = promisify(setTimeout);
 
 const distributionID = process.argv[2] ?? '';
-const flat = (arr: any[]) => [].concat(...arr);
-
-const getAllDirsFiles = async (files: string[], basePath: string = '') => flat(await Promise.all(
-  files.flatMap(async (file) => {
-    const currPath = basePath ? `${basePath}/${file}` : file;
-    const stat = await fs.lstat(currPath);
-    if (stat.isDirectory()) {
-      if (file.match(/\d+/)) { // This is a elections results folder
-        return [];
-      }
-      const dirFiles = await fs.readdir(currPath);
-      return getAllDirsFiles(dirFiles, currPath);
-    }
-
-    return currPath.replace(basePath, '');
-  }),
-));
 
 const getInvalidationStatus = (id: string) => cf.send(new GetInvalidationCommand(
   { DistributionId: distributionID, Id: id },
@@ -36,8 +19,23 @@ const main = async () => {
   if (!distributionID) {
     throw new Error('Missing distribution id');
   }
-  const basePath = './elections-client';
-  const files = await getAllDirsFiles([basePath]);
+
+  let files: string[] = [];
+  try {
+    const data = await fs.readFile('updated-files.json', 'utf8');
+    files = JSON.parse(data);
+  } catch {
+    console.log('No updated-files.json found, skipping smart invalidation.');
+    return;
+  }
+
+  if (files.length === 0) {
+    console.log('No files changed, skipping invalidation.');
+    return;
+  }
+
+  console.log(`Invalidating ${files.length} files...`);
+
   const { Invalidation } = await cf.send(new CreateInvalidationCommand({
     InvalidationBatch: {
       CallerReference: Math.random().toString(),
@@ -62,6 +60,9 @@ const main = async () => {
       throw new Error('Invalidation status is null');
     }
   }
+
+  await fs.unlink('updated-files.json').catch(() => {});
+
   return invalidationStatus.Invalidation;
 };
 
