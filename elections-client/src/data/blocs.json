@@ -1,0 +1,17 @@
+{
+  "25": {
+    "order": ["gushA", "gushB"],
+    "blocks": {
+      "gushA": {
+        "label": "גוש א",
+        "color": "#2563eb",
+        "parties": []
+      },
+      "gushB": {
+        "label": "גוש ב",
+        "color": "#dc2626",
+        "parties": []
+      }
+    }
+  }
+}
