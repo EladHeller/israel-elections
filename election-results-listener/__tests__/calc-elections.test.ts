@@ -120,6 +120,15 @@ describe('baderOffer', () => {
     });
     assert.equal(sumBy(Object.values(res), 'mandats'), 20);
   });
+
+  it('should not enter loop if all mandats are already distributed', () => {
+    const res = baderOffer(19, {
+      a: { votes: 360, mandats: 3 },
+      b: { votes: 640, mandats: 6 },
+      c: { votes: 1000, mandats: 10 },
+    });
+    assert.equal(sumBy(Object.values(res), 'mandats'), 19);
+  });
 });
 
 describe('ceilRound', () => {
@@ -579,6 +588,41 @@ describe('calcVotesResults', () => {
       voteData: {},
       withoutAgreements: {},
     });
+  });
+
+  it('should return empty results for parties with zero votes', () => {
+    const res = calcVotesResults({
+      a: { votes: 0 },
+      b: { votes: 0 },
+    });
+
+    assert.deepEqual(res, {
+      realResults: {},
+      beforeBaderOffer: {},
+      voteData: {
+        a: { votes: 0 },
+        b: { votes: 0 },
+      },
+      withoutAgreements: {},
+    });
+  });
+
+  it('should use default algorithm when not provided', () => {
+    const res = calcVotesResults({
+      a: { votes: 1000 },
+      b: { votes: 1000 },
+    });
+    // Default for 25 is baderOffer
+    assert.ok(res.beforeBaderOffer);
+    assert.ok(!res.afterBaderOffer);
+  });
+
+  it('should use provided algorithm when provided', () => {
+    const res = calcVotesResults({
+      a: { votes: 1000 },
+      b: { votes: 1000 },
+    }, undefined, undefined, 'ceilRound');
+    assert.ok(res.afterBaderOffer);
   });
 });
 
