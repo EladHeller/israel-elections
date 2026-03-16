@@ -53,9 +53,13 @@ jobs:
 
       - name: Build code
         run: |
+          export NODE_ENV=${{ needs.env_detect.outputs.env_name }}
           export REGION=${{ secrets.AWS_REGION }}
           export CODE_BUCKET=${{ secrets.CODE_BUCKET_NAME }}
           export CURR_ELECTIONS=${{ secrets.CURR_ELECTIONS }}
           export CLIENT_CODE_BUCKET=${{ secrets.CLIENT_CODE_BUCKET }}
+          export HOSTED_ZONE_ID=${{ secrets.HOSTED_ZONE_ID }}
+          export DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
+          export SUB_DOMAIN=${{ secrets.SUB_DOMAIN }}
           npm run update-env
           npm run update-lambda

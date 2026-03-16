@@ -76,6 +76,12 @@ async function runTemplate(
   return updatedStack.Stacks?.[0]?.Outputs;
 }
 
+const rawEnv = process.env.NODE_ENV || 'production';
+const environment = rawEnv === 'prod' || rawEnv === 'production' ? 'production' : 'develop';
+const domainName = process.env.DOMAIN_NAME || 'eladheller.com';
+const subDomain = process.env.SUB_DOMAIN || 'elections';
+const hostedZoneId = process.env.HOSTED_ZONE_ID;
+
 async function main() {
   const outputs = await runTemplate('./infra/CD/t00.cf.yaml', 'Israel-elections-code-bucket', [{
     ParameterKey: 'BucketCodeName',
@@ -83,7 +89,22 @@ async function main() {
   }, {
     ParameterKey: 'ClientCodeName',
     ParameterValue: clientCodeName,
+  }, {
+    ParameterKey: 'DomainName',
+    ParameterValue: domainName,
+  }, {
+    ParameterKey: 'SubDomain',
+    ParameterValue: subDomain,
+  }, {
+    ParameterKey: 'HostedZoneId',
+    ParameterValue: hostedZoneId,
+  }, {
+    ParameterKey: 'Environment',
+    ParameterValue: environment,
   }]);
+
+
+
   const distributionId = outputs?.find(({ OutputKey }) => OutputKey === 'DistributionId')?.OutputValue;
   console.log({ distributionId, outputs });
   if (!distributionId) {

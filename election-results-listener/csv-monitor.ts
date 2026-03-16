@@ -44,6 +44,9 @@ export async function uploadResults(results, elections: number, time: string) {
 }
 
 export async function csvMonitor() {
+  if (csvUrl == null) {
+    throw new Error('CSV url is missing')
+  }
   const fetchRes = await fetch(csvUrl);
   const csvData = await fetchRes.text();
   const exists = (await isFileAlreadyExists(`${currElections}/elections.csv`, Buffer.from(csvData)));

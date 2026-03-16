@@ -1,36 +1,39 @@
-
 import config from './config';
 import type { ElectionsConfig, ResultsData, VoteData } from './types';
 
 const { currElections, electionsConfig } = config;
-
 const currElectionsConfig: ElectionsConfig = electionsConfig[currElections];
 
 const MANDATS = 120;
 
 const cloneDeep = <T>(data: T): T => JSON.parse(JSON.stringify(data));
 
-export function sumBy(arr: any[], prop: string): number {
-  return arr.reduce((acc, curr) => acc + (Number(curr[prop]) || 0), 0);
-}
+export const sumBy = (arr: any[], prop: string): number =>
+  arr.reduce((acc, curr) => acc + (Number(curr[prop]) || 0), 0);
 
-export function baderOffer(allMandats: number, voteData: ResultsData) {
+export const baderOffer = (allMandats: number, voteData: ResultsData): ResultsData => {
   const res = cloneDeep(voteData);
   while (sumBy(Object.values(res), 'mandats') < allMandats) {
     const [winLetter] = Object.entries(res)
-      .reduce(([letter, votesPerMandats], [currLetter, { votes, mandats }]) => {
-        const currVotesPerMandat = votes / (mandats + 1);
-        if (currVotesPerMandat > votesPerMandats) {
-          return [currLetter, currVotesPerMandat];
-        }
-        return [letter, votesPerMandats];
-      }, ['x', 0]);
+      .reduce<[string, number]>(
+        ([letter, votesPerMandats], [currLetter, { votes, mandats }]) => {
+          const currVotesPerMandat = votes / (mandats + 1);
+          if (currVotesPerMandat > votesPerMandats) {
+            return [currLetter, currVotesPerMandat];
+          }
+          return [letter, votesPerMandats];
+        },
+        ['x', 0],
+      );
     res[winLetter].mandats += 1;
   }
   return res;
-}
+};
 
-export function convertToAgreements(partiesAgreements: string[][], voteData: ResultsData) {
+export const convertToAgreements = (
+  partiesAgreements: string[][],
+  voteData: ResultsData,
+): ResultsData => {
   const res = cloneDeep(voteData);
   partiesAgreements.forEach(([a, b]) => {
     if (a in res && b in res) {
@@ -43,47 +46,54 @@ export function convertToAgreements(partiesAgreements: string[][], voteData: Res
     }
   });
   return res;
-}
+};
 
-export function calcMandats(mandats: number, voteData: VoteData): ResultsData {
+export const calcMandats = (mandats: number, voteData: VoteData): ResultsData => {
   const sumVotes = sumBy(Object.values(voteData), 'votes');
+  return Object.fromEntries(
+    Object.entries(voteData).map(([letter, partyData]) => [
+      letter,
+      {
+        votes: partyData.votes,
+        mandats: Math.floor((partyData.votes / sumVotes) * mandats),
+      },
+    ]),
+  );
+};
 
-  return Object.fromEntries(Object.entries(voteData).map(([letter, partyData]) => ([
-    letter,
-    {
-      votes: partyData.votes,
-      mandats: Math.floor((partyData.votes / sumVotes) * mandats),
-    },
-  ])));
-}
-
-export function filterNotPassBlockPersentage(
+export const filterNotPassBlockPersentage = (
   percentage: number,
   voteData: VoteData,
   sumVotes: number,
-): VoteData {
+): VoteData => {
   const blockPercentageMinimum = sumVotes * percentage;
-  return Object.fromEntries(Object.entries(voteData)
-    .filter(([, { votes }]) => blockPercentageMinimum <= votes));
-}
+  return Object.fromEntries(
+    Object.entries(voteData).filter(([, { votes }]) => blockPercentageMinimum <= votes),
+  );
+};
 
-export function splitAgreements(
+export const splitAgreements = (
   voteData: ResultsData,
   agreementsVoteData: ResultsData,
-  splitAlgorithm: (mandats: number, vData: ResultsData) => ResultsData = baderOffer,
-): ResultsData {
-  const agreementArray = Object.entries(agreementsVoteData)
-    .flatMap(([letter, { mandats, votes }]) => {
+  splitAlgorithm: (mandats: number, voteData: ResultsData) => ResultsData = baderOffer,
+): ResultsData => {
+  const agreementArray = Object.entries(agreementsVoteData).flatMap(
+    ([letter, { mandats, votes }]) => {
       if (letter.includes('+')) {
         const [a, b] = letter.split('+');
         const result = splitAlgorithm(mandats, { [a]: voteData[a], [b]: voteData[b] });
-        return [[a, result[a]], [b, result[b]]];
+        return [
+          [a, result[a]],
+          [b, result[b]],
+        ];
       }
       return [[letter, { votes, mandats }]];
-    });
+    },
+  );
   return Object.fromEntries(agreementArray);
-}
-export const ceilRound = (mandats: number, voteData: ResultsData) => {
+};
+
+export const ceilRound = (mandats: number, voteData: ResultsData): ResultsData => {
   const res = cloneDeep(voteData);
 
   const mandatVotes = sumBy(Object.values(res), 'votes') / mandats;
@@ -91,9 +101,9 @@ export const ceilRound = (mandats: number, voteData: ResultsData) => {
   const sortedParties = Object.entries(res).sort(
     ([, v1], [, v2]) => (v2.votes % mandatVotes) - (v1.votes % mandatVotes),
   );
-  sortedParties.forEach(([, partyData], i) => {
+  sortedParties.forEach(([letter], i) => {
     if (mandatsForDistribution > i) {
-      partyData.mandats += 1;
+      res[letter].mandats += 1;
     }
   });
   return res;
@@ -101,42 +111,49 @@ export const ceilRound = (mandats: number, voteData: ResultsData) => {
 
 export function calcVotesResults(
   voteData: VoteData,
-  blockPercentage = currElectionsConfig.blockPercentage,
-  agreements = currElectionsConfig.agreements,
-  algorithm = currElectionsConfig.algorithm,
-  mandats = MANDATS,
+  blockPercentage?: number,
+  agreements?: string[][],
+  algorithm?: string,
+  mandats?: number,
 ) {
+  const finalBlockPercentage = blockPercentage ?? currElectionsConfig.blockPercentage;
+  const finalAgreements = agreements ?? currElectionsConfig.agreements;
+  const finalAlgorithm = algorithm ?? currElectionsConfig.algorithm;
+  const finalMandats = mandats ?? MANDATS;
+
   const sumVotes = sumBy(Object.values(voteData), 'votes');
   if (sumVotes === 0) {
     return {
-      realResults: {}, withoutAgreements: {}, beforeBaderOffer: {}, voteData,
+      realResults: {},
+      withoutAgreements: {},
+      beforeBaderOffer: {},
+      voteData,
     };
   }
-  const passBlockPercntage = filterNotPassBlockPersentage(blockPercentage, voteData, sumVotes);
+  const passBlockPercntage = filterNotPassBlockPersentage(finalBlockPercentage, voteData, sumVotes);
 
-  const withMandats = calcMandats(mandats, passBlockPercntage);
-  const withAgreements = convertToAgreements(agreements, withMandats);
-  const baderOfferWithAgreements = baderOffer(mandats, withAgreements);
+  const withMandats = calcMandats(finalMandats, passBlockPercntage);
+  const withAgreements = convertToAgreements(finalAgreements, withMandats);
+  const baderOfferWithAgreements = baderOffer(finalMandats, withAgreements);
   const baderOfferResults = splitAgreements(withMandats, baderOfferWithAgreements, baderOffer);
 
-  if (algorithm === 'baderOffer') {
-    // Bader Offer without agreements
-    const withoutAgreements = baderOffer(mandats, withMandats);
-    // Before Bader Offer
-    const beforeBaderOffer = ceilRound(mandats, withMandats);
+  const isBader = finalAlgorithm === 'baderOffer';
+  const withoutAgreements = isBader
+    ? baderOffer(finalMandats, withMandats)
+    : ceilRound(finalMandats, withMandats);
 
-    return {
-      realResults: baderOfferResults, withoutAgreements, beforeBaderOffer, voteData,
-    };
-  }
-  // Ceil round
-  const resultWithAgreements = ceilRound(mandats, withAgreements);
-  const realResults = splitAgreements(withMandats, resultWithAgreements, ceilRound);
+  const realResults = isBader
+    ? baderOfferResults
+    : splitAgreements(withMandats, ceilRound(finalMandats, withAgreements), ceilRound);
 
-  // Ceil round without agreements
-  const withoutAgreements = ceilRound(mandats, withMandats);
+  const extra = isBader
+    ? { beforeBaderOffer: ceilRound(finalMandats, withMandats) }
+    : { afterBaderOffer: baderOfferResults };
 
   return {
-    realResults, withoutAgreements, afterBaderOffer: baderOfferResults, voteData,
+    realResults,
+    withoutAgreements,
+    voteData,
+    ...extra,
   };
 }

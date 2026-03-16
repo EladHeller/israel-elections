@@ -48,6 +48,39 @@ describe('validateAgreements', () => {
     assert.equal(result.isValid, false);
     assert.equal(result.errors.length, 4);
   });
+
+  it('rejects agreements with missing parties', () => {
+    const result = validateAgreements(
+      [['a', '']],
+      { a: { votes: 100, mandats: 0 } } satisfies CalcVoteData,
+    );
+    assert.equal(result.isValid, false);
+    assert.ok(result.errors[0].includes('כולל מפלגה חסרה'));
+  });
+
+  it('rejects non-array agreements', () => {
+    const result = validateAgreements(null as any, {});
+    assert.equal(result.isValid, false);
+    assert.ok(result.errors[0].includes('פורמט הסכמי העודפים אינו תקין'));
+  });
+
+  it('rejects invalid pair format', () => {
+    const result = validateAgreements([['a']] as any, { a: { votes: 100, mandats: 0 } });
+    assert.equal(result.isValid, false);
+    assert.ok(result.errors[0].includes('אינו זוג מפלגות תקין'));
+  });
+
+  it('rejects same party twice in agreement', () => {
+    const result = validateAgreements([['a', 'a']], { a: { votes: 100, mandats: 0 } });
+    assert.equal(result.isValid, false);
+    assert.ok(result.errors[0].includes('כולל את אותה מפלגה פעמיים'));
+  });
+
+  it('rejects non-existent party', () => {
+    const result = validateAgreements([['a', 'nonexistent']], { a: { votes: 100, mandats: 0 } });
+    assert.equal(result.isValid, false);
+    assert.ok(result.errors[0].includes('מפלגה שלא קיימת'));
+  });
 });
 
 describe('normalizeScenarioInput', () => {
@@ -75,6 +108,42 @@ describe('normalizeScenarioInput', () => {
       b: { votes: 33, mandats: 0 },
     });
   });
+
+  it('handles negative block percentage', () => {
+    const normalized = normalizeScenarioInput({
+      baseVoteData: { a: { votes: 100, mandats: 0 } },
+      baseConfig: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+      scenarioConfig: { blockPercentage: -1 },
+    });
+    assert.equal(normalized.config.blockPercentage, 0);
+  });
+
+  it('uses base data when scenario is missing', () => {
+    const normalized = normalizeScenarioInput({
+      baseVoteData: { a: { votes: 100, mandats: 0 } },
+      baseConfig: { blockPercentage: 0.0325, agreements: [['a', 'b']], algorithm: 'baderOffer' },
+    });
+    assert.deepEqual(normalized.voteData, { a: { votes: 100, mandats: 0 } });
+    assert.equal(normalized.config.agreements.length, 1);
+  });
+
+  it('handles NaN in block percentage', () => {
+    const normalized = normalizeScenarioInput({
+      baseVoteData: { a: { votes: 100, mandats: 0 } },
+      baseConfig: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+      scenarioConfig: { blockPercentage: 'abc' as any },
+    });
+    assert.equal(normalized.config.blockPercentage, 0.0325);
+  });
+
+  it('handles missing agreements in config', () => {
+    const normalized = normalizeScenarioInput({
+      baseVoteData: { a: { votes: 100, mandats: 0 } },
+      baseConfig: { blockPercentage: 0.0325, agreements: null as any, algorithm: 'baderOffer' },
+      scenarioConfig: { agreements: null as any },
+    });
+    assert.deepEqual(normalized.config.agreements, []);
+  });
 });
 
 describe('computeSeatDeltas', () => {
@@ -84,6 +153,11 @@ describe('computeSeatDeltas', () => {
       { a: { mandats: 4, votes: 0 }, c: { mandats: 2, votes: 0 } },
     );
     assert.deepEqual(deltas, { a: -1, b: -3, c: 2 });
+  });
+
+  it('handles null results', () => {
+    const deltas = computeSeatDeltas(null as any, null as any);
+    assert.deepEqual(deltas, {});
   });
 });
 
@@ -128,6 +202,98 @@ describe('isScenarioEdited', () => {
     };
 
     assert.equal(isScenarioEdited(base, scenario), true);
+  });
+
+  it('detects party addition', () => {
+    const base: any = {
+      voteData: { a: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+    };
+    const scenario: any = {
+      voteData: { a: { votes: 10, mandats: 0 }, b: { votes: 20, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+    };
+    assert.equal(isScenarioEdited(base, scenario), true);
+  });
+
+  it('detects party removal', () => {
+    const base: any = {
+      voteData: { a: { votes: 10, mandats: 0 }, b: { votes: 20, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+    };
+    const scenario: any = {
+      voteData: { a: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+    };
+    assert.equal(isScenarioEdited(base, scenario), true);
+  });
+
+  it('detects algorithm change', () => {
+    const base: any = {
+      voteData: { a: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+    };
+    const scenario: any = {
+      voteData: { a: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'ceilRound' },
+    };
+    assert.equal(isScenarioEdited(base, scenario), true);
+  });
+
+  it('detects block percentage change', () => {
+    const base: any = {
+      voteData: { a: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+    };
+    const scenario: any = {
+      voteData: { a: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.04, agreements: [], algorithm: 'baderOffer' },
+    };
+    assert.equal(isScenarioEdited(base, scenario), true);
+  });
+
+  it('detects agreement count change', () => {
+    const base: any = {
+      voteData: { a: { votes: 10, mandats: 0 }, b: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [['a', 'b']], algorithm: 'baderOffer' },
+    };
+    const scenario: any = {
+      voteData: { a: { votes: 10, mandats: 0 }, b: { votes: 10, mandats: 0 } },
+      config: { blockPercentage: 0.0325, agreements: [], algorithm: 'baderOffer' },
+    };
+    assert.equal(isScenarioEdited(base, scenario), true);
+  });
+
+  it('detects agreement key size change even with same length', () => {
+    const base: any = {
+      voteData: { a: { votes: 10, mandats: 0 }, b: { votes: 10, mandats: 0 } },
+      config: {
+        blockPercentage: 0.0325,
+        agreements: [['a', 'b'], ['c', 'd']] as [string, string][],
+        algorithm: 'baderOffer',
+      },
+    };
+    const scenario: any = {
+      voteData: { a: { votes: 10, mandats: 0 }, b: { votes: 10, mandats: 0 } },
+      config: {
+        blockPercentage: 0.0325,
+        agreements: [['a', 'b'], ['a', 'b']] as [string, string][],
+        algorithm: 'baderOffer',
+      },
+    };
+    assert.equal(isScenarioEdited(base, scenario), true);
+  });
+
+  it('handles null voteData and agreements', () => {
+    const base: any = {
+      voteData: null,
+      config: { blockPercentage: 0.0325, agreements: null, algorithm: 'baderOffer' },
+    };
+    const scenario: any = {
+      voteData: null,
+      config: { blockPercentage: 0.0325, agreements: null, algorithm: 'baderOffer' },
+    };
+    assert.equal(isScenarioEdited(base, scenario), false);
   });
 });
 
