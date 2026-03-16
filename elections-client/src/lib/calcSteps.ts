@@ -229,7 +229,7 @@ export const buildCalcSteps = (
   );
 
   // Step 5: remainder distribution
-  let remainderRounds: (BaderRound | (CeilCandidate & { getsBonus: boolean }))[] = [];
+  let remainderRounds: (BaderRound | (CeilCandidate & { getsBonus: boolean }))[];
   let afterRemainders: CalcVoteData;
 
   if (algorithm === 'baderOffer') {
