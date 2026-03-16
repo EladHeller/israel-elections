@@ -22,6 +22,16 @@ Parameters:
     Type: AWS::Route53::HostedZone::Id
     Description: The ID of the existing Route53 hosted zone
 
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - production
+      - develop
+
+Conditions:
+  IsProd: !Equals [ !Ref Environment, "production" ]
+
 Resources:
   ElectionsLambdaCode:
     Type: 'AWS::S3::Bucket'
@@ -34,6 +44,7 @@ Resources:
 
   Certificate:
     Type: AWS::CertificateManager::Certificate
+    Condition: IsProd
     Properties:
       DomainName: !Sub '${SubDomain}.${DomainName}'
       ValidationMethod: DNS
@@ -53,8 +64,7 @@ Resources:
         Comment: Israel elections client
         DefaultRootObject: index.html
         Enabled: true
-        Aliases:
-          - !Sub '${SubDomain}.${DomainName}'
+        Aliases: !If [ IsProd, [ !Sub '${SubDomain}.${DomainName}' ], !Ref "AWS::NoValue" ]
         DefaultCacheBehavior:
           TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
           ViewerProtocolPolicy: redirect-to-https
@@ -67,13 +77,16 @@ Resources:
             DomainName: !Sub ${ElectionsClientCode}.s3.amazonaws.com
             S3OriginConfig:
               OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
-        ViewerCertificate:
-          AcmCertificateArn: !Ref Certificate
-          MinimumProtocolVersion: TLSv1.2_2021
-          SslSupportMethod: sni-only
+        ViewerCertificate: !If
+          - IsProd
+          - AcmCertificateArn: !Ref Certificate
+            MinimumProtocolVersion: TLSv1.2_2021
+            SslSupportMethod: sni-only
+          - !Ref "AWS::NoValue"
 
   DNSRecord:
     Type: AWS::Route53::RecordSet
+    Condition: IsProd
     Properties:
       HostedZoneId: !Ref HostedZoneId
       Name: !Sub '${SubDomain}.${DomainName}'
