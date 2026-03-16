@@ -8,6 +8,20 @@ Parameters:
     Description: The name of client code bucket.
     Type: String
 
+  DomainName:
+    Type: String
+    Default: eladheller.com
+    Description: The domain name
+
+  SubDomain:
+    Type: String
+    Default: elections
+    Description: The subdomain for the website
+
+  HostedZoneId:
+    Type: AWS::Route53::HostedZone::Id
+    Description: The ID of the existing Route53 hosted zone
+
 Resources:
   ElectionsLambdaCode:
     Type: 'AWS::S3::Bucket'
@@ -17,6 +31,16 @@ Resources:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Ref ClientCodeName
+
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub '${SubDomain}.${DomainName}'
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Sub '${SubDomain}.${DomainName}'
+          HostedZoneId: !Ref HostedZoneId
+
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
@@ -29,6 +53,8 @@ Resources:
         Comment: Israel elections client
         DefaultRootObject: index.html
         Enabled: true
+        Aliases:
+          - !Sub '${SubDomain}.${DomainName}'
         DefaultCacheBehavior:
           TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
           ViewerProtocolPolicy: redirect-to-https
@@ -41,8 +67,20 @@ Resources:
             DomainName: !Sub ${ElectionsClientCode}.s3.amazonaws.com
             S3OriginConfig:
               OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+        ViewerCertificate:
+          AcmCertificateArn: !Ref Certificate
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
 
-
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub '${SubDomain}.${DomainName}'
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CDN.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2 # CloudFront's fixed hosted zone ID
 
 Outputs:
   DistributionId:
