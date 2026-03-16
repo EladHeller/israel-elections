@@ -20,7 +20,7 @@ const main = async () => {
     throw new Error('Missing distribution id');
   }
 
-  let files: string[] = [];
+  let files: string[];
   try {
     const data = await fs.readFile('updated-files.json', 'utf8');
     files = JSON.parse(data);
