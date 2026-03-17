@@ -82,7 +82,7 @@ Resources:
           - AcmCertificateArn: !Ref Certificate
             MinimumProtocolVersion: TLSv1.2_2021
             SslSupportMethod: sni-only
-          - !Ref "AWS::NoValue"
+          - CloudFrontDefaultCertificate: true
 
   DNSRecord:
     Type: AWS::Route53::RecordSet
