@@ -5,7 +5,6 @@ import {
   UpdateStackCommand,
   waitUntilStackCreateComplete,
   waitUntilStackUpdateComplete,
-  waitUntilStackRollbackComplete,
   Parameter,
   Capability,
 } from '@aws-sdk/client-cloudformation';
@@ -40,6 +39,7 @@ async function runTemplate(
       Capabilities: capabilities,
       Parameters: parameters,
     }));
+    await waitUntilStackCreateComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name });
   } else {
     try {
       await cf.send(new UpdateStackCommand({
@@ -48,6 +48,7 @@ async function runTemplate(
         Capabilities: capabilities,
         Parameters: parameters,
       }));
+      await waitUntilStackUpdateComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name });
     } catch (e: any) {
       if (e.message === 'No updates are to be performed.') {
         console.log(`template ${name} No updates are to be performed.`);
@@ -56,12 +57,6 @@ async function runTemplate(
       throw e;
     }
   }
-
-  await Promise.race([
-    waitUntilStackCreateComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name }),
-    waitUntilStackUpdateComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name }),
-    waitUntilStackRollbackComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name }),
-  ]);
 
   const updatedStack = await cf.send(new DescribeStacksCommand({
     StackName: name,
