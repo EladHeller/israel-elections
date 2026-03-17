@@ -78,30 +78,45 @@ async function runTemplate(
 
 const rawEnv = process.env.NODE_ENV || 'production';
 const environment = rawEnv === 'prod' || rawEnv === 'production' ? 'production' : 'develop';
-const domainName = process.env.DOMAIN_NAME || 'eladheller.com';
+const domainName = process.env.DOMAIN_NAME;
 const subDomain = process.env.SUB_DOMAIN || 'elections';
 const hostedZoneId = process.env.HOSTED_ZONE_ID;
 
 async function main() {
-  const outputs = await runTemplate('./infra/CD/t00.cf.yaml', 'Israel-elections-code-bucket', [{
+  const parameters: Parameter[] = [{
     ParameterKey: 'BucketCodeName',
     ParameterValue: bucketCodeName,
   }, {
     ParameterKey: 'ClientCodeName',
     ParameterValue: clientCodeName,
   }, {
-    ParameterKey: 'DomainName',
-    ParameterValue: domainName,
-  }, {
     ParameterKey: 'SubDomain',
     ParameterValue: subDomain,
   }, {
-    ParameterKey: 'HostedZoneId',
-    ParameterValue: hostedZoneId,
-  }, {
     ParameterKey: 'Environment',
     ParameterValue: environment,
-  }]);
+  }];
+
+  if (domainName) {
+    parameters.push({
+      ParameterKey: 'DomainName',
+      ParameterValue: domainName,
+    });
+  } else {
+    console.error('Domain name is missing')
+  }
+
+  if (hostedZoneId) {
+    parameters.push({
+      ParameterKey: 'HostedZoneId',
+      ParameterValue: hostedZoneId,
+    });
+  } else {
+    console.error('Zone id is missing')
+  }
+
+  const outputs = await runTemplate('./infra/CD/t00.cf.yaml', 'Israel-elections-code-bucket', parameters);
+
 
 
 
