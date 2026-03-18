@@ -49,7 +49,7 @@ async function getEtagOfFile(stream: Buffer): Promise<string> {
   return `${md5(Buffer.from(md5Chunks.join(''), 'hex'))}-${chunksNumber}`;
 }
 
-export async function upload(bucket: string, key: string, filePath: string, acl: ObjectCannedACL = 'private'): Promise<boolean> {
+export async function upload(bucket: string, key: string, filePath: string, acl?: ObjectCannedACL): Promise<boolean> {
   const s3Object = await s3.send(new HeadObjectCommand({
     Bucket: bucket,
     Key: key,
