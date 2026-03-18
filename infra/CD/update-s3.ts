@@ -24,14 +24,13 @@ async function main() {
       clientCodeName,
       key,
       file,
-      'public-read',
     );
     if (updated) {
       updatedFiles.push(`/${key}`);
     }
   }));
 
-  const updatedClientZip = await upload(clientCodeName, 'client.zip', './client.zip', 'public-read');
+  const updatedClientZip = await upload(clientCodeName, 'client.zip', './client.zip');
   if (updatedClientZip) {
     updatedFiles.push('/client.zip');
   }
