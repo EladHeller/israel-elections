@@ -51,7 +51,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Build code
+      - name: Build and Deploy
         run: |
           export NODE_ENV=${{ needs.env_detect.outputs.env_name }}
           export REGION=${{ secrets.AWS_REGION }}
@@ -61,5 +61,4 @@ jobs:
           export HOSTED_ZONE_ID=${{ secrets.HOSTED_ZONE_ID }}
           export DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
           export SUB_DOMAIN=${{ secrets.SUB_DOMAIN }}
-          npm run update-env
-          npm run update-lambda
+          npm run deploy

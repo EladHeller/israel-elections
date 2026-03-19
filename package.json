@@ -12,12 +12,8 @@
     "type-check": "tsc --noEmit",
     "upload-client": "node uploadClient.js",
     "build": "rm -rf dist && tsc",
-    "clear-cache": "tsx ./infra/CD/cloudfront.ts",
-    "update-lambda": "tsx ./infra/CD/update-lambda.ts",
-    "update-s3": "tsx ./infra/CD/update-s3.ts",
-    "update-env": "tsx ./infra/CD/update-env.ts",
+    "deploy": "tsx ./infra/CD/deploy-all.ts",
     "test:ci": "npm run type-check && npm run test:coverage && npm run lint:test",
-    "deploy": "sh ./infra/CD/deploy.sh",
     "build:client": "cd elections-client && npm ci && npm run build"
   },
   "author": "",
