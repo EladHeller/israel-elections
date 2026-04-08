@@ -35,7 +35,7 @@
     "@aws-sdk/client-s3": "^3.1025.0",
     "@aws-sdk/lib-storage": "^3.1021.0",
     "convict": "^6.2.4",
-    "csv-parse": "^6.1.0",
+    "csv-parse": "^6.2.1",
     "encoding": "^0.1.13",
     "mime-types": "^3.0.2"
   },
