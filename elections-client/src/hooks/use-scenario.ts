@@ -154,7 +154,8 @@ export const useScenario = ({
   };
 
   const onVoteChange = (party: string, value: string | number) => {
-    const parsed = Number.parseInt(String(value), 10);
+    const rawValue = String(value).trim();
+    const parsed = rawValue === '' ? 0 : Number.parseInt(rawValue, 10);
     if (Number.isNaN(parsed)) return;
     const nextVotes = Math.max(0, parsed);
     setScenarioVoteData((prev) => ({
@@ -176,7 +177,8 @@ export const useScenario = ({
   };
 
   const onBlockPercentageChange = (nextBlockPercentagePercent: string | number) => {
-    const parsed = Number.parseFloat(String(nextBlockPercentagePercent).replace(',', '.'));
+    const rawValue = String(nextBlockPercentagePercent).trim();
+    const parsed = rawValue === '' ? 0 : Number.parseFloat(rawValue.replace(',', '.'));
     if (!Number.isFinite(parsed)) return;
     const normalized = Math.min(100, Math.max(0, parsed));
     setScenarioConfig((prev) =>
@@ -242,4 +244,3 @@ export const useScenario = ({
     isEdited,
   };
 };
-

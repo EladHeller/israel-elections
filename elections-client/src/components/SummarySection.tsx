@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { algorithmLabel, numberFormat } from '../lib/ui-helpers';
 import type { ElectionConfig } from '../types';
 
@@ -22,8 +22,17 @@ const SummarySection: React.FC<SummarySectionProps> = ({
   isEdited,
   onBlockPercentageChange,
   onAlgorithmChange,
-}) => (
-  <section className="summary">
+}) => {
+  const [blockPercentageDraft, setBlockPercentageDraft] = useState(
+    String((activeConfig.blockPercentage * 100).toFixed(2)),
+  );
+
+  useEffect(() => {
+    setBlockPercentageDraft(String((activeConfig.blockPercentage * 100).toFixed(2)));
+  }, [activeConfig.blockPercentage]);
+
+  return (
+    <section className="summary">
     <div className="card">
       <div className="card-label">סה"כ קולות כשרים</div>
       <div className="card-value">{numberFormat.format(sumVotes)}</div>
@@ -41,8 +50,9 @@ const SummarySection: React.FC<SummarySectionProps> = ({
             min="0"
             max="100"
             step="0.01"
-            value={Number((activeConfig.blockPercentage * 100).toFixed(2))}
-            onChange={(e) => onBlockPercentageChange(e.target.value)}
+            value={blockPercentageDraft}
+            onChange={(e) => setBlockPercentageDraft(e.target.value)}
+            onBlur={() => onBlockPercentageChange(blockPercentageDraft)}
           />
           <span className="block-percentage-suffix">%</span>
         </label>
@@ -68,7 +78,7 @@ const SummarySection: React.FC<SummarySectionProps> = ({
       </select>
     </div>
   </section>
-);
+  );
+};
 
 export default SummarySection;
-

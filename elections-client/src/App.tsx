@@ -23,7 +23,7 @@ const sumVotes = (data: VoteData): number =>
 const filterRealParties = (data: VoteData) =>
   Object.entries(data)
     .filter(([party]) => !NON_PARTY_KEYS.has(party))
-    .filter(([, value]) => value && value.votes > 0);
+    .filter(([, value]) => value && Number.isFinite(value.votes));
 
 export default function App() {
   const [showBelowBlock, setShowBelowBlock] = useState(false);
@@ -236,6 +236,7 @@ export default function App() {
           <section className="grid grid-single">
             <PartyPanel
               isLatestElection={isLatestElection}
+              isEdited={isEdited}
               parties={parties}
               passedParties={passedParties}
               blocs={blocs}
