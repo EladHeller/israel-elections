@@ -118,6 +118,17 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
   const [hoveredZone, setHoveredZone] = React.useState<string | null>(null);
   const [selectedParty, setSelectedParty] = React.useState<string | null>(null);
   const [touchSelectionMode, setTouchSelectionMode] = React.useState(false);
+  const [isTouchDevice, setIsTouchDevice] = React.useState(false);
+  const touchPartyRef = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsTouchDevice(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
   if (editableParties.length === 0) return null;
 
   const [gushAKey, gushBKey] = blocs.order || Object.keys(blocs.blocks);
@@ -137,10 +148,18 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
   };
 
   const handleChipPointerDown = (party: string) => (event: React.PointerEvent) => {
-    if (event.pointerType === 'mouse') return;
+    if (event.pointerType === 'mouse' || isTouchDevice) return;
     setTouchSelectionMode(true);
     setSelectedParty(party);
     setDraggedParty(null);
+  };
+
+  const handleChipTouchStart = (party: string) => (event: React.TouchEvent) => {
+    touchPartyRef.current = party;
+    setTouchSelectionMode(true);
+    setSelectedParty(party);
+    setDraggedParty(null);
+    event.preventDefault();
   };
 
   const handleDragEnd = () => {
@@ -166,13 +185,19 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
     setTouchSelectionMode(false);
   };
 
-  const handleTouchAssign = (targetBloc: string | null) => {
-    if (!touchSelectionMode || !selectedParty) return;
-    onPartyBlocChange(selectedParty, targetBloc);
+  const assignPartyToBloc = (party: string, targetBloc: string | null) => {
+    onPartyBlocChange(party, targetBloc);
     setDraggedParty(null);
     setSelectedParty(null);
     setHoveredZone(null);
     setTouchSelectionMode(false);
+    touchPartyRef.current = null;
+  };
+
+  const handleTouchAssign = (targetBloc: string | null) => {
+    const party = touchPartyRef.current || selectedParty;
+    if (!touchSelectionMode || !party) return;
+    assignPartyToBloc(party, targetBloc);
   };
 
   const allowDrop = (event: React.DragEvent) => {
@@ -200,6 +225,9 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
     onPointerUp: () => {
       handleTouchAssign(targetBloc);
     },
+    onTouchEnd: () => {
+      handleTouchAssign(targetBloc);
+    },
     onMouseEnter: () => {
       if (!selectedParty) return;
       setHoveredZone(targetBloc ?? '__unassigned__');
@@ -210,9 +238,7 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
     },
     onClick: () => {
       if (!selectedParty) return;
-      onPartyBlocChange(selectedParty, targetBloc);
-      setSelectedParty(null);
-      setHoveredZone(null);
+      assignPartyToBloc(selectedParty, targetBloc);
     },
   });
 
@@ -239,12 +265,18 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
                 key={party.party}
                 type="button"
                 className={`bloc-chip ${selectedParty === party.party ? 'is-selected' : ''}`}
-                draggable
+                draggable={!isTouchDevice}
                 onDragStart={handleDragStart(party.party)}
                 onDragEnd={handleDragEnd}
-                onPointerDown={handleChipPointerDown(party.party)}
-                onClick={() => handleChipClick(party.party)}
-                style={{ touchAction: 'manipulation' }}
+                onPointerDown={isTouchDevice ? undefined : handleChipPointerDown(party.party)}
+                onTouchStart={isTouchDevice ? handleChipTouchStart(party.party) : undefined}
+                onClick={() => {
+                  if (isTouchDevice) {
+                    setTouchSelectionMode(true);
+                  }
+                  handleChipClick(party.party);
+                }}
+                style={{ touchAction: isTouchDevice ? 'none' : 'manipulation' }}
                 title="גרור לגוש אחר או ללא גוש"
               >
                 {getPartyName(party.party)}
@@ -268,12 +300,18 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
                 key={party.party}
                 type="button"
                 className={`bloc-chip bloc-chip-unassigned ${selectedParty === party.party ? 'is-selected' : ''} ${draggedParty === party.party ? 'is-dragging' : ''}`}
-                draggable
+                draggable={!isTouchDevice}
                 onDragStart={handleDragStart(party.party)}
                 onDragEnd={handleDragEnd}
-                onPointerDown={handleChipPointerDown(party.party)}
-                onClick={() => handleChipClick(party.party)}
-                style={{ touchAction: 'manipulation' }}
+                onPointerDown={isTouchDevice ? undefined : handleChipPointerDown(party.party)}
+                onTouchStart={isTouchDevice ? handleChipTouchStart(party.party) : undefined}
+                onClick={() => {
+                  if (isTouchDevice) {
+                    setTouchSelectionMode(true);
+                  }
+                  handleChipClick(party.party);
+                }}
+                style={{ touchAction: isTouchDevice ? 'none' : 'manipulation' }}
                 title="גרור לגוש א' או גוש ב'"
               >
                 <span className="bloc-editor-party" title={party.party}>
@@ -301,12 +339,18 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
                 key={party.party}
                 type="button"
                 className={`bloc-chip ${selectedParty === party.party ? 'is-selected' : ''}`}
-                draggable
+                draggable={!isTouchDevice}
                 onDragStart={handleDragStart(party.party)}
                 onDragEnd={handleDragEnd}
-                onPointerDown={handleChipPointerDown(party.party)}
-                onClick={() => handleChipClick(party.party)}
-                style={{ touchAction: 'manipulation' }}
+                onPointerDown={isTouchDevice ? undefined : handleChipPointerDown(party.party)}
+                onTouchStart={isTouchDevice ? handleChipTouchStart(party.party) : undefined}
+                onClick={() => {
+                  if (isTouchDevice) {
+                    setTouchSelectionMode(true);
+                  }
+                  handleChipClick(party.party);
+                }}
+                style={{ touchAction: isTouchDevice ? 'none' : 'manipulation' }}
                 title="גרור לגוש אחר או ללא גוש"
               >
                 {getPartyName(party.party)}
