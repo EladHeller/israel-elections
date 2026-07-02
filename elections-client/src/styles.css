@@ -434,6 +434,22 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  align-items: stretch;
+}
+
+.bloc-editor-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 10px;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.bloc-editor-column.is-drop-target {
+  border-color: var(--accent);
+  background: rgba(246, 170, 28, 0.08);
 }
 
 .bloc-editor-column-title {
@@ -444,9 +460,12 @@ body {
 }
 
 .bloc-editor-chips {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  flex: 1;
+  min-height: 0;
   gap: 6px;
-  max-height: 210px;
   overflow: auto;
 }
 
@@ -454,6 +473,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: fit-content;
   padding: 10px 20px;
   border-radius: 999px;
   border: 1px solid var(--ink-20);
@@ -464,25 +484,26 @@ body {
   white-space: nowrap;
 }
 
+.bloc-chip.is-selected {
+  border-color: var(--accent);
+  background: rgba(246, 170, 28, 0.16);
+  color: var(--ink-90);
+  box-shadow: 0 0 0 2px rgba(246, 170, 28, 0.18);
+}
+
 .bloc-chip.small {
   font-size: 14px;
   padding: 6px 12px;
 }
 
-.bloc-editor-unassigned-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.bloc-editor-actions {
-  display: flex;
-  gap: 4px;
+.bloc-chip-unassigned {
+  min-width: 0;
+  max-width: 100%;
+  text-align: start;
 }
 
 .bloc-editor-column-unassigned .bloc-editor-chips {
-  max-height: 260px;
+  flex: 1;
 }
 
 .margins-head {
@@ -742,6 +763,40 @@ body {
 
   .controls label {
     flex: 1 1 200px;
+  }
+
+  .bloc-editor-columns {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'unassigned unassigned'
+      'bloc-a bloc-b';
+  }
+
+  .bloc-editor-column-a {
+    grid-area: bloc-a;
+  }
+
+  .bloc-editor-column-unassigned {
+    grid-area: unassigned;
+    align-items: center;
+  }
+
+  .bloc-editor-column-unassigned .bloc-editor-column-title {
+    text-align: center;
+    width: 100%;
+  }
+
+  .bloc-editor-column-unassigned .bloc-editor-chips {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .bloc-editor-column-b {
+    grid-area: bloc-b;
+  }
+
+  .bloc-editor-column {
+    min-width: 0;
   }
 }
 

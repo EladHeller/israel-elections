@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { numberFormat, getStablePartyColor } from '../lib/ui-helpers';
 import type { BlocsConfig } from '../types';
 
@@ -114,6 +114,21 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
   getPartyName,
 }) => {
   const editableParties = parties || [];
+  const [draggedParty, setDraggedParty] = React.useState<string | null>(null);
+  const [hoveredZone, setHoveredZone] = React.useState<string | null>(null);
+  const [selectedParty, setSelectedParty] = React.useState<string | null>(null);
+  const [touchSelectionMode, setTouchSelectionMode] = React.useState(false);
+  const [isTouchDevice, setIsTouchDevice] = React.useState(false);
+  const touchPartyRef = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsTouchDevice(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
   if (editableParties.length === 0) return null;
 
   const [gushAKey, gushBKey] = blocs.order || Object.keys(blocs.blocks);
@@ -125,13 +140,107 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
       !partyToBloc[p.party] || ![gushAKey, gushBKey].includes(partyToBloc[p.party] ?? ''),
   );
 
-  const moveTo = (party: string, key: string) => {
-    onPartyBlocChange(party, key);
+  const handleDragStart = (party: string) => (event: React.DragEvent) => {
+    setSelectedParty(party);
+    setDraggedParty(party);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', party);
   };
 
-  const clearFromGroup = (party: string) => {
-    onPartyBlocChange(party, null);
+  const handleChipPointerDown = (party: string) => (event: React.PointerEvent) => {
+    if (event.pointerType === 'mouse' || isTouchDevice) return;
+    setTouchSelectionMode(true);
+    setSelectedParty(party);
+    setDraggedParty(null);
   };
+
+  const handleChipTouchStart = (party: string) => (event: React.TouchEvent) => {
+    touchPartyRef.current = party;
+    setTouchSelectionMode(true);
+    setSelectedParty(party);
+    setDraggedParty(null);
+    event.preventDefault();
+  };
+
+  const handleDragEnd = () => {
+    setDraggedParty(null);
+    setHoveredZone(null);
+    setSelectedParty(null);
+    setTouchSelectionMode(false);
+  };
+
+  const handleChipClick = (party: string) => {
+    if (touchSelectionMode) return;
+    setSelectedParty((current) => (current === party ? null : party));
+  };
+
+  const handleDrop = (targetBloc: string | null) => (event: React.DragEvent) => {
+    event.preventDefault();
+    const party = draggedParty || selectedParty || event.dataTransfer.getData('text/plain');
+    if (!party) return;
+    onPartyBlocChange(party, targetBloc);
+    setDraggedParty(null);
+    setSelectedParty(null);
+    setHoveredZone(null);
+    setTouchSelectionMode(false);
+  };
+
+  const assignPartyToBloc = (party: string, targetBloc: string | null) => {
+    onPartyBlocChange(party, targetBloc);
+    setDraggedParty(null);
+    setSelectedParty(null);
+    setHoveredZone(null);
+    setTouchSelectionMode(false);
+    touchPartyRef.current = null;
+  };
+
+  const handleTouchAssign = (targetBloc: string | null) => {
+    const party = touchPartyRef.current || selectedParty;
+    if (!touchSelectionMode || !party) return;
+    assignPartyToBloc(party, targetBloc);
+  };
+
+  const allowDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+  };
+
+  const handleDragEnter = (targetBloc: string | null) => (event: React.DragEvent) => {
+    event.preventDefault();
+    setHoveredZone(targetBloc ?? '__unassigned__');
+  };
+
+  const handleDragLeave = (targetBloc: string | null) => (event: React.DragEvent) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+    const zoneKey = targetBloc ?? '__unassigned__';
+    if (hoveredZone === zoneKey) {
+      setHoveredZone(null);
+    }
+  };
+
+  const dropZoneProps = (targetBloc: string | null) => ({
+    onDragEnter: handleDragEnter(targetBloc),
+    onDragOver: allowDrop,
+    onDragLeave: handleDragLeave(targetBloc),
+    onDrop: handleDrop(targetBloc),
+    onPointerUp: () => {
+      handleTouchAssign(targetBloc);
+    },
+    onTouchEnd: () => {
+      handleTouchAssign(targetBloc);
+    },
+    onMouseEnter: () => {
+      if (!selectedParty) return;
+      setHoveredZone(targetBloc ?? '__unassigned__');
+    },
+    onMouseLeave: () => {
+      if (!selectedParty) return;
+      setHoveredZone(null);
+    },
+    onClick: () => {
+      if (!selectedParty) return;
+      assignPartyToBloc(selectedParty, targetBloc);
+    },
+  });
 
   return (
     <div className="bloc-editor">
@@ -139,18 +248,36 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
         <span className="bloc-editor-title">שיוך מפלגות לגוש א / גוש ב</span>
       </div>
       <div className="bloc-editor-columns">
-        <div className="bloc-editor-column">
+        <div
+          className={`bloc-editor-column bloc-editor-column-a ${
+            (hoveredZone === gushAKey || (selectedParty && hoveredZone === gushAKey))
+              ? 'is-drop-target'
+              : ''
+          }`}
+          {...dropZoneProps(gushAKey)}
+        >
           <div className="bloc-editor-column-title">
             {blocs.blocks[gushAKey].label}
           </div>
-          <div className="bloc-editor-chips">
+          <div className="bloc-editor-chips" {...dropZoneProps(gushAKey)}>
             {groupA.map((party) => (
               <button
                 key={party.party}
                 type="button"
-                className="bloc-chip"
-                onClick={() => clearFromGroup(party.party)}
-                title="הסר מהגוש"
+                className={`bloc-chip ${selectedParty === party.party ? 'is-selected' : ''}`}
+                draggable={!isTouchDevice}
+                onDragStart={handleDragStart(party.party)}
+                onDragEnd={handleDragEnd}
+                onPointerDown={isTouchDevice ? undefined : handleChipPointerDown(party.party)}
+                onTouchStart={isTouchDevice ? handleChipTouchStart(party.party) : undefined}
+                onClick={() => {
+                  if (isTouchDevice) {
+                    setTouchSelectionMode(true);
+                  }
+                  handleChipClick(party.party);
+                }}
+                style={{ touchAction: isTouchDevice ? 'none' : 'manipulation' }}
+                title="גרור לגוש אחר או ללא גוש"
               >
                 {getPartyName(party.party)}
               </button>
@@ -158,47 +285,73 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
           </div>
         </div>
 
-        <div className="bloc-editor-column bloc-editor-column-unassigned">
+        <div
+          className={`bloc-editor-column bloc-editor-column-unassigned ${
+            (hoveredZone === '__unassigned__' || (selectedParty && hoveredZone === '__unassigned__'))
+              ? 'is-drop-target'
+              : ''
+          }`}
+          {...dropZoneProps(null)}
+        >
           <div className="bloc-editor-column-title">ללא גוש</div>
-          <div className="bloc-editor-chips">
+          <div className="bloc-editor-chips" {...dropZoneProps(null)}>
             {unassigned.map((party) => (
-              <div key={party.party} className="bloc-editor-unassigned-row">
+              <button
+                key={party.party}
+                type="button"
+                className={`bloc-chip bloc-chip-unassigned ${selectedParty === party.party ? 'is-selected' : ''} ${draggedParty === party.party ? 'is-dragging' : ''}`}
+                draggable={!isTouchDevice}
+                onDragStart={handleDragStart(party.party)}
+                onDragEnd={handleDragEnd}
+                onPointerDown={isTouchDevice ? undefined : handleChipPointerDown(party.party)}
+                onTouchStart={isTouchDevice ? handleChipTouchStart(party.party) : undefined}
+                onClick={() => {
+                  if (isTouchDevice) {
+                    setTouchSelectionMode(true);
+                  }
+                  handleChipClick(party.party);
+                }}
+                style={{ touchAction: isTouchDevice ? 'none' : 'manipulation' }}
+                title="גרור לגוש א' או גוש ב'"
+              >
                 <span className="bloc-editor-party" title={party.party}>
                   {getPartyName(party.party)}
                 </span>
-                <div className="bloc-editor-actions">
-                  <button
-                    type="button"
-                    className="bloc-chip small"
-                    onClick={() => moveTo(party.party, gushAKey)}
-                  >
-                    {blocs.blocks[gushAKey].label}
-                  </button>
-                  <button
-                    type="button"
-                    className="bloc-chip small"
-                    onClick={() => moveTo(party.party, gushBKey)}
-                  >
-                    {blocs.blocks[gushBKey].label}
-                  </button>
-                </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
 
-        <div className="bloc-editor-column">
+        <div
+          className={`bloc-editor-column bloc-editor-column-b ${
+            (hoveredZone === gushBKey || (selectedParty && hoveredZone === gushBKey))
+              ? 'is-drop-target'
+              : ''
+          }`}
+          {...dropZoneProps(gushBKey)}
+        >
           <div className="bloc-editor-column-title">
             {blocs.blocks[gushBKey].label}
           </div>
-          <div className="bloc-editor-chips">
+          <div className="bloc-editor-chips" {...dropZoneProps(gushBKey)}>
             {groupB.map((party) => (
               <button
                 key={party.party}
                 type="button"
-                className="bloc-chip"
-                onClick={() => clearFromGroup(party.party)}
-                title="הסר מהגוש"
+                className={`bloc-chip ${selectedParty === party.party ? 'is-selected' : ''}`}
+                draggable={!isTouchDevice}
+                onDragStart={handleDragStart(party.party)}
+                onDragEnd={handleDragEnd}
+                onPointerDown={isTouchDevice ? undefined : handleChipPointerDown(party.party)}
+                onTouchStart={isTouchDevice ? handleChipTouchStart(party.party) : undefined}
+                onClick={() => {
+                  if (isTouchDevice) {
+                    setTouchSelectionMode(true);
+                  }
+                  handleChipClick(party.party);
+                }}
+                style={{ touchAction: isTouchDevice ? 'none' : 'manipulation' }}
+                title="גרור לגוש אחר או ללא גוש"
               >
                 {getPartyName(party.party)}
               </button>
@@ -232,45 +385,65 @@ const PartyBars: React.FC<PartyBarsProps> = ({
   useCoalitionColors,
   editableVoteData,
   onVoteChange,
-}) => (
-  <div className="party-bars">
-    {parties.map((party) => {
-      const blocKey = partyToBloc[party.party] || 'other';
-      const color = useCoalitionColors
-        ? blocs.blocks[blocKey]?.color || 'var(--ink-50)'
-        : getStablePartyColor(party.party);
-      const width = maxMandats > 0 ? (party.mandats / maxMandats) * 100 : 0;
-      return (
-        <div key={party.party} className="party-row">
-          <div className="party-meta" title={party.party}>
-            <span className="party-name">{getPartyName(party.party)}</span>
-            <span className="party-seats">
-              {party.mandats}
-              <DeltaChip delta={partySeatDeltas[party.party]} />
-            </span>
+}) => {
+  const [voteDrafts, setVoteDrafts] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setVoteDrafts(
+      Object.fromEntries(
+        parties.map((party) => [
+          party.party,
+          String(editableVoteData[party.party]?.votes ?? party.votes),
+        ]),
+      ),
+    );
+  }, [parties, editableVoteData]);
+
+  return (
+    <div className="party-bars">
+      {parties.map((party) => {
+        const blocKey = partyToBloc[party.party] || 'other';
+        const color = useCoalitionColors
+          ? blocs.blocks[blocKey]?.color || 'var(--ink-50)'
+          : getStablePartyColor(party.party);
+        const width = maxMandats > 0 ? (party.mandats / maxMandats) * 100 : 0;
+        const draftValue =
+          voteDrafts[party.party] ?? String(editableVoteData[party.party]?.votes ?? party.votes);
+        return (
+          <div key={party.party} className="party-row">
+            <div className="party-meta" title={party.party}>
+              <span className="party-name">{getPartyName(party.party)}</span>
+              <span className="party-seats">
+                {party.mandats}
+                <DeltaChip delta={partySeatDeltas[party.party]} />
+              </span>
+            </div>
+            <div className="party-bar">
+              <div
+                className="party-bar-fill"
+                style={{ width: `${width}%`, background: color }}
+              />
+            </div>
+            <div className="party-votes">
+              <input
+                className="party-vote-input"
+                type="number"
+                min="0"
+                step="1"
+                value={draftValue}
+                onChange={(e) =>
+                  setVoteDrafts((prev) => ({ ...prev, [party.party]: e.target.value }))
+                }
+                onBlur={() => onVoteChange(party.party, voteDrafts[party.party] ?? draftValue)}
+              />
+              <span>קולות</span>
+            </div>
           </div>
-          <div className="party-bar">
-            <div
-              className="party-bar-fill"
-              style={{ width: `${width}%`, background: color }}
-            />
-          </div>
-          <div className="party-votes">
-            <input
-              className="party-vote-input"
-              type="number"
-              min="0"
-              step="1"
-              value={editableVoteData[party.party]?.votes ?? party.votes}
-              onChange={(e) => onVoteChange(party.party, e.target.value)}
-            />
-            <span>קולות</span>
-          </div>
-        </div>
-      );
-    })}
-  </div>
-);
+        );
+      })}
+    </div>
+  );
+};
 
 interface SeatMargin {
   party: string;
@@ -383,6 +556,7 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
 
 interface PartyPanelProps {
   isLatestElection: boolean;
+  isEdited: boolean;
   parties: PartySummary[];
   passedParties: PartySummary[];
   blocs: BlocsConfig;
@@ -398,6 +572,7 @@ interface PartyPanelProps {
 
 export const PartyPanel: React.FC<PartyPanelProps> = ({
   isLatestElection,
+  isEdited,
   parties,
   passedParties,
   blocs,
@@ -413,9 +588,11 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
   <div className="panel">
     <div className="panel-head">
       <h2>מפלגות</h2>
-      <button type="button" className="ghost" onClick={resetScenario}>
-        איפוס לתוצאות מקור
-      </button>
+      {isEdited && (
+        <button type="button" className="ghost" onClick={resetScenario}>
+          איפוס לתוצאות מקור
+        </button>
+      )}
     </div>
     <PartyBars
       parties={parties}
