@@ -31,6 +31,8 @@ export interface BlocsConfig {
 
 export type PartyNames = Record<string, string>;
 
+export type AppViewMode = 'results' | 'simulator' | 'summary';
+
 export type ElectionPhase =
   | 'beforeLists'
   | 'listsFinal'

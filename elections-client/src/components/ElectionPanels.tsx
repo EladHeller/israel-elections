@@ -364,6 +364,7 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
 };
 
 interface PartyBarsProps {
+  editable: boolean;
   parties: PartySummary[];
   blocs: BlocsConfig;
   partyToBloc: Record<string, string | null | undefined>;
@@ -376,6 +377,7 @@ interface PartyBarsProps {
 }
 
 const PartyBars: React.FC<PartyBarsProps> = ({
+  editable,
   parties,
   blocs,
   partyToBloc,
@@ -425,17 +427,23 @@ const PartyBars: React.FC<PartyBarsProps> = ({
               />
             </div>
             <div className="party-votes">
-              <input
-                className="party-vote-input"
-                type="number"
-                min="0"
-                step="1"
-                value={draftValue}
-                onChange={(e) =>
-                  setVoteDrafts((prev) => ({ ...prev, [party.party]: e.target.value }))
-                }
-                onBlur={() => onVoteChange(party.party, voteDrafts[party.party] ?? draftValue)}
-              />
+              {editable ? (
+                <input
+                  className="party-vote-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={draftValue}
+                  onChange={(e) =>
+                    setVoteDrafts((prev) => ({ ...prev, [party.party]: e.target.value }))
+                  }
+                  onBlur={() => onVoteChange(party.party, voteDrafts[party.party] ?? draftValue)}
+                />
+              ) : (
+                <span className="party-vote-value">
+                  {numberFormat.format(party.votes)}
+                </span>
+              )}
               <span>קולות</span>
             </div>
           </div>
@@ -475,6 +483,7 @@ const SeatMargins: React.FC<SeatMarginsProps> = ({ margins, getPartyName }) => (
 );
 
 interface AgreementsPanelProps {
+  editable: boolean;
   agreements: [string, string][];
   getPartyName: (party: string) => string;
   removeAgreement: (a: string, b: string) => void;
@@ -488,6 +497,7 @@ interface AgreementsPanelProps {
 }
 
 const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
+  editable,
   agreements,
   getPartyName,
   removeAgreement,
@@ -509,42 +519,46 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
           <span>{getPartyName(a)}</span>
           <span className="agreement-plus">+</span>
           <span>{getPartyName(b)}</span>
-          <button
-            type="button"
-            className="ghost danger"
-            onClick={() => removeAgreement(a, b)}
-          >
-            הסר
-          </button>
+          {editable && (
+            <button
+              type="button"
+              className="ghost danger"
+              onClick={() => removeAgreement(a, b)}
+            >
+              הסר
+            </button>
+          )}
         </div>
       ))}
     </div>
 
-    <div className="add-agreement">
-      <select value={addAgreementA} onChange={(e) => setAddAgreementA(e.target.value)}>
-        <option value="">מפלגה א׳</option>
-        {agreementSelectableParties.map((party) => (
-          <option key={party} value={party}>
-            {getPartyName(party)}
-          </option>
-        ))}
-      </select>
-      <select value={addAgreementB} onChange={(e) => setAddAgreementB(e.target.value)}>
-        <option value="">מפלגה ב׳</option>
-        {agreementSelectableParties
-          .filter((party) => party !== addAgreementA)
-          .map((party) => (
+    {editable && (
+      <div className="add-agreement">
+        <select value={addAgreementA} onChange={(e) => setAddAgreementA(e.target.value)}>
+          <option value="">מפלגה א׳</option>
+          {agreementSelectableParties.map((party) => (
             <option key={party} value={party}>
               {getPartyName(party)}
             </option>
           ))}
-      </select>
-      <button type="button" onClick={addAgreement}>
-        הוספת הסכם
-      </button>
-    </div>
+        </select>
+        <select value={addAgreementB} onChange={(e) => setAddAgreementB(e.target.value)}>
+          <option value="">מפלגה ב׳</option>
+          {agreementSelectableParties
+            .filter((party) => party !== addAgreementA)
+            .map((party) => (
+              <option key={party} value={party}>
+                {getPartyName(party)}
+              </option>
+            ))}
+        </select>
+        <button type="button" onClick={addAgreement}>
+          הוספת הסכם
+        </button>
+      </div>
+    )}
 
-    {!agreementValidation.isValid && (
+    {editable && !agreementValidation.isValid && (
       <div className="validation-errors">
         {agreementValidation.errors.map((msg) => (
           <div key={msg}>{msg}</div>
@@ -555,6 +569,7 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
 );
 
 interface PartyPanelProps {
+  editable: boolean;
   isLatestElection: boolean;
   isEdited: boolean;
   parties: PartySummary[];
@@ -571,6 +586,7 @@ interface PartyPanelProps {
 }
 
 export const PartyPanel: React.FC<PartyPanelProps> = ({
+  editable,
   isLatestElection,
   isEdited,
   parties,
@@ -588,13 +604,14 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
   <div className="panel">
     <div className="panel-head">
       <h2>מפלגות</h2>
-      {isEdited && (
+      {editable && isEdited && (
         <button type="button" className="ghost" onClick={resetScenario}>
           איפוס לתוצאות מקור
         </button>
       )}
     </div>
     <PartyBars
+      editable={editable}
       parties={parties}
       blocs={blocs}
       partyToBloc={partyToBloc}
@@ -617,6 +634,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
 );
 
 interface BlocsDistributionPanelProps {
+  editable: boolean;
   blocs: BlocsConfig;
   blocData: number[];
   blocColors: string[];
@@ -630,6 +648,7 @@ interface BlocsDistributionPanelProps {
 }
 
 export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
+  editable,
   blocs,
   blocData,
   blocColors,
@@ -651,17 +670,20 @@ export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
         <BlocLegend blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas} />
       </div>
     </div>
-    <BlocEditor
-      blocs={blocs}
-      partyToBloc={partyToBloc}
-      parties={passedParties}
-      onPartyBlocChange={onPartyBlocChange}
-      getPartyName={getPartyName}
-    />
+    {editable && (
+      <BlocEditor
+        blocs={blocs}
+        partyToBloc={partyToBloc}
+        parties={passedParties}
+        onPartyBlocChange={onPartyBlocChange}
+        getPartyName={getPartyName}
+      />
+    )}
   </div>
 );
 
 interface BottomPanelsProps {
+  editable: boolean;
   margins: SeatMargin[];
   getPartyName: (party: string) => string;
   scenarioConfig: { agreements?: [string, string][] };
@@ -676,6 +698,7 @@ interface BottomPanelsProps {
 }
 
 export const BottomPanels: React.FC<BottomPanelsProps> = ({
+  editable,
   margins,
   getPartyName,
   scenarioConfig,
@@ -702,6 +725,7 @@ export const BottomPanels: React.FC<BottomPanelsProps> = ({
     <div className="panel">
       <h2>הסכמי עודפים</h2>
       <AgreementsPanel
+        editable={editable}
         agreements={scenarioConfig.agreements || []}
         getPartyName={getPartyName}
         removeAgreement={removeAgreement}

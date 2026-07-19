@@ -1,4 +1,6 @@
 import React from 'react';
+import type { AppViewMode } from '../types';
+
 interface AppHeaderProps {
   statusText: string;
   showViewControl: boolean;
@@ -6,9 +8,15 @@ interface AppHeaderProps {
   currentElection: string | null;
   setCurrentElection: (id: string) => void;
   availableElections: string[];
-  viewMode: 'simulator' | 'summary';
-  setViewMode: (mode: 'simulator' | 'summary') => void;
+  viewMode: AppViewMode;
+  setViewMode: (mode: AppViewMode) => void;
 }
+
+const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
+  { value: 'results', label: 'תוצאות' },
+  { value: 'simulator', label: 'סימולטור' },
+  { value: 'summary', label: 'כל הכנסות' },
+];
 
 const AppHeader: React.FC<AppHeaderProps> = ({
   statusText,
@@ -30,23 +38,29 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     </div>
     <div className="controls">
       {showViewControl && (
-        <label>
+        <div className="view-control">
           <span>תצוגה</span>
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value as 'simulator' | 'summary')}
-          >
-            <option value="simulator">סימולטור</option>
-            <option value="summary">סיכום כל הכנסות</option>
-          </select>
-        </label>
+          <div className="view-switcher" role="group" aria-label="בחירת תצוגה">
+            {VIEW_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={viewMode === option.value ? 'is-active' : ''}
+                aria-pressed={viewMode === option.value}
+                onClick={() => setViewMode(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
       <label>
         <span>כנסת</span>
         <select
           value={currentElection ?? ''}
           onChange={(e) => setCurrentElection(e.target.value)}
-          disabled={viewMode === 'summary'}
+          disabled={showViewControl && viewMode === 'summary'}
         >
           {availableElections.map((election) => (
             <option key={election} value={election}>

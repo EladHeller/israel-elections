@@ -77,6 +77,44 @@ body {
   color: var(--ink-50);
 }
 
+.view-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ink-50);
+}
+
+.view-switcher {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--ink-20);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.view-switcher button {
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 13px;
+  background: transparent;
+  color: var(--ink-50);
+  font-family: 'Assistant', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.view-switcher button:hover {
+  color: var(--ink-90);
+}
+
+.view-switcher button.is-active {
+  background: var(--ink-70);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(28, 37, 65, 0.18);
+}
+
 .controls {
   display: flex;
   align-items: flex-end;
@@ -121,6 +159,18 @@ body {
 .card-value {
   font-size: 22px;
   font-weight: 700;
+}
+
+.card-value-detail {
+  color: var(--ink-50);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.party-vote-value {
+  color: var(--ink-90);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .algorithm-select {
@@ -796,6 +846,11 @@ body {
 }
 
 @media (max-width: 960px) {
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .summary {
     grid-template-columns: 1fr;
   }
@@ -838,6 +893,14 @@ body {
 
   .controls {
     width: 100%;
+  }
+
+  .view-control {
+    flex: 1 1 100%;
+  }
+
+  .view-switcher button {
+    flex: 1;
   }
 
   .controls label {
