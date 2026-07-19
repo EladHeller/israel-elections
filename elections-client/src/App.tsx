@@ -17,6 +17,7 @@ import { useScenario } from './hooks/use-scenario';
 import { computeSeatDeltas } from './lib/scenario';
 import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
 import { formatTime } from './lib/ui-helpers';
+import { hasMandate } from './lib/calc';
 import { DEFAULT_VIEW_MODE, selectViewData, viewUsesScenario } from './lib/view-mode';
 import type { AppViewMode, PartyResult, ResultsMap, VoteData } from './types';
 
@@ -31,7 +32,7 @@ const filterRealParties = (data: VoteData) =>
     .filter(([, value]) => value && Number.isFinite(value.votes));
 
 export default function App() {
-  const [showBelowBlock, setShowBelowBlock] = useState(false);
+  const [showAllParties, setShowAllParties] = useState(false);
   const [viewMode, setViewMode] = useState<AppViewMode>(DEFAULT_VIEW_MODE);
   const [partyToBlocOverrides, setPartyToBlocOverrides] = useState<
     Record<string, Record<string, string | null>>
@@ -172,16 +173,16 @@ export default function App() {
   const invalidVotesDerived = Math.max(0, configTotalVotes - totalVotes);
 
   const allParties = filterRealParties(voteData)
+    .filter(([, { votes }]) => votes > 0)
     .map(([party, { votes }]) => ({
       party,
       votes,
       mandats: (realResults[party] as PartyResult | undefined)?.mandats || 0,
-      passed: votes >= blockThreshold,
     }))
     .sort((a, b) => b.mandats - a.mandats || b.votes - a.votes);
 
-  const passedParties = allParties.filter((party) => party.passed);
-  const parties = showBelowBlock ? allParties : passedParties;
+  const mandateParties = allParties.filter(hasMandate);
+  const parties = showAllParties ? allParties : mandateParties;
 
   const baseSumVotes = sumVotes(baseVoteData);
   const baseBlockThreshold = Math.ceil(baseSumVotes * baseConfig.blockPercentage);
@@ -300,15 +301,15 @@ export default function App() {
               isLatestElection={isLatestElection}
               isEdited={displayedIsEdited}
               parties={parties}
-              passedParties={passedParties}
+              mandateParties={mandateParties}
               blocs={blocs}
               partyToBloc={partyToBloc}
               getPartyName={getPartyName}
               partySeatDeltas={displayedPartySeatDeltas}
               normalizedScenario={{ voteData: displayedVoteData }}
               onVoteChange={onVoteChange}
-              showBelowBlock={showBelowBlock}
-              setShowBelowBlock={setShowBelowBlock}
+              showAllParties={showAllParties}
+              setShowAllParties={setShowAllParties}
               resetScenario={resetScenario}
             />
           </section>
@@ -340,7 +341,7 @@ export default function App() {
               partyToBloc={partyToBloc}
               onPartyBlocChange={handlePartyBlocChange}
               getPartyName={getPartyName}
-              passedParties={passedParties}
+              mandateParties={mandateParties}
             />
           </section>
 

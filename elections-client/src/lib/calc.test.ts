@@ -7,6 +7,7 @@ import {
   ceilRound,
   convertToAgreements,
   filterNotPassBlockPercentage,
+  hasMandate,
   splitAgreements,
   sumBy,
 } from './calc';
@@ -112,6 +113,17 @@ describe('filterNotPassBlockPercentage', () => {
     assert.deepEqual(res, {
       b: { votes: 640, mandats: 0 },
       c: { votes: 1000, mandats: 0 },
+    });
+  });
+
+  it('should exclude parties with no votes when the block percentage is zero', () => {
+    const res = filterNotPassBlockPercentage(0, {
+      a: { votes: 1, mandats: 0 },
+      b: { votes: 0, mandats: 0 },
+    }, 1);
+
+    assert.deepEqual(res, {
+      a: { votes: 1, mandats: 0 },
     });
   });
 });
@@ -276,6 +288,24 @@ describe('calcVotesResults', () => {
       beforeBaderOffer: {},
       voteData: {},
     });
+  });
+
+  it('should let parties without whole mandates compete for remainder mandates', () => {
+    const voteData = Object.fromEntries(
+      Array.from({ length: 1000 }, (_, index) => [
+        `party-${index}`,
+        { votes: 1, mandats: 0 },
+      ]),
+    );
+
+    for (const algorithm of ['baderOffer', 'ceilRound'] as const) {
+      const { realResults } = calcVotesResults(voteData, 0, [], algorithm);
+      const winners = Object.values(realResults).filter(hasMandate);
+
+      assert.equal(Object.keys(realResults).length, 1000);
+      assert.equal(winners.length, 120);
+      assert.equal(sumBy(winners, 'mandats'), 120);
+    }
   });
 });
 
