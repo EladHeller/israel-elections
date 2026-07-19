@@ -7,6 +7,7 @@ import { detectAvailableElections, fetchElectionResults } from '../lib/data';
 import { getDefaultElectionId, phaseHasResults } from '../lib/election-manifest';
 import {
   LIVE_RESULTS_REFRESH_INTERVAL_MS,
+  resultSnapshotsDiffer,
   shouldRefreshLiveResults,
 } from '../lib/live-results';
 import type {
@@ -65,6 +66,7 @@ export interface UseElectionDataResult {
   currentElection: string | null;
   setCurrentElection: (id: string) => void;
   results: ElectionResultsPayload | null;
+  previousResults: ElectionResultsPayload | null;
   error: string | null;
   electionConfig: ElectionConfig;
   blocs: BlocsConfig;
@@ -77,6 +79,8 @@ export const useElectionData = (): UseElectionDataResult => {
   const [availableElections, setAvailableElections] = useState<string[]>([]);
   const [currentElection, setCurrentElection] = useState<string | null>(null);
   const [results, setResults] = useState<ElectionResultsPayload | null>(null);
+  const [previousResults, setPreviousResults] =
+    useState<ElectionResultsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,6 +101,7 @@ export const useElectionData = (): UseElectionDataResult => {
   useEffect(() => {
     if (!currentElection) return;
     setResults(null);
+    setPreviousResults(null);
     setError(null);
     const manifest = getElectionManifest(currentElection);
     if (manifest && !phaseHasResults(manifest.phase)) return;
@@ -104,6 +109,7 @@ export const useElectionData = (): UseElectionDataResult => {
     let cancelled = false;
     let requestInFlight = false;
     let hasLoadedResults = false;
+    let lastSuccessfulResults: ElectionResultsPayload | null = null;
 
     const load = async () => {
       if (requestInFlight) return;
@@ -111,8 +117,16 @@ export const useElectionData = (): UseElectionDataResult => {
       try {
         const data = await fetchElectionResults<ElectionResultsPayload>(currentElection);
         if (cancelled) return;
+        const snapshotChanged =
+          !lastSuccessfulResults || resultSnapshotsDiffer(lastSuccessfulResults, data);
+        if (lastSuccessfulResults && snapshotChanged) {
+          setPreviousResults(lastSuccessfulResults);
+        }
+        lastSuccessfulResults = data;
         hasLoadedResults = true;
-        setResults(data);
+        if (snapshotChanged) {
+          setResults(data);
+        }
         setError(null);
       } catch (e) {
         if (!cancelled && !hasLoadedResults) {
@@ -171,6 +185,7 @@ export const useElectionData = (): UseElectionDataResult => {
     currentElection,
     setCurrentElection,
     results,
+    previousResults,
     error,
     electionConfig,
     blocs,
