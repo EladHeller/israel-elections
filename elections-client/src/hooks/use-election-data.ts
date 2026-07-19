@@ -5,6 +5,10 @@ import electionsManifestsAll from '../data/elections-manifests.json';
 import partyNamesAll from '../data/party-names.json';
 import { detectAvailableElections, fetchElectionResults } from '../lib/data';
 import { getDefaultElectionId, phaseHasResults } from '../lib/election-manifest';
+import {
+  LIVE_RESULTS_REFRESH_INTERVAL_MS,
+  shouldRefreshLiveResults,
+} from '../lib/live-results';
 import type {
   BlocsConfig,
   ElectionConfig,
@@ -96,15 +100,53 @@ export const useElectionData = (): UseElectionDataResult => {
     setError(null);
     const manifest = getElectionManifest(currentElection);
     if (manifest && !phaseHasResults(manifest.phase)) return;
+
+    let cancelled = false;
+    let requestInFlight = false;
+    let hasLoadedResults = false;
+
     const load = async () => {
+      if (requestInFlight) return;
+      requestInFlight = true;
       try {
         const data = await fetchElectionResults<ElectionResultsPayload>(currentElection);
+        if (cancelled) return;
+        hasLoadedResults = true;
         setResults(data);
+        setError(null);
       } catch (e) {
-        setError((e as Error).message);
+        if (!cancelled && !hasLoadedResults) {
+          setError((e as Error).message);
+        }
+      } finally {
+        requestInFlight = false;
       }
     };
+
     void load();
+
+    if (!manifest || manifest.phase !== 'counting') {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const refreshIfVisible = () => {
+      if (shouldRefreshLiveResults(manifest.phase, document.visibilityState)) {
+        void load();
+      }
+    };
+    const intervalId = window.setInterval(
+      refreshIfVisible,
+      LIVE_RESULTS_REFRESH_INTERVAL_MS,
+    );
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
   }, [currentElection]);
 
   const electionConfig = useMemo(
