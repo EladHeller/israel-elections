@@ -380,7 +380,7 @@ body {
 
 .party-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1.2fr) 2fr 140px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) 140px;
   align-items: center;
   gap: 14px;
 }
@@ -389,9 +389,13 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .party-name {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
@@ -401,6 +405,7 @@ body {
 
 .party-seats {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
   font-size: 13px;
@@ -949,7 +954,7 @@ body {
   }
 
   .party-row {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
   }
 

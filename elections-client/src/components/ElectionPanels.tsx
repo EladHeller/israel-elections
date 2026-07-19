@@ -411,10 +411,11 @@ const PartyBars: React.FC<PartyBarsProps> = ({
         const width = maxMandats > 0 ? (party.mandats / maxMandats) * 100 : 0;
         const draftValue =
           voteDrafts[party.party] ?? String(editableVoteData[party.party]?.votes ?? party.votes);
+        const partyName = getPartyName(party.party);
         return (
           <div key={party.party} className="party-row">
-            <div className="party-meta" title={party.party}>
-              <span className="party-name">{getPartyName(party.party)}</span>
+            <div className="party-meta" title={partyName}>
+              <span className="party-name">{partyName}</span>
               <span className="party-seats">
                 {party.mandats}
                 <DeltaChip delta={partySeatDeltas[party.party]} />
