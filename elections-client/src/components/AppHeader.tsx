@@ -1,9 +1,7 @@
 import React from 'react';
-import { formatTime } from '../lib/ui-helpers';
-
 interface AppHeaderProps {
-  hasFinalResults: boolean;
-  resultsTime?: string;
+  statusText: string;
+  showViewControl: boolean;
   isEdited: boolean;
   currentElection: string | null;
   setCurrentElection: (id: string) => void;
@@ -13,8 +11,8 @@ interface AppHeaderProps {
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
-  hasFinalResults,
-  resultsTime,
+  statusText,
+  showViewControl,
   isEdited,
   currentElection,
   setCurrentElection,
@@ -26,21 +24,23 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     <div>
       <h1>תוצאות הבחירות לכנסת</h1>
       <div className="subtitle">
-        {hasFinalResults ? 'תוצאות סופיות' : `מעודכן ל-${formatTime(resultsTime)}`}
+        {statusText}
         {isEdited && <span className="edited-tag">נתונים נערכו</span>}
       </div>
     </div>
     <div className="controls">
-      <label>
-        <span>תצוגה</span>
-        <select
-          value={viewMode}
-          onChange={(e) => setViewMode(e.target.value as 'simulator' | 'summary')}
-        >
-          <option value="simulator">סימולטור</option>
-          <option value="summary">סיכום כל הכנסות</option>
-        </select>
-      </label>
+      {showViewControl && (
+        <label>
+          <span>תצוגה</span>
+          <select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value as 'simulator' | 'summary')}
+          >
+            <option value="simulator">סימולטור</option>
+            <option value="summary">סיכום כל הכנסות</option>
+          </select>
+        </label>
+      )}
       <label>
         <span>כנסת</span>
         <select
@@ -60,4 +60,3 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 );
 
 export default AppHeader;
-

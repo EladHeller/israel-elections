@@ -11,8 +11,11 @@ import SecondarySummarySection from './components/SecondarySummarySection';
 import ElectionStatsSection from './components/ElectionStatsSection';
 import { BottomPanels, PartyPanel, BlocsDistributionPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
+import PreElectionView from './components/PreElectionView';
 import { useElectionData } from './hooks/use-election-data';
 import { useScenario } from './hooks/use-scenario';
+import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
+import { formatTime } from './lib/ui-helpers';
 import type { PartyResult, ResultsMap, VoteData } from './types';
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
@@ -39,10 +42,10 @@ export default function App() {
     results,
     error,
     electionConfig,
+    electionManifest,
     blocs,
     partyNames,
     isLatestElection,
-    hasFinalResults,
   } = useElectionData();
 
   const {
@@ -84,9 +87,43 @@ export default function App() {
     );
   }
 
+  if (!currentElection || !electionManifest) {
+    return (
+      <div className="screen loading">
+        <h1>טוען נתונים...</h1>
+      </div>
+    );
+  }
+
+  const showResults = phaseHasResults(electionManifest.phase);
+  const statusText =
+    electionManifest.phase === 'counting' && results?.time
+      ? `מעודכן ל-${formatTime(results.time)}`
+      : getElectionPhaseLabel(electionManifest);
+
+  if (!showResults) {
+    return (
+      <div className="screen">
+        <AppHeader
+          statusText={statusText}
+          showViewControl={false}
+          isEdited={false}
+          currentElection={currentElection}
+          setCurrentElection={setCurrentElection}
+          availableElections={availableElections}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        />
+        <PreElectionView
+          electionId={currentElection}
+          manifest={electionManifest}
+        />
+      </div>
+    );
+  }
+
   if (
     !results ||
-    !currentElection ||
     !scenarioConfig ||
     !scenarioVoteData ||
     !normalizedScenario
@@ -195,8 +232,8 @@ export default function App() {
   return (
     <div className="screen">
       <AppHeader
-        hasFinalResults={hasFinalResults}
-        resultsTime={results.time}
+        statusText={statusText}
+        showViewControl
         isEdited={isEdited}
         currentElection={currentElection}
         setCurrentElection={setCurrentElection}

@@ -716,6 +716,85 @@ body {
   background: #f5f7fb;
 }
 
+.pre-election-view {
+  display: grid;
+  gap: 24px;
+}
+
+.pre-election-intro {
+  padding: 32px;
+}
+
+.pre-election-kicker {
+  color: #8a4b00;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.pre-election-intro h2 {
+  font-family: 'Secular One', sans-serif;
+  font-size: 32px;
+  margin: 0 0 12px;
+}
+
+.pre-election-intro p {
+  color: var(--ink-50);
+  font-size: 18px;
+  line-height: 1.7;
+  margin: 12px 0 0;
+  max-width: 760px;
+}
+
+.pre-election-date {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.election-lists-panel h2 {
+  margin: 0 0 18px;
+}
+
+.election-lists-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.election-list-card {
+  align-items: center;
+  background: #f5f7fb;
+  border: 1px solid var(--ink-20);
+  border-radius: 16px;
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+}
+
+.ballot-letter {
+  align-items: center;
+  background: var(--card);
+  border: 2px solid var(--ink-90);
+  border-radius: 10px;
+  display: flex;
+  flex: 0 0 56px;
+  font-size: 22px;
+  font-weight: 700;
+  height: 56px;
+  justify-content: center;
+}
+
+.election-list-card h3 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.election-list-card p {
+  color: var(--ink-50);
+  line-height: 1.4;
+  margin: 4px 0 0;
+}
+
 @media (max-width: 960px) {
   .summary {
     grid-template-columns: 1fr;
@@ -797,6 +876,19 @@ body {
 
   .bloc-editor-column {
     min-width: 0;
+  }
+
+  .pre-election-intro {
+    padding: 24px 20px;
+  }
+
+  .pre-election-intro h2 {
+    font-size: 26px;
+  }
+
+  .pre-election-intro p,
+  .pre-election-date {
+    font-size: 16px;
   }
 }
 

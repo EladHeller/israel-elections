@@ -34,6 +34,21 @@ A sophisticated React dashboard that allows users to explore election results in
 *   **Calculation Transparency**: Includes a "Step-by-step" breakdown that explains exactly how seats were allocated according to the law.
 *   **Historical Data**: Access and compare results from all Israeli Knesset elections (1-25).
 
+#### Election lifecycle
+
+The client can publish an upcoming election before result files exist. Election metadata is
+stored in `elections-client/src/data/elections-manifests.json` and supports these phases:
+
+* `beforeLists` - the election is visible, with a message that candidate lists are not final.
+* `listsFinal` - the ballot letters and list names are displayed from the manifest.
+* `voting` - polling is in progress and official results are not shown yet.
+* `counting` - the client loads and displays the election result file.
+* `final` - the result file is displayed as final.
+
+To publish the lists after registration closes, update the election's phase to `listsFinal`
+and populate its `lists` array. Move it to `counting` only after the corresponding
+`data/<election>/allResults.json` file is available.
+
 ### infra
 
 Cloud-native infrastructure management:

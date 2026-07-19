@@ -31,6 +31,25 @@ export interface BlocsConfig {
 
 export type PartyNames = Record<string, string>;
 
+export type ElectionPhase =
+  | 'beforeLists'
+  | 'listsFinal'
+  | 'voting'
+  | 'counting'
+  | 'final';
+
+export interface ElectionList {
+  ballotLetter: string;
+  name: string;
+  officialName?: string;
+}
+
+export interface ElectionManifest {
+  phase: ElectionPhase;
+  electionDate?: string;
+  lists: ElectionList[];
+}
+
 export interface ElectionResultsPayload {
   time?: string;
   voteData: VoteData;
@@ -49,4 +68,3 @@ export interface AgreementValidation {
   isValid: boolean;
   errors: string[];
 }
-
