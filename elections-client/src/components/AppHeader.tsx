@@ -1,5 +1,6 @@
 import React from 'react';
 import type { AppViewMode } from '../types';
+import ElectionSelector from './ElectionSelector';
 
 interface AppHeaderProps {
   statusText: string;
@@ -55,20 +56,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
         </div>
       )}
-      <label>
-        <span>כנסת</span>
-        <select
-          value={currentElection ?? ''}
-          onChange={(e) => setCurrentElection(e.target.value)}
-          disabled={showViewControl && viewMode === 'summary'}
-        >
-          {availableElections.map((election) => (
-            <option key={election} value={election}>
-              {election}
-            </option>
-          ))}
-        </select>
-      </label>
+      <ElectionSelector
+        value={currentElection}
+        elections={availableElections}
+        onChange={setCurrentElection}
+        disabled={showViewControl && viewMode === 'summary'}
+      />
     </div>
   </header>
 );
