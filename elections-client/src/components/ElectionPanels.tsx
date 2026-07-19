@@ -250,7 +250,7 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
       <div className="bloc-editor-columns">
         <div
           className={`bloc-editor-column bloc-editor-column-a ${
-            (hoveredZone === gushAKey || (selectedParty && hoveredZone === gushAKey))
+            selectedParty !== null || hoveredZone === gushAKey
               ? 'is-drop-target'
               : ''
           }`}
@@ -324,7 +324,7 @@ const BlocEditor: React.FC<BlocEditorProps> = ({
 
         <div
           className={`bloc-editor-column bloc-editor-column-b ${
-            (hoveredZone === gushBKey || (selectedParty && hoveredZone === gushBKey))
+            selectedParty !== null || hoveredZone === gushBKey
               ? 'is-drop-target'
               : ''
           }`}
