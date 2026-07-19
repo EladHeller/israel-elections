@@ -72,6 +72,11 @@ export const filterNotPassBlockPercentage = (
 
 export const hasMandate = ({ mandats }: { mandats: number }): boolean => mandats > 0;
 
+export const canPassThresholdWithoutMandate = (
+  blockPercentage: number,
+  totalMandates: number = MANDATS,
+): boolean => blockPercentage < 1 / totalMandates;
+
 export const splitAgreements = (
   voteData: CalcVoteData,
   agreementsVoteData: CalcVoteData,
