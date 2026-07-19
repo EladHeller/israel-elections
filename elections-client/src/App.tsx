@@ -193,9 +193,7 @@ export default function App() {
   const basePartyToBloc = computeBlocMap(blocs);
   const electionKey = currentElection;
   const electionOverrides = partyToBlocOverrides[electionKey] || {};
-  const partyToBloc = isSimulator
-    ? { ...basePartyToBloc, ...electionOverrides }
-    : basePartyToBloc;
+  const partyToBloc = { ...basePartyToBloc, ...electionOverrides };
 
   const baseBlocTotals = computeBlocTotals(baseResults.realResults || {}, blocs, partyToBloc);
   const blocTotals = computeBlocTotals(displayedResults.realResults || {}, blocs, partyToBloc);
@@ -317,7 +315,7 @@ export default function App() {
 
           <section className="grid grid-single">
             <BlocsDistributionPanel
-              editable={isSimulator}
+              editable
               blocs={blocs}
               blocData={blocData}
               blocColors={blocColors}
