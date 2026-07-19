@@ -14,6 +14,7 @@ import CalcDetailsCard from './components/CalcDetailsCard';
 import PreElectionView from './components/PreElectionView';
 import { useElectionData } from './hooks/use-election-data';
 import { useScenario } from './hooks/use-scenario';
+import { computeSeatDeltas } from './lib/scenario';
 import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
 import { formatTime } from './lib/ui-helpers';
 import { DEFAULT_VIEW_MODE, selectViewData, viewUsesScenario } from './lib/view-mode';
@@ -41,6 +42,7 @@ export default function App() {
     currentElection,
     setCurrentElection,
     results,
+    previousResults,
     error,
     electionConfig,
     electionManifest,
@@ -141,7 +143,16 @@ export default function App() {
   const displayedVoteData = selectViewData(viewMode, baseVoteData, activeVoteData);
   const displayedConfig = selectViewData(viewMode, baseConfig, activeConfig);
   const displayedIsEdited = isSimulator && isEdited;
-  const displayedPartySeatDeltas = isSimulator ? partySeatDeltas : {};
+  const livePartySeatDeltas =
+    electionManifest.phase === 'counting' && previousResults
+      ? computeSeatDeltas(
+          previousResults.realResults || {},
+          baseResults.realResults || {},
+        )
+      : {};
+  const displayedPartySeatDeltas = isSimulator
+    ? partySeatDeltas
+    : livePartySeatDeltas;
 
   const realResults: ResultsMap = displayedResults.realResults || {};
   const voteData: VoteData = displayedVoteData || {};
@@ -197,11 +208,15 @@ export default function App() {
 
   const baseBlocTotals = computeBlocTotals(baseResults.realResults || {}, blocs, partyToBloc);
   const blocTotals = computeBlocTotals(displayedResults.realResults || {}, blocs, partyToBloc);
+  const comparedBlocTotals =
+    !isSimulator && electionManifest.phase === 'counting' && previousResults
+      ? computeBlocTotals(previousResults.realResults || {}, blocs, partyToBloc)
+      : baseBlocTotals;
 
   const blocSeatDeltas: Record<string, number> = Object.fromEntries(
     Object.keys(blocTotals).map((blocKey) => [
       blocKey,
-      (blocTotals[blocKey] || 0) - (baseBlocTotals[blocKey] || 0),
+      (blocTotals[blocKey] || 0) - (comparedBlocTotals[blocKey] || 0),
     ]),
   );
 
