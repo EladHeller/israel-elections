@@ -1,6 +1,7 @@
 import {
   sumBy,
   filterNotPassBlockPercentage,
+  hasMandate,
   calcMandats,
   convertToAgreements,
   baderOffer,
@@ -250,7 +251,7 @@ export const buildCalcSteps = (
   // Step 6: split agreements
   const agreementSplits: AgreementSplit[] = agreements
     .filter(([a, b]) => a in withMandats && b in withMandats)
-    .map(([a, b]) => {
+    .map<AgreementSplit>(([a, b]) => {
       const agreementKey = `${a}+${b}`;
       const totalMandats = afterRemainders[agreementKey]?.mandats ?? 0;
 
@@ -316,10 +317,12 @@ export const buildCalcSteps = (
         splitRounds,
         algorithmUsed: algorithm,
       };
-    });
+    })
+    .filter(({ totalMandats }) => totalMandats > 0);
 
   // Step 7: final results
   const finalResults: FinalResultRow[] = Object.entries(realResults)
+    .filter(([, result]) => hasMandate(result))
     .map(([party, { mandats }]) => {
       const wholeMandats = withMandats[party]?.mandats ?? 0;
       const remainderMandats = mandats - wholeMandats;
@@ -346,4 +349,3 @@ export const buildCalcSteps = (
     totalMandats: MANDATS,
   };
 };
-

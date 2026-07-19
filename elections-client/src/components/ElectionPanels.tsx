@@ -573,15 +573,15 @@ interface PartyPanelProps {
   isLatestElection: boolean;
   isEdited: boolean;
   parties: PartySummary[];
-  passedParties: PartySummary[];
+  mandateParties: PartySummary[];
   blocs: BlocsConfig;
   partyToBloc: Record<string, string | null | undefined>;
   getPartyName: (party: string) => string;
   partySeatDeltas: Record<string, number>;
   normalizedScenario: { voteData: Record<string, { votes: number }> };
   onVoteChange: (party: string, value: string) => void;
-  showBelowBlock: boolean;
-  setShowBelowBlock: (show: boolean) => void;
+  showAllParties: boolean;
+  setShowAllParties: (show: boolean) => void;
   resetScenario: () => void;
 }
 
@@ -590,15 +590,15 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
   isLatestElection,
   isEdited,
   parties,
-  passedParties,
+  mandateParties,
   blocs,
   partyToBloc,
   getPartyName,
   partySeatDeltas,
   normalizedScenario,
   onVoteChange,
-  showBelowBlock,
-  setShowBelowBlock,
+  showAllParties,
+  setShowAllParties,
   resetScenario,
 }) => (
   <div className="panel">
@@ -615,7 +615,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
       parties={parties}
       blocs={blocs}
       partyToBloc={partyToBloc}
-      maxMandats={passedParties[0]?.mandats || 0}
+      maxMandats={mandateParties[0]?.mandats || 0}
       getPartyName={getPartyName}
       partySeatDeltas={partySeatDeltas}
       useCoalitionColors={isLatestElection}
@@ -625,10 +625,10 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
     <label className="toggle">
       <input
         type="checkbox"
-        checked={showBelowBlock}
-        onChange={(event) => setShowBelowBlock(event.target.checked)}
+        checked={showAllParties}
+        onChange={(event) => setShowAllParties(event.target.checked)}
       />
-      <span>הראה מפלגות שלא עברו את אחוז החסימה</span>
+      <span>הראה מפלגות ללא מנדטים</span>
     </label>
   </div>
 );
@@ -644,7 +644,7 @@ interface BlocsDistributionPanelProps {
   partyToBloc: Record<string, string | null | undefined>;
   onPartyBlocChange: (party: string, blocKey: string | null) => void;
   getPartyName: (party: string) => string;
-  passedParties: PartySummary[];
+  mandateParties: PartySummary[];
 }
 
 export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
@@ -658,7 +658,7 @@ export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
   partyToBloc,
   onPartyBlocChange,
   getPartyName,
-  passedParties,
+  mandateParties,
 }) => (
   <div className="panel">
     <h2>חלוקת גושים</h2>
@@ -674,7 +674,7 @@ export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
       <BlocEditor
         blocs={blocs}
         partyToBloc={partyToBloc}
-        parties={passedParties}
+        parties={mandateParties}
         onPartyBlocChange={onPartyBlocChange}
         getPartyName={getPartyName}
       />
