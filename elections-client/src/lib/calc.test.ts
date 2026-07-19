@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   baderOffer,
+  canPassThresholdWithoutMandate,
   calcMandats,
   calcVotesResults,
   ceilRound,
@@ -125,6 +126,14 @@ describe('filterNotPassBlockPercentage', () => {
     assert.deepEqual(res, {
       a: { votes: 1, mandats: 0 },
     });
+  });
+});
+
+describe('canPassThresholdWithoutMandate', () => {
+  it('is possible only below the vote share of one mandate', () => {
+    assert.equal(canPassThresholdWithoutMandate(0), true);
+    assert.equal(canPassThresholdWithoutMandate(1 / 120), false);
+    assert.equal(canPassThresholdWithoutMandate(0.0325), false);
   });
 });
 

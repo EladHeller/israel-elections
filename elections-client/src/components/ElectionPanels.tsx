@@ -582,6 +582,7 @@ interface PartyPanelProps {
   onVoteChange: (party: string, value: string) => void;
   showAllParties: boolean;
   setShowAllParties: (show: boolean) => void;
+  showZeroSeatLabel: boolean;
   resetScenario: () => void;
 }
 
@@ -599,6 +600,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
   onVoteChange,
   showAllParties,
   setShowAllParties,
+  showZeroSeatLabel,
   resetScenario,
 }) => (
   <div className="panel">
@@ -628,7 +630,11 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
         checked={showAllParties}
         onChange={(event) => setShowAllParties(event.target.checked)}
       />
-      <span>הראה מפלגות ללא מנדטים</span>
+      <span>
+        {showZeroSeatLabel
+          ? 'הראה מפלגות ללא מנדטים'
+          : 'הראה מפלגות שלא עברו את אחוז החסימה'}
+      </span>
     </label>
   </div>
 );

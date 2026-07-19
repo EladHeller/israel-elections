@@ -17,7 +17,7 @@ import { useScenario } from './hooks/use-scenario';
 import { computeSeatDeltas } from './lib/scenario';
 import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
 import { formatTime } from './lib/ui-helpers';
-import { hasMandate } from './lib/calc';
+import { canPassThresholdWithoutMandate, hasMandate } from './lib/calc';
 import { DEFAULT_VIEW_MODE, selectViewData, viewUsesScenario } from './lib/view-mode';
 import type { AppViewMode, PartyResult, ResultsMap, VoteData } from './types';
 
@@ -310,6 +310,9 @@ export default function App() {
               onVoteChange={onVoteChange}
               showAllParties={showAllParties}
               setShowAllParties={setShowAllParties}
+              showZeroSeatLabel={canPassThresholdWithoutMandate(
+                displayedConfig.blockPercentage,
+              )}
               resetScenario={resetScenario}
             />
           </section>
