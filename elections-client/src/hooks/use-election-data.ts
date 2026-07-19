@@ -1,14 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import blocsConfigAll from '../data/blocs.json';
 import electionsConfigAll from '../data/elections-config.json';
+import electionsManifestsAll from '../data/elections-manifests.json';
 import partyNamesAll from '../data/party-names.json';
 import { detectAvailableElections, fetchElectionResults } from '../lib/data';
+import { getDefaultElectionId, phaseHasResults } from '../lib/election-manifest';
+import {
+  LIVE_RESULTS_REFRESH_INTERVAL_MS,
+  resultSnapshotsDiffer,
+  shouldRefreshLiveResults,
+} from '../lib/live-results';
 import type {
   BlocsConfig,
   ElectionConfig,
+  ElectionManifest,
   ElectionResultsPayload,
   PartyNames,
 } from '../types';
+
+const electionManifests = electionsManifestsAll as unknown as Record<
+  string,
+  ElectionManifest
+>;
 
 const getElectionConfig = (electionId: string | null): ElectionConfig => {
   if (!electionId) {
@@ -40,31 +53,44 @@ const getPartyNames = (electionId: string | null): PartyNames => {
   return all[electionId] || {};
 };
 
+const getElectionManifest = (electionId: string | null): ElectionManifest | null => {
+  if (!electionId) return null;
+  return electionManifests[electionId] || {
+    phase: 'final',
+    lists: [],
+  };
+};
+
 export interface UseElectionDataResult {
   availableElections: string[];
   currentElection: string | null;
   setCurrentElection: (id: string) => void;
   results: ElectionResultsPayload | null;
+  previousResults: ElectionResultsPayload | null;
   error: string | null;
   electionConfig: ElectionConfig;
   blocs: BlocsConfig;
   partyNames: PartyNames;
+  electionManifest: ElectionManifest | null;
   isLatestElection: boolean;
-  hasFinalResults: boolean;
 }
 
 export const useElectionData = (): UseElectionDataResult => {
   const [availableElections, setAvailableElections] = useState<string[]>([]);
   const [currentElection, setCurrentElection] = useState<string | null>(null);
   const [results, setResults] = useState<ElectionResultsPayload | null>(null);
+  const [previousResults, setPreviousResults] =
+    useState<ElectionResultsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const available = await detectAvailableElections();
+        const configuredElectionIds = Object.keys(electionManifests).map(Number);
+        const latestElectionId = Math.max(25, ...configuredElectionIds);
+        const available = await detectAvailableElections(latestElectionId);
         setAvailableElections(available);
-        setCurrentElection(available[0] ?? null);
+        setCurrentElection(getDefaultElectionId(available, electionManifests));
       } catch (e) {
         setError((e as Error).message);
       }
@@ -75,15 +101,66 @@ export const useElectionData = (): UseElectionDataResult => {
   useEffect(() => {
     if (!currentElection) return;
     setResults(null);
+    setPreviousResults(null);
+    setError(null);
+    const manifest = getElectionManifest(currentElection);
+    if (manifest && !phaseHasResults(manifest.phase)) return;
+
+    let cancelled = false;
+    let requestInFlight = false;
+    let hasLoadedResults = false;
+    let lastSuccessfulResults: ElectionResultsPayload | null = null;
+
     const load = async () => {
+      if (requestInFlight) return;
+      requestInFlight = true;
       try {
         const data = await fetchElectionResults<ElectionResultsPayload>(currentElection);
-        setResults(data);
+        if (cancelled) return;
+        const snapshotChanged =
+          !lastSuccessfulResults || resultSnapshotsDiffer(lastSuccessfulResults, data);
+        if (lastSuccessfulResults && snapshotChanged) {
+          setPreviousResults(lastSuccessfulResults);
+        }
+        lastSuccessfulResults = data;
+        hasLoadedResults = true;
+        if (snapshotChanged) {
+          setResults(data);
+        }
+        setError(null);
       } catch (e) {
-        setError((e as Error).message);
+        if (!cancelled && !hasLoadedResults) {
+          setError((e as Error).message);
+        }
+      } finally {
+        requestInFlight = false;
       }
     };
+
     void load();
+
+    if (!manifest || manifest.phase !== 'counting') {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const refreshIfVisible = () => {
+      if (shouldRefreshLiveResults(manifest.phase, document.visibilityState)) {
+        void load();
+      }
+    };
+    const intervalId = window.setInterval(
+      refreshIfVisible,
+      LIVE_RESULTS_REFRESH_INTERVAL_MS,
+    );
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
   }, [currentElection]);
 
   const electionConfig = useMemo(
@@ -95,23 +172,25 @@ export const useElectionData = (): UseElectionDataResult => {
     () => getPartyNames(currentElection),
     [currentElection],
   );
+  const electionManifest = useMemo(
+    () => getElectionManifest(currentElection),
+    [currentElection],
+  );
   const isLatestElection =
     currentElection != null && availableElections.length > 0
       ? currentElection === availableElections[0]
       : false;
-  const hasFinalResults = electionConfig.finalResults ?? !isLatestElection;
-
   return {
     availableElections,
     currentElection,
     setCurrentElection,
     results,
+    previousResults,
     error,
     electionConfig,
     blocs,
     partyNames,
+    electionManifest,
     isLatestElection,
-    hasFinalResults,
   };
 };
-

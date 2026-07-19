@@ -64,9 +64,18 @@ export const filterNotPassBlockPercentage = (
 ): CalcVoteData => {
   const blockPercentageMinimum = sumVotes * percentage;
   return Object.fromEntries(
-    Object.entries(voteData).filter(([, { votes }]) => blockPercentageMinimum <= votes),
+    Object.entries(voteData).filter(
+      ([, { votes }]) => votes > 0 && blockPercentageMinimum <= votes,
+    ),
   ) as CalcVoteData;
 };
+
+export const hasMandate = ({ mandats }: { mandats: number }): boolean => mandats > 0;
+
+export const canPassThresholdWithoutMandate = (
+  blockPercentage: number,
+  totalMandates: number = MANDATS,
+): boolean => blockPercentage < 1 / totalMandates;
 
 export const splitAgreements = (
   voteData: CalcVoteData,
@@ -159,4 +168,3 @@ export const calcVotesResults = (
     voteData,
   };
 };
-

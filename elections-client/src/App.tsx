@@ -11,9 +11,15 @@ import SecondarySummarySection from './components/SecondarySummarySection';
 import ElectionStatsSection from './components/ElectionStatsSection';
 import { BottomPanels, PartyPanel, BlocsDistributionPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
+import PreElectionView from './components/PreElectionView';
 import { useElectionData } from './hooks/use-election-data';
 import { useScenario } from './hooks/use-scenario';
-import type { PartyResult, ResultsMap, VoteData } from './types';
+import { computeSeatDeltas } from './lib/scenario';
+import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
+import { formatTime } from './lib/ui-helpers';
+import { canPassThresholdWithoutMandate, hasMandate } from './lib/calc';
+import { DEFAULT_VIEW_MODE, selectViewData, viewUsesScenario } from './lib/view-mode';
+import type { AppViewMode, PartyResult, ResultsMap, VoteData } from './types';
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
@@ -26,8 +32,8 @@ const filterRealParties = (data: VoteData) =>
     .filter(([, value]) => value && Number.isFinite(value.votes));
 
 export default function App() {
-  const [showBelowBlock, setShowBelowBlock] = useState(false);
-  const [viewMode, setViewMode] = useState<'simulator' | 'summary'>('simulator');
+  const [showAllParties, setShowAllParties] = useState(false);
+  const [viewMode, setViewMode] = useState<AppViewMode>(DEFAULT_VIEW_MODE);
   const [partyToBlocOverrides, setPartyToBlocOverrides] = useState<
     Record<string, Record<string, string | null>>
   >({});
@@ -37,12 +43,13 @@ export default function App() {
     currentElection,
     setCurrentElection,
     results,
+    previousResults,
     error,
     electionConfig,
+    electionManifest,
     blocs,
     partyNames,
     isLatestElection,
-    hasFinalResults,
   } = useElectionData();
 
   const {
@@ -84,9 +91,43 @@ export default function App() {
     );
   }
 
+  if (!currentElection || !electionManifest) {
+    return (
+      <div className="screen loading">
+        <h1>טוען נתונים...</h1>
+      </div>
+    );
+  }
+
+  const showResults = phaseHasResults(electionManifest.phase);
+  const statusText =
+    electionManifest.phase === 'counting' && results?.time
+      ? `מעודכן ל-${formatTime(results.time)}`
+      : getElectionPhaseLabel(electionManifest);
+
+  if (!showResults) {
+    return (
+      <div className="screen">
+        <AppHeader
+          statusText={statusText}
+          showViewControl={false}
+          isEdited={false}
+          currentElection={currentElection}
+          setCurrentElection={setCurrentElection}
+          availableElections={availableElections}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        />
+        <PreElectionView
+          electionId={currentElection}
+          manifest={electionManifest}
+        />
+      </div>
+    );
+  }
+
   if (
     !results ||
-    !currentElection ||
     !scenarioConfig ||
     !scenarioVoteData ||
     !normalizedScenario
@@ -98,8 +139,24 @@ export default function App() {
     );
   }
 
-  const realResults: ResultsMap = activeResults.realResults || {};
-  const voteData: VoteData = activeVoteData || {};
+  const isSimulator = viewUsesScenario(viewMode);
+  const displayedResults = selectViewData(viewMode, baseResults, activeResults);
+  const displayedVoteData = selectViewData(viewMode, baseVoteData, activeVoteData);
+  const displayedConfig = selectViewData(viewMode, baseConfig, activeConfig);
+  const displayedIsEdited = isSimulator && isEdited;
+  const livePartySeatDeltas =
+    electionManifest.phase === 'counting' && previousResults
+      ? computeSeatDeltas(
+          previousResults.realResults || {},
+          baseResults.realResults || {},
+        )
+      : {};
+  const displayedPartySeatDeltas = isSimulator
+    ? partySeatDeltas
+    : livePartySeatDeltas;
+
+  const realResults: ResultsMap = displayedResults.realResults || {};
+  const voteData: VoteData = displayedVoteData || {};
 
   const partyNameOverrides: Record<string, string> = Object.fromEntries(
     Object.entries(voteData)
@@ -111,21 +168,21 @@ export default function App() {
     partyNames[party] || partyNameOverrides[party] || party;
 
   const totalVotes = sumVotes(voteData);
-  const blockThreshold = Math.ceil(totalVotes * activeConfig.blockPercentage);
+  const blockThreshold = Math.ceil(totalVotes * displayedConfig.blockPercentage);
   const configTotalVotes = electionConfig.totalVotes ?? totalVotes;
   const invalidVotesDerived = Math.max(0, configTotalVotes - totalVotes);
 
   const allParties = filterRealParties(voteData)
+    .filter(([, { votes }]) => votes > 0)
     .map(([party, { votes }]) => ({
       party,
       votes,
       mandats: (realResults[party] as PartyResult | undefined)?.mandats || 0,
-      passed: votes >= blockThreshold,
     }))
     .sort((a, b) => b.mandats - a.mandats || b.votes - a.votes);
 
-  const passedParties = allParties.filter((party) => party.passed);
-  const parties = showBelowBlock ? allParties : passedParties;
+  const mandateParties = allParties.filter(hasMandate);
+  const parties = showAllParties ? allParties : mandateParties;
 
   const baseSumVotes = sumVotes(baseVoteData);
   const baseBlockThreshold = Math.ceil(baseSumVotes * baseConfig.blockPercentage);
@@ -151,12 +208,16 @@ export default function App() {
   const partyToBloc = { ...basePartyToBloc, ...electionOverrides };
 
   const baseBlocTotals = computeBlocTotals(baseResults.realResults || {}, blocs, partyToBloc);
-  const blocTotals = computeBlocTotals(activeResults.realResults || {}, blocs, partyToBloc);
+  const blocTotals = computeBlocTotals(displayedResults.realResults || {}, blocs, partyToBloc);
+  const comparedBlocTotals =
+    !isSimulator && electionManifest.phase === 'counting' && previousResults
+      ? computeBlocTotals(previousResults.realResults || {}, blocs, partyToBloc)
+      : baseBlocTotals;
 
   const blocSeatDeltas: Record<string, number> = Object.fromEntries(
     Object.keys(blocTotals).map((blocKey) => [
       blocKey,
-      (blocTotals[blocKey] || 0) - (baseBlocTotals[blocKey] || 0),
+      (blocTotals[blocKey] || 0) - (comparedBlocTotals[blocKey] || 0),
     ]),
   );
 
@@ -177,7 +238,7 @@ export default function App() {
   const blocColors = blocFiltered.map((item) => item.color);
   const blocLabels = blocFiltered.map((item) => item.label);
 
-  const margins = computeSeatMargins(realResults, voteData, activeConfig).sort(
+  const margins = computeSeatMargins(realResults, voteData, displayedConfig).sort(
     (a, b) => (a.gain ?? Infinity) - (b.gain ?? Infinity),
   );
 
@@ -195,9 +256,9 @@ export default function App() {
   return (
     <div className="screen">
       <AppHeader
-        hasFinalResults={hasFinalResults}
-        resultsTime={results.time}
-        isEdited={isEdited}
+        statusText={statusText}
+        showViewControl
+        isEdited={displayedIsEdited}
         currentElection={currentElection}
         setCurrentElection={setCurrentElection}
         availableElections={availableElections}
@@ -210,12 +271,13 @@ export default function App() {
       ) : (
         <>
           <SummarySection
+            editable={isSimulator}
             sumVotes={totalVotes}
             baseSumVotes={baseSumVotes}
             blockThreshold={blockThreshold}
             baseBlockThreshold={baseBlockThreshold}
-            activeConfig={activeConfig}
-            isEdited={isEdited}
+            activeConfig={displayedConfig}
+            isEdited={displayedIsEdited}
             onBlockPercentageChange={onBlockPercentageChange}
             onAlgorithmChange={onAlgorithmChange}
           />
@@ -235,26 +297,31 @@ export default function App() {
 
           <section className="grid grid-single">
             <PartyPanel
+              editable={isSimulator}
               isLatestElection={isLatestElection}
-              isEdited={isEdited}
+              isEdited={displayedIsEdited}
               parties={parties}
-              passedParties={passedParties}
+              mandateParties={mandateParties}
               blocs={blocs}
               partyToBloc={partyToBloc}
               getPartyName={getPartyName}
-              partySeatDeltas={partySeatDeltas}
-              normalizedScenario={normalizedScenario}
+              partySeatDeltas={displayedPartySeatDeltas}
+              normalizedScenario={{ voteData: displayedVoteData }}
               onVoteChange={onVoteChange}
-              showBelowBlock={showBelowBlock}
-              setShowBelowBlock={setShowBelowBlock}
+              showAllParties={showAllParties}
+              setShowAllParties={setShowAllParties}
+              showZeroSeatLabel={canPassThresholdWithoutMandate(
+                displayedConfig.blockPercentage,
+              )}
               resetScenario={resetScenario}
             />
           </section>
 
           <BottomPanels
+            editable={isSimulator}
             margins={margins}
             getPartyName={getPartyName}
-            scenarioConfig={scenarioConfig}
+            scenarioConfig={displayedConfig}
             removeAgreement={removeAgreement}
             addAgreementA={addAgreementA}
             setAddAgreementA={setAddAgreementA}
@@ -267,6 +334,7 @@ export default function App() {
 
           <section className="grid grid-single">
             <BlocsDistributionPanel
+              editable
               blocs={blocs}
               blocData={blocData}
               blocColors={blocColors}
@@ -276,13 +344,13 @@ export default function App() {
               partyToBloc={partyToBloc}
               onPartyBlocChange={handlePartyBlocChange}
               getPartyName={getPartyName}
-              passedParties={passedParties}
+              mandateParties={mandateParties}
             />
           </section>
 
           <CalcDetailsCard
             voteData={voteData}
-            activeConfig={activeConfig}
+            activeConfig={displayedConfig}
             getPartyName={getPartyName}
           />
         </>
