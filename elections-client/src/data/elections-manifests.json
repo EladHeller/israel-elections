@@ -1,6 +1,159 @@
 {
   "26": {
-    "phase": "beforeLists",
-    "lists": []
+    "phase": "listsFinal",
+    "lists": [
+      {
+        "ballotLetter": "רק",
+        "name": "ביחד"
+      },
+      {
+        "ballotLetter": "דרך",
+        "name": "ישר"
+      },
+      {
+        "ballotLetter": "צדק",
+        "name": "שרשר"
+      },
+      {
+        "ballotLetter": "ד",
+        "name": "השותפות לכולם"
+      },
+      {
+        "ballotLetter": "צף",
+        "name": "הפיראטים"
+      },
+      {
+        "ballotLetter": "ך",
+        "name": "עמך ישראל"
+      },
+      {
+        "ballotLetter": "י",
+        "name": "ישראל תחילה"
+      },
+      {
+        "ballotLetter": "ה",
+        "name": "גן עדן"
+      },
+      {
+        "ballotLetter": "קה",
+        "name": "קול הנשים"
+      },
+      {
+        "ballotLetter": "בד",
+        "name": "ביחד נצליח"
+      },
+      {
+        "ballotLetter": "ל",
+        "name": "ישראל ביתנו"
+      },
+      {
+        "ballotLetter": "קץ",
+        "name": "משפט צדק"
+      },
+      {
+        "ballotLetter": "נף",
+        "name": "שמע"
+      },
+      {
+        "ballotLetter": "ב",
+        "name": "עוצמה יהודית"
+      },
+      {
+        "ballotLetter": "קך",
+        "name": "סדר חדש"
+      },
+      {
+        "ballotLetter": "די",
+        "name": "המילואימניקים והכלכלית"
+      },
+      {
+        "ballotLetter": "אמת",
+        "name": "הדמוקרטים"
+      },
+      {
+        "ballotLetter": "עם",
+        "name": "רע\"ם"
+      },
+      {
+        "ballotLetter": "שס",
+        "name": "ש\"ס"
+      },
+      {
+        "ballotLetter": "זך",
+        "name": "הציבור החרדי"
+      },
+      {
+        "ballotLetter": "פה",
+        "name": "אני ואתה"
+      },
+      {
+        "ballotLetter": "זץ",
+        "name": "ברית עולם"
+      },
+      {
+        "ballotLetter": "נקי",
+        "name": "התיקון"
+      },
+      {
+        "ballotLetter": "יק",
+        "name": "הגוש התנ\"כי"
+      },
+      {
+        "ballotLetter": "ז",
+        "name": "בטח"
+      },
+      {
+        "ballotLetter": "בקר",
+        "name": "אורות השחר"
+      },
+      {
+        "ballotLetter": "נץ",
+        "name": "ביטחון אישי"
+      },
+      {
+        "ballotLetter": "נר",
+        "name": "צבע שחור"
+      },
+      {
+        "ballotLetter": "מחל",
+        "name": "הליכוד"
+      },
+      {
+        "ballotLetter": "כן",
+        "name": "כחול לבן"
+      },
+      {
+        "ballotLetter": "ט",
+        "name": "הציונות הדתית וזהות"
+      },
+      {
+        "ballotLetter": "צבי",
+        "name": "אחי"
+      },
+      {
+        "ballotLetter": "בי",
+        "name": "צומת בית ישראל"
+      },
+      {
+        "ballotLetter": "ק",
+        "name": "תקומה"
+      },
+      {
+        "ballotLetter": "ודם",
+        "name": "הרשימה המשותפת"
+      },
+      {
+        "ballotLetter": "רץ",
+        "name": "הקהל"
+      },
+      {
+        "ballotLetter": "ג",
+        "name": "יהדות התורה"
+      },
+      {
+        "ballotLetter": "ני",
+        "name": "נעם"
+      }
+    ]
   }
 }
