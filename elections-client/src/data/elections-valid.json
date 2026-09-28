@@ -1,77 +1,102 @@
 {
   "1": {
-    "validVotes": 434677
+    "validVotes": 434677,
+    "belowThresholdVotes": 19417
   },
   "2": {
-    "validVotes": 687492
+    "validVotes": 687492,
+    "belowThresholdVotes": 4413
   },
   "3": {
-    "validVotes": 853219
+    "validVotes": 853219,
+    "belowThresholdVotes": 20617
   },
   "4": {
-    "validVotes": 969337
+    "validVotes": 969337,
+    "belowThresholdVotes": 33260
   },
   "5": {
-    "validVotes": 1006964
+    "validVotes": 1006964,
+    "belowThresholdVotes": 7077
   },
   "6": {
-    "validVotes": 1206728
+    "validVotes": 1206728,
+    "belowThresholdVotes": 20905
   },
   "7": {
-    "validVotes": 1367743
+    "validVotes": 1367743,
+    "belowThresholdVotes": 14845
   },
   "8": {
-    "validVotes": 1566855
+    "validVotes": 1566855,
+    "belowThresholdVotes": 75907
   },
   "9": {
-    "validVotes": 1747820
+    "validVotes": 1747820,
+    "belowThresholdVotes": 46969
   },
   "10": {
-    "validVotes": 1937366
+    "validVotes": 1937366,
+    "belowThresholdVotes": 99903
   },
   "11": {
-    "validVotes": 2073321
+    "validVotes": 2073321,
+    "belowThresholdVotes": 58978
   },
   "12": {
-    "validVotes": 2283118
+    "validVotes": 2283118,
+    "belowThresholdVotes": 55500
   },
   "13": {
-    "validVotes": 2616841
+    "validVotes": 2616841,
+    "belowThresholdVotes": 130989
   },
   "14": {
-    "validVotes": 3052130
+    "validVotes": 3052130,
+    "belowThresholdVotes": 78550
   },
   "15": {
-    "validVotes": 3309416
+    "validVotes": 3309416,
+    "belowThresholdVotes": 197093
   },
   "16": {
-    "validVotes": 3148364
+    "validVotes": 3148364,
+    "belowThresholdVotes": 131740
   },
   "17": {
-    "validVotes": 3137064
+    "validVotes": 3137064,
+    "belowThresholdVotes": 182688
   },
   "18": {
-    "validVotes": 3373490
+    "validVotes": 3373490,
+    "belowThresholdVotes": 103904
   },
   "19": {
-    "validVotes": 3792742
+    "validVotes": 3792742,
+    "belowThresholdVotes": 268795
   },
   "20": {
-    "validVotes": 4210884
+    "validVotes": 4210884,
+    "belowThresholdVotes": 189517
   },
   "21": {
-    "validVotes": 4309054
+    "validVotes": 4309054,
+    "belowThresholdVotes": 366016
   },
   "22": {
-    "validVotes": 4436806
+    "validVotes": 4436806,
+    "belowThresholdVotes": 126704
   },
   "23": {
-    "validVotes": 4590062
+    "validVotes": 4590062,
+    "belowThresholdVotes": 36901
   },
   "24": {
-    "validVotes": 4410052
+    "validVotes": 4410052,
+    "belowThresholdVotes": 64752
   },
   "25": {
-    "validVotes": 4764742
+    "validVotes": 4764742,
+    "belowThresholdVotes": 417400
   }
 }

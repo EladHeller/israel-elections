@@ -20,16 +20,23 @@ interface SummaryRow {
   totalVotes: number | null;
   invalidVotes: number | null;
   validVotes: number | null;
+  belowThresholdPercentage: number | null;
 }
 
 const rows: SummaryRow[] = Object.keys(electionsConfigAll as Record<string, any>)
   .map((id) => {
     const election = (electionsConfigAll as Record<string, any>)[id] || {};
     const totalVotes = Number(election.totalVotes);
-    const validVotes = (electionsValid as Record<string, any>)[id]?.validVotes ?? null;
+    const electionVotes = (electionsValid as Record<string, any>)[id] || {};
+    const validVotes = electionVotes.validVotes ?? null;
+    const belowThresholdVotes = electionVotes.belowThresholdVotes ?? null;
     const invalidVotes =
       Number.isFinite(totalVotes) && Number.isFinite(validVotes)
         ? (totalVotes as number) - (validVotes as number)
+        : null;
+    const belowThresholdPercentage =
+      Number.isFinite(belowThresholdVotes) && Number.isFinite(validVotes) && validVotes > 0
+        ? ((belowThresholdVotes as number) / (validVotes as number)) * 100
         : null;
     return {
       id: Number(id),
@@ -37,6 +44,7 @@ const rows: SummaryRow[] = Object.keys(electionsConfigAll as Record<string, any>
       totalVotes,
       invalidVotes,
       validVotes,
+      belowThresholdPercentage,
     };
   })
   .sort((a, b) => b.id - a.id);
@@ -53,6 +61,7 @@ const AllElectionsSummary: React.FC = () => (
             <th>סה&quot;כ מצביעים</th>
             <th>קולות פסולים</th>
             <th>קולות כשרים</th>
+            <th>אחוז הקולות שלא עברו את אחוז החסימה</th>
           </tr>
         </thead>
         <tbody>
@@ -63,6 +72,7 @@ const AllElectionsSummary: React.FC = () => (
               <td>{formatNumber(row.totalVotes)}</td>
               <td>{formatNumber(row.invalidVotes)}</td>
               <td>{formatNumber(row.validVotes)}</td>
+              <td>{formatPercent(row.belowThresholdPercentage)}</td>
             </tr>
           ))}
         </tbody>
@@ -72,4 +82,3 @@ const AllElectionsSummary: React.FC = () => (
 );
 
 export default AllElectionsSummary;
-
