@@ -637,45 +637,196 @@ body {
   flex: 1;
 }
 
-.margins-head {
-  display: grid;
-  grid-template-columns: 1fr 90px 90px;
+/* Threshold and mandate proximity use the active election/scenario settings. */
+.close-races-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.close-races-heading h2,
+.close-races-heading p {
+  margin: 0;
+}
+
+.close-races-heading p,
+.close-races-subtitle,
+.close-races-empty,
+.close-races-details {
   color: var(--ink-50);
-  font-size: 12px;
-  margin-bottom: 8px;
+  font-size: 14px;
 }
 
-.margins {
+.close-races-section .panel {
+  min-width: 0;
+}
+
+.close-races-section h3 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.close-races-subtitle {
+  margin: 0 0 18px;
+}
+
+.close-threshold-axis {
+  display: flex;
+  justify-content: space-between;
+  direction: ltr;
+  color: var(--ink-50);
+  font-size: 13px;
+  padding: 0 6px;
+}
+
+.close-threshold-list {
   display: grid;
-  gap: 10px;
+  gap: 18px;
+  margin-top: 10px;
 }
 
-.margin-row {
-  display: grid;
-  grid-template-columns: 1fr 90px 90px;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ink-20);
+.close-threshold-meta,
+.close-threshold-detail {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
 }
 
-.margin-party {
-  font-weight: 700;
+.close-threshold-meta strong {
+  overflow-wrap: anywhere;
+}
+
+.close-threshold-meta > span {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.close-threshold-track {
+  position: relative;
+  height: 10px;
+  margin: 12px 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  direction: ltr;
+}
+
+.close-threshold-marker {
+  position: absolute;
+  top: -5px;
+  width: 2px;
+  height: 20px;
+  background: var(--ink-50);
+  transform: translateX(-50%);
+}
+
+.close-threshold-dot {
+  position: absolute;
+  top: -1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.close-threshold-dot.above {
+  background: #126b38;
+}
+
+.close-threshold-dot.below {
+  background: #b20000;
+}
+
+.close-threshold-detail {
+  color: var(--ink-50);
+  font-size: 13px;
+}
+
+.close-race-badge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #fff3d5;
+  color: #8a4b00;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.margin-change {
-  text-align: left;
+.close-seat-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.close-seat-table th,
+.close-seat-table td {
+  padding: 12px 4px;
+  text-align: right;
+  border-bottom: 1px solid var(--ink-20);
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.close-seat-table thead th {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--ink-50);
+}
+
+.close-seat-table th:first-child {
+  width: 28%;
+}
+
+.close-seat-table th:nth-child(2) {
+  width: 18%;
+}
+
+.close-seat-table td {
   font-variant-numeric: tabular-nums;
 }
 
-.margin-change.gain {
-  color: #1b8b3f;
+.close-seat-value {
+  background: #fff3d5;
+  padding: 3px 6px;
+  border-radius: 5px;
+  color: var(--ink-90);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.margin-change.lose {
-  color: #d00000;
+.close-threshold-loss {
+  display: block;
+  color: #b20000;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.close-races-details {
+  margin-top: 14px;
+}
+
+.close-races-details summary {
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.close-races-details p {
+  line-height: 1.6;
+  margin: 4px 0;
+}
+
+@media (max-width: 600px) {
+  .close-seat-table th,
+  .close-seat-table td {
+    padding-right: 2px;
+    padding-left: 2px;
+  }
+
+  .close-seat-table thead th {
+    font-size: 12px;
+  }
 }
 
 .agreements {

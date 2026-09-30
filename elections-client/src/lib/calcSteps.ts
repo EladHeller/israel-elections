@@ -174,7 +174,8 @@ export const buildCalcSteps = (
     .map(([party, { votes }]) => ({
       party,
       votes,
-      pct: sumVotes > 0 ? (votes / sumVotes) * 100 : 0,
+      // Positive parties are retained above, so their total is positive too.
+      pct: (votes / sumVotes) * 100,
       passed: votes >= blockThreshold,
     }))
     .sort((a, b) => b.votes - a.votes);
@@ -194,11 +195,7 @@ export const buildCalcSteps = (
   // Step 3: whole mandates
   const withMandats = calcMandats(MANDATS, passBlockPercentage);
   const totalWhole = sumBy(Object.values(withMandats), 'mandats');
-  const remainingMandats = MANDATS - totalWhole;
-
-  const wholeMandatesByParty = Object.fromEntries(
-    Object.entries(withMandats).map(([party, { mandats }]) => [party, mandats]),
-  ) as Record<string, number>;
+  const remainingMandats = participatingVotes > 0 ? MANDATS - totalWhole : 0;
 
   const wholeMandatesRows = Object.entries(withMandats)
     .map(([party, { votes, mandats }]) => ({
@@ -255,11 +252,13 @@ export const buildCalcSteps = (
       const agreementKey = `${a}+${b}`;
       const totalMandats = afterRemainders[agreementKey]?.mandats ?? 0;
 
-      const globalAWhole = wholeMandatesByParty[a] ?? 0;
-      const globalBWhole = wholeMandatesByParty[b] ?? 0;
+      // The filter guarantees both parties qualify. Their vote, whole-seat and
+      // final-result entries exist throughout the allocation and split.
+      const globalAWhole = withMandats[a].mandats;
+      const globalBWhole = withMandats[b].mandats;
 
-      const aVotes = withMandats[a]?.votes ?? 0;
-      const bVotes = withMandats[b]?.votes ?? 0;
+      const aVotes = withMandats[a].votes;
+      const bVotes = withMandats[b].votes;
       const pairVotes = aVotes + bVotes;
 
       let aWholeInAgreement = globalAWhole;
@@ -267,22 +266,13 @@ export const buildCalcSteps = (
       let remainingAfterWhole = 0;
       let agreementModed = 0;
 
-      if (totalMandats > 0 && pairVotes > 0) {
+      if (totalMandats > 0) {
         agreementModed = pairVotes / totalMandats;
         aWholeInAgreement = Math.floor(aVotes / agreementModed);
         bWholeInAgreement = Math.floor(bVotes / agreementModed);
 
-        let sumWhole = aWholeInAgreement + bWholeInAgreement;
-        if (sumWhole > totalMandats) {
-          const overflow = sumWhole - totalMandats;
-          if (aWholeInAgreement >= overflow) {
-            aWholeInAgreement -= overflow;
-          } else {
-            bWholeInAgreement -= overflow;
-          }
-          sumWhole = aWholeInAgreement + bWholeInAgreement;
-        }
-
+        // The floors of the two shares sum to at most the pair's allocation.
+        const sumWhole = aWholeInAgreement + bWholeInAgreement;
         remainingAfterWhole = Math.max(0, totalMandats - sumWhole);
       }
 
@@ -306,14 +296,8 @@ export const buildCalcSteps = (
         bVotes,
         pairVotes,
         agreementModed,
-        aResult: realResults[a] ?? {
-          votes: withMandats[a]?.votes ?? 0,
-          mandats: aWholeInAgreement,
-        },
-        bResult: realResults[b] ?? {
-          votes: withMandats[b]?.votes ?? 0,
-          mandats: bWholeInAgreement,
-        },
+        aResult: realResults[a],
+        bResult: realResults[b],
         splitRounds,
         algorithmUsed: algorithm,
       };
@@ -324,7 +308,7 @@ export const buildCalcSteps = (
   const finalResults: FinalResultRow[] = Object.entries(realResults)
     .filter(([, result]) => hasMandate(result))
     .map(([party, { mandats }]) => {
-      const wholeMandats = withMandats[party]?.mandats ?? 0;
+      const wholeMandats = withMandats[party].mandats;
       const remainderMandats = mandats - wholeMandats;
       return { party, wholeMandats, remainderMandats, total: mandats };
     })
@@ -346,6 +330,6 @@ export const buildCalcSteps = (
     algorithmUsed: algorithm,
     agreementSplits,
     finalResults,
-    totalMandats: MANDATS,
+    totalMandats: participatingVotes > 0 ? MANDATS : 0,
   };
 };

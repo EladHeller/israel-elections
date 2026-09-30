@@ -454,35 +454,6 @@ const PartyBars: React.FC<PartyBarsProps> = ({
   );
 };
 
-interface SeatMargin {
-  party: string;
-  gain?: number | null;
-  lose?: number | null;
-}
-
-interface SeatMarginsProps {
-  margins: SeatMargin[];
-  getPartyName: (party: string) => string;
-}
-
-const SeatMargins: React.FC<SeatMarginsProps> = ({ margins, getPartyName }) => (
-  <div className="margins">
-    {margins.map((m) => (
-      <div key={m.party} className="margin-row">
-        <span className="margin-party" title={m.party}>
-          {getPartyName(m.party)}
-        </span>
-        <span className="margin-change gain">
-          +{m.gain ? numberFormat.format(m.gain) : '—'}
-        </span>
-        <span className="margin-change lose">
-          -{m.lose ? numberFormat.format(m.lose) : '—'}
-        </span>
-      </div>
-    ))}
-  </div>
-);
-
 interface AgreementsPanelProps {
   editable: boolean;
   agreements: [string, string][];
@@ -691,7 +662,6 @@ export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
 
 interface BottomPanelsProps {
   editable: boolean;
-  margins: SeatMargin[];
   getPartyName: (party: string) => string;
   scenarioConfig: { agreements?: [string, string][] };
   removeAgreement: (a: string, b: string) => void;
@@ -706,7 +676,6 @@ interface BottomPanelsProps {
 
 export const BottomPanels: React.FC<BottomPanelsProps> = ({
   editable,
-  margins,
   getPartyName,
   scenarioConfig,
   removeAgreement,
@@ -718,17 +687,7 @@ export const BottomPanels: React.FC<BottomPanelsProps> = ({
   addAgreement,
   agreementValidation,
 }) => (
-  <section className="grid">
-    <div className="panel">
-      <h2>קרובים למנדט נוסף / אובדן</h2>
-      <div className="margins-head">
-        <span className="margin-party">מפלגה</span>
-        <span className="margin-change gain">+מנדט</span>
-        <span className="margin-change lose">-מנדט</span>
-      </div>
-      <SeatMargins margins={margins} getPartyName={getPartyName} />
-    </div>
-
+  <section className="grid grid-single">
     <div className="panel">
       <h2>הסכמי עודפים</h2>
       <AgreementsPanel
