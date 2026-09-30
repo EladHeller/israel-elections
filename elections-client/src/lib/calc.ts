@@ -140,6 +140,11 @@ export const calcVotesResults = (
   }
   const passBlockPercentage = filterNotPassBlockPercentage(blockPercentage, voteData, sumVotes);
 
+  // A custom simulator threshold can leave every party below the threshold.
+  if (Object.keys(passBlockPercentage).length === 0) {
+    return { realResults: {}, withoutAgreements: {}, voteData };
+  }
+
   const withMandats = calcMandats(mandats, passBlockPercentage);
   const withAgreements = convertToAgreements(agreements, withMandats);
   const baderOfferWithAgreements = baderOffer(mandats, withAgreements);
