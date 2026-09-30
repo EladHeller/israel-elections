@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId, useState } from 'react';
 import {
   isCloseSeatMargin,
   THRESHOLD_PROXIMITY,
@@ -53,7 +53,10 @@ const SeatTable = ({ races, limit, getPartyName }: {
 export default function CloseRacesSection({
   proximity, blockPercentage, getPartyName, isCounting,
 }: Props) {
+  const [showAllParties, setShowAllParties] = useState(false);
+  const seatListId = useId();
   const { thresholdRaces, seatRaces, closeSeatRaces, seatLimit } = proximity;
+  const visibleSeatRaces = showAllParties ? seatRaces : closeSeatRaces;
   const axisStart = Math.max(0, blockPercentage - THRESHOLD_PROXIMITY);
   const axisEnd = Math.min(1, blockPercentage + THRESHOLD_PROXIMITY);
   const position = (share: number) => `${(share - axisStart) / (axisEnd - axisStart) * 100}%`;
@@ -67,11 +70,11 @@ export default function CloseRacesSection({
       <div className="grid">
         <div className="panel">
           <h3>קרובות לאחוז החסימה</h3>
-          <p className="close-races-subtitle">עד 0.25 נקודות אחוז מאחוז החסימה · אחוז החסימה: {percent(blockPercentage)}</p>
+          <p className="close-races-subtitle">אחוז החסימה: {percent(blockPercentage)}</p>
           {blockPercentage === 0 ? (
             <p className="close-races-empty">אין אחוז חסימה בתרחיש הזה.</p>
           ) : thresholdRaces.length === 0 ? (
-            <p className="close-races-empty">אין מפלגות בטווח של 0.25 נקודות אחוז מאחוז החסימה.</p>
+            <p className="close-races-empty">אין מפלגות קרובות לאחוז החסימה.</p>
           ) : (
             <>
               <div className="close-threshold-axis" aria-hidden="true">
@@ -82,8 +85,7 @@ export default function CloseRacesSection({
                   <div key={race.party} className="close-threshold-row">
                     <div className="close-threshold-meta">
                       <strong>{getPartyName(race.party)}</strong>
-                      <span>{percent(race.share)} · {race.gapVotes < 0 ? 'מתחת לאחוז החסימה'
-                        : race.gapPercentagePoints === 0 ? 'בדיוק באחוז החסימה' : 'מעל אחוז החסימה'}</span>
+                      <span>{percent(race.share)}</span>
                     </div>
                     <div className="close-threshold-track" aria-hidden="true">
                       <span className="close-threshold-marker" style={{ left: position(blockPercentage) }} />
@@ -106,23 +108,20 @@ export default function CloseRacesSection({
         <div className="panel">
           <h3>קרובות לשינוי מנדט</h3>
           <p className="close-races-subtitle">עד 10% ממודד המנדט · עד {numberFormat.format(seatLimit)} קולות</p>
-          {closeSeatRaces.length === 0 ? (
-            <p className="close-races-empty">אין מפלגות במרחק של עד 10% ממודד המנדט משינוי.</p>
-          ) : (
-            <SeatTable races={closeSeatRaces} limit={seatLimit} getPartyName={getPartyName} />
-          )}
+          <div id={seatListId}>
+            {visibleSeatRaces.length === 0 ? (
+              <p className="close-races-empty">אין מפלגות במרחק של עד 10% ממודד המנדט משינוי.</p>
+            ) : (
+              <SeatTable races={visibleSeatRaces} limit={seatLimit} getPartyName={getPartyName} />
+            )}
+          </div>
           {seatRaces.length > closeSeatRaces.length && (
-            <details className="close-races-details">
-              <summary>הצג את כל המפלגות ({seatRaces.length})</summary>
-              <SeatTable races={seatRaces} limit={seatLimit} getPartyName={getPartyName} />
-            </details>
+            <button type="button" className="close-races-toggle"
+              aria-expanded={showAllParties} aria-controls={seatListId}
+              onClick={() => setShowAllParties((showAll) => !showAll)}>
+              {showAllParties ? 'הצג פחות' : `הצג את כל המפלגות (${seatRaces.length})`}
+            </button>
           )}
-          <details className="close-races-details">
-            <summary>אופן החישוב</summary>
-            <p>המודד הוא סך הקולות למפלגות שעוברות את אחוז החסימה, חלקי 120.
-              המרחק בקולות מחושב בשינוי קולות המפלגה בלבד, כשקולות יתר המפלגות נשארים קבועים,
-              כולל שיטת החלוקה והסכמי העודפים הנבחרים. זו קרבה חישובית, ולא הסתברות לשינוי.</p>
-          </details>
         </div>
       </div>
     </section>

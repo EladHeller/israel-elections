@@ -655,7 +655,7 @@ body {
 .close-races-heading p,
 .close-races-subtitle,
 .close-races-empty,
-.close-races-details {
+.close-races-toggle {
   color: var(--ink-50);
   font-size: 14px;
 }
@@ -803,18 +803,13 @@ body {
   margin-top: 6px;
 }
 
-.close-races-details {
+.close-races-toggle {
   margin-top: 14px;
-}
-
-.close-races-details summary {
-  cursor: pointer;
   padding: 10px 0;
-}
-
-.close-races-details p {
-  line-height: 1.6;
-  margin: 4px 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 @media (max-width: 600px) {
