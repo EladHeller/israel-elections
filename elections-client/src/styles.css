@@ -638,21 +638,11 @@ body {
 }
 
 /* Threshold and mandate proximity use the active election/scenario settings. */
-.close-races-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
+.close-races-counting {
+  margin: 0 0 14px;
 }
 
-.close-races-heading h2,
-.close-races-heading p {
-  margin: 0;
-}
-
-.close-races-heading p,
+.close-races-counting,
 .close-races-subtitle,
 .close-races-empty,
 .close-races-toggle {
@@ -664,7 +654,7 @@ body {
   min-width: 0;
 }
 
-.close-races-section h3 {
+.close-races-section h2 {
   font-size: 20px;
   margin: 0 0 8px;
 }
@@ -787,13 +777,32 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.close-seat-gain,
+.close-seat-loss {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.close-seat-gain {
+  color: #126b38;
+}
+
+.close-seat-loss {
+  color: #b20000;
+}
+
 .close-seat-value {
-  background: #fff3d5;
   padding: 3px 6px;
   border-radius: 5px;
-  color: var(--ink-90);
   font-weight: 700;
-  white-space: nowrap;
+}
+
+.close-seat-gain.close-seat-value {
+  background: #e8f5eb;
+}
+
+.close-seat-loss.close-seat-value {
+  background: #fdeaea;
 }
 
 .close-threshold-loss {

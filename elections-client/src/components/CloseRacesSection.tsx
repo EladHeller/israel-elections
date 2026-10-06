@@ -35,11 +35,11 @@ const SeatTable = ({ races, limit, getPartyName }: {
         <tr key={race.party}>
           <th scope="row">{getPartyName(race.party)}</th>
           <td>{numberFormat.format(race.mandats)}</td>
-          <td><span className={isCloseSeatMargin(race.gain, limit) ? 'close-seat-value' : ''}>
-            {race.gain === null ? '—' : numberFormat.format(race.gain)}
+          <td><span dir="ltr" className={`close-seat-gain${isCloseSeatMargin(race.gain, limit) ? ' close-seat-value' : ''}`}>
+            {race.gain === null ? '—' : `+${numberFormat.format(race.gain)}`}
           </span></td>
-          <td><span className={isCloseSeatMargin(race.lose, limit) ? 'close-seat-value' : ''}>
-            {race.lose === null ? '—' : numberFormat.format(race.lose)}
+          <td><span dir="ltr" className={`close-seat-loss${isCloseSeatMargin(race.lose, limit) ? ' close-seat-value' : ''}`}>
+            {race.lose === null ? '—' : `−${numberFormat.format(race.lose)}`}
           </span>
           {race.loseCrossesThreshold && (
             <span className="close-threshold-loss">ירידה מתחת לאחוז החסימה</span>
@@ -62,14 +62,11 @@ export default function CloseRacesSection({
   const position = (share: number) => `${(share - axisStart) / (axisEnd - axisStart) * 100}%`;
 
   return (
-    <section className="close-races-section" aria-labelledby="close-races-title">
-      <div className="close-races-heading">
-        <h2 id="close-races-title">על הסף</h2>
-        {isCounting && <p>לפי הקולות שנספרו עד כה</p>}
-      </div>
+    <section className="close-races-section" aria-label="קרובות לאחוז החסימה ולשינוי מנדט">
+      {isCounting && <p className="close-races-counting">לפי הקולות שנספרו עד כה</p>}
       <div className="grid">
         <div className="panel">
-          <h3>קרובות לאחוז החסימה</h3>
+          <h2>קרובות לאחוז החסימה</h2>
           <p className="close-races-subtitle">אחוז החסימה: {percent(blockPercentage)}</p>
           {blockPercentage === 0 ? (
             <p className="close-races-empty">אין אחוז חסימה בתרחיש הזה.</p>
@@ -106,7 +103,7 @@ export default function CloseRacesSection({
           )}
         </div>
         <div className="panel">
-          <h3>קרובות לשינוי מנדט</h3>
+          <h2>קרובות לשינוי מנדט</h2>
           <p className="close-races-subtitle">עד 10% ממודד המנדט · עד {numberFormat.format(seatLimit)} קולות</p>
           <div id={seatListId}>
             {visibleSeatRaces.length === 0 ? (
