@@ -170,8 +170,10 @@ export default function App() {
 
   const totalVotes = sumVotes(voteData);
   const blockThreshold = Math.ceil(totalVotes * displayedConfig.blockPercentage);
-  const configTotalVotes = electionConfig.totalVotes ?? totalVotes;
-  const invalidVotesDerived = Math.max(0, configTotalVotes - totalVotes);
+  const baseSumVotes = sumVotes(baseVoteData);
+  // Election statistics describe the original results, even in the simulator.
+  const configTotalVotes = electionConfig.totalVotes ?? baseSumVotes;
+  const invalidVotesDerived = Math.max(0, configTotalVotes - baseSumVotes);
 
   const allParties = filterRealParties(voteData)
     .filter(([, { votes }]) => votes > 0)
@@ -185,7 +187,6 @@ export default function App() {
   const mandateParties = allParties.filter(hasMandate);
   const parties = showAllParties ? allParties : mandateParties;
 
-  const baseSumVotes = sumVotes(baseVoteData);
   const baseBlockThreshold = Math.ceil(baseSumVotes * baseConfig.blockPercentage);
 
   const nonParticipatingVotes = filterRealParties(voteData).reduce(
