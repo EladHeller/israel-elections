@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   computeBlocTotals,
-  computeSeatMargins,
   computeBlocMap,
 } from './lib/analytics';
 import AppHeader from './components/AppHeader';
@@ -11,6 +10,8 @@ import SecondarySummarySection from './components/SecondarySummarySection';
 import ElectionStatsSection from './components/ElectionStatsSection';
 import { BottomPanels, PartyPanel, BlocsDistributionPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
+import CloseRacesSection from './components/CloseRacesSection';
+import { computeProximity } from './lib/proximity';
 import PreElectionView from './components/PreElectionView';
 import { useElectionData } from './hooks/use-election-data';
 import { useScenario } from './hooks/use-scenario';
@@ -238,9 +239,7 @@ export default function App() {
   const blocColors = blocFiltered.map((item) => item.color);
   const blocLabels = blocFiltered.map((item) => item.label);
 
-  const margins = computeSeatMargins(realResults, voteData, displayedConfig).sort(
-    (a, b) => (a.gain ?? Infinity) - (b.gain ?? Infinity),
-  );
+  const proximity = computeProximity(realResults, voteData, displayedConfig);
 
   const handlePartyBlocChange = (party: string, blocKey: string | null) => {
     if (!electionKey) return;
@@ -317,9 +316,15 @@ export default function App() {
             />
           </section>
 
+          <CloseRacesSection
+            proximity={proximity}
+            blockPercentage={displayedConfig.blockPercentage}
+            getPartyName={getPartyName}
+            isCounting={!isSimulator && electionManifest.phase === 'counting'}
+          />
+
           <BottomPanels
             editable={isSimulator}
-            margins={margins}
             getPartyName={getPartyName}
             scenarioConfig={displayedConfig}
             removeAgreement={removeAgreement}
