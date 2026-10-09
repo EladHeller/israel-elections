@@ -102,4 +102,4 @@ npm run deploy
 ## Live Demo
 
 The latest version is deployed at:
-[https://d2dtitluek3vlq.cloudfront.net/](https://d2dtitluek3vlq.cloudfront.net/)
+[https://elections.eladheller.com](https://elections.eladheller.com)
