@@ -322,6 +322,9 @@ export default function App() {
             blockPercentage={displayedConfig.blockPercentage}
             getPartyName={getPartyName}
             isCounting={!isSimulator && electionManifest.phase === 'counting'}
+            onVoteDelta={isSimulator
+              ? (party, delta) => onVoteChange(party, voteData[party].votes + delta)
+              : undefined}
           />
 
           <BottomPanels
