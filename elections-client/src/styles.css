@@ -644,8 +644,7 @@ body {
 
 .close-races-counting,
 .close-races-subtitle,
-.close-races-empty,
-.close-races-toggle {
+.close-races-empty {
   color: var(--ink-50);
   font-size: 14px;
 }
@@ -812,13 +811,25 @@ body {
   margin-top: 6px;
 }
 
-.close-races-toggle {
-  margin-top: 14px;
-  padding: 10px 0;
+.close-seat-action {
+  padding: 3px 6px;
   border: 0;
+  border-radius: 5px;
   background: transparent;
-  font-family: inherit;
+  font: inherit;
   cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.close-seat-action.close-seat-value {
+  font-weight: 700;
+}
+
+.close-seat-action:hover,
+.close-seat-action:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 @media (max-width: 600px) {
