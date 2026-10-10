@@ -818,8 +818,7 @@ body {
   background: transparent;
   font: inherit;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  transition: background-color 150ms ease;
 }
 
 .close-seat-action.close-seat-value {
@@ -827,6 +826,10 @@ body {
 }
 
 .close-seat-action:hover,
+.close-seat-action:focus-visible {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
 .close-seat-action:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
