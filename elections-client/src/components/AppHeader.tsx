@@ -4,7 +4,7 @@ import ElectionSelector from './ElectionSelector';
 
 interface AppHeaderProps {
   statusText: string;
-  showViewControl: boolean;
+  showSimulator: boolean;
   isEdited: boolean;
   currentElection: string | null;
   setCurrentElection: (id: string) => void;
@@ -21,7 +21,7 @@ const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
 
 const AppHeader: React.FC<AppHeaderProps> = ({
   statusText,
-  showViewControl,
+  showSimulator,
   isEdited,
   currentElection,
   setCurrentElection,
@@ -38,29 +38,29 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
     </div>
     <div className="controls">
-      {showViewControl && (
-        <div className="view-control">
-          <span>תצוגה</span>
-          <div className="view-switcher" role="group" aria-label="בחירת תצוגה">
-            {VIEW_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={viewMode === option.value ? 'is-active' : ''}
-                aria-pressed={viewMode === option.value}
-                onClick={() => setViewMode(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+      <div className="view-control">
+        <span>תצוגה</span>
+        <div className="view-switcher" role="group" aria-label="בחירת תצוגה">
+          {VIEW_OPTIONS
+            .filter((option) => showSimulator || option.value !== 'simulator')
+            .map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={viewMode === option.value ? 'is-active' : ''}
+              aria-pressed={viewMode === option.value}
+              onClick={() => setViewMode(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
       <ElectionSelector
         value={currentElection}
         elections={availableElections}
         onChange={setCurrentElection}
-        disabled={showViewControl && viewMode === 'summary'}
+        disabled={viewMode === 'summary'}
       />
     </div>
   </header>

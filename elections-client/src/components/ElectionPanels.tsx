@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { numberFormat, getStablePartyColor } from '../lib/ui-helpers';
 import type { BlocsConfig } from '../types';
+import PartyRow from './PartyRow';
 
 interface DeltaChipProps {
   delta?: number | null;
@@ -413,22 +414,18 @@ const PartyBars: React.FC<PartyBarsProps> = ({
           voteDrafts[party.party] ?? String(editableVoteData[party.party]?.votes ?? party.votes);
         const partyName = getPartyName(party.party);
         return (
-          <div key={party.party} className="party-row">
-            <div className="party-meta" title={partyName}>
-              <span className="party-name">{partyName}</span>
-              <span className="party-seats">
+          <PartyRow
+            key={party.party}
+            name={partyName}
+            seats={
+              <>
                 {party.mandats}
                 <DeltaChip delta={partySeatDeltas[party.party]} />
-              </span>
-            </div>
-            <div className="party-bar">
-              <div
-                className="party-bar-fill"
-                style={{ width: `${width}%`, background: color }}
-              />
-            </div>
-            <div className="party-votes">
-              {editable ? (
+              </>
+            }
+            bar={{ width, color }}
+            votes={
+              editable ? (
                 <input
                   className="party-vote-input"
                   type="number"
@@ -444,10 +441,9 @@ const PartyBars: React.FC<PartyBarsProps> = ({
                 <span className="party-vote-value">
                   {numberFormat.format(party.votes)}
                 </span>
-              )}
-              <span>קולות</span>
-            </div>
-          </div>
+              )
+            }
+          />
         );
       })}
     </div>
