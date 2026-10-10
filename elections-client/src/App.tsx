@@ -120,8 +120,8 @@ export default function App() {
           setViewMode={setViewMode}
         />
         <PreElectionView
-          electionId={currentElection}
           manifest={electionManifest}
+          electionConfig={electionConfig}
         />
       </div>
     );
