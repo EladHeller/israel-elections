@@ -5,12 +5,16 @@ interface ElectionStatsSectionProps {
   turnoutPercentage?: number;
   totalVotes?: number;
   invalidVotes?: number;
+  validVotes: number;
+  isSimulator: boolean;
 }
 
 const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
   turnoutPercentage,
   totalVotes,
   invalidVotes,
+  validVotes,
+  isSimulator,
 }) => {
   const invalidVotePercent =
     invalidVotes != null && totalVotes
@@ -18,28 +22,32 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
       : null;
 
   return (
-    <section className="summary stats-summary">
-      <div className="card">
-        <div className="card-label">אחוז הצבעה</div>
-        <div className="card-value">
-          {turnoutPercentage != null ? Number(turnoutPercentage).toFixed(2) : '—'}%
-        </div>
+    <section className="panel election-summary-panel" aria-labelledby="voting-summary-title">
+      <h2 id="voting-summary-title">{isSimulator ? 'הצבעה בפועל' : 'הצבעה'}</h2>
+      <div className="summary-headline">
+        <span className="summary-value">
+          {turnoutPercentage != null ? `${Number(turnoutPercentage).toFixed(2)}%` : '—'}
+        </span>
+        <span>אחוז הצבעה</span>
       </div>
-      <div className="card">
-        <div className="card-label">סה"כ קולות</div>
-        <div className="card-value">
-          {totalVotes != null ? numberFormat.format(totalVotes) : '—'}
-        </div>
+      <div className="summary-caption">
+        <bdi>{totalVotes != null ? numberFormat.format(totalVotes) : '—'}</bdi> מצביעים
       </div>
-      <div className="card">
-        <div className="card-label">קולות פסולים</div>
-        <div className="card-value">
-          {invalidVotes != null ? numberFormat.format(invalidVotes) : '—'}
+      <dl className="summary-breakdown">
+        <div className="summary-detail">
+          <dt>קולות כשרים</dt>
+          <dd><bdi>{numberFormat.format(validVotes)}</bdi></dd>
         </div>
-        {invalidVotePercent != null && (
-          <div className="card-sub">({invalidVotePercent.toFixed(2)}%)</div>
-        )}
-      </div>
+        <div className="summary-detail">
+          <dt>קולות פסולים</dt>
+          <dd>
+            <bdi>{invalidVotes != null ? numberFormat.format(invalidVotes) : '—'}</bdi>
+            {invalidVotePercent != null && (
+              <span className="summary-caption"> ({invalidVotePercent.toFixed(2)}%)</span>
+            )}
+          </dd>
+        </div>
+      </dl>
     </section>
   );
 };
