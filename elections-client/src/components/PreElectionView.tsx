@@ -5,6 +5,7 @@ import ElectionSettingsSection from './ElectionSettingsSection';
 
 interface PreElectionViewProps {
   manifest: ElectionManifest;
+  electionNight?: boolean;
   electionConfig: ElectionConfig;
 }
 
@@ -14,7 +15,7 @@ const formatElectionDate = (date: string): string =>
     timeZone: 'Asia/Jerusalem',
   }).format(new Date(date));
 
-const PreElectionView: React.FC<PreElectionViewProps> = ({ manifest, electionConfig }) => (
+const PreElectionView: React.FC<PreElectionViewProps> = ({ manifest, electionConfig, electionNight = false }) => (
   <main>
     <ElectionSettingsSection
       editable={false}
@@ -44,6 +45,7 @@ const PreElectionView: React.FC<PreElectionViewProps> = ({ manifest, electionCon
             <PartyRow
               key={list.ballotLetter}
               name={list.name}
+              electionNight={electionNight}
               ballotLetter={list.ballotLetter}
               seats={<span aria-label="מנדטים טרם פורסמו">—</span>}
               votes={<span className="party-vote-value" aria-label="קולות טרם פורסמו">—</span>}

@@ -5,12 +5,13 @@ import PartyRow from './PartyRow';
 
 interface DeltaChipProps {
   delta?: number | null;
+  electionNight?: boolean;
 }
 
-const DeltaChip: React.FC<DeltaChipProps> = ({ delta }) => {
+const DeltaChip: React.FC<DeltaChipProps> = ({ delta, electionNight }) => {
   if (!delta) return null;
   return (
-    <span dir="ltr" className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>
+    <span dir={electionNight ? 'ltr' : undefined} className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>
       {delta > 0 ? `+${delta}` : delta}
     </span>
   );
@@ -23,6 +24,7 @@ interface PartySummary {
 }
 
 interface PartyBarsProps {
+  electionNight: boolean;
   editable: boolean;
   parties: PartySummary[];
   blocs: BlocsConfig;
@@ -36,6 +38,7 @@ interface PartyBarsProps {
 }
 
 const PartyBars: React.FC<PartyBarsProps> = ({
+  electionNight,
   editable,
   parties,
   blocs,
@@ -76,13 +79,14 @@ const PartyBars: React.FC<PartyBarsProps> = ({
           <PartyRow
             key={party.party}
             name={partyName}
+            electionNight={electionNight}
             percentage={totalVotes > 0 ? `${(party.votes / totalVotes * 100).toLocaleString('he-IL', { maximumFractionDigits: 2 })}%` : '0%'}
-            seats={
+            seats={electionNight ? (
               <>
                 <span key={party.mandats} className={`seat-number${partySeatDeltas[party.party] ? ' seat-changed' : ''}`} aria-label={`${party.mandats} מנדטים`}>{party.mandats}</span>
-                <span aria-label={editable ? 'שינוי לעומת התוצאות' : 'שינוי מהעדכון הקודם'}><DeltaChip delta={partySeatDeltas[party.party]} /></span>
+                <span aria-label={editable ? 'שינוי לעומת התוצאות' : 'שינוי מהעדכון הקודם'}><DeltaChip electionNight delta={partySeatDeltas[party.party]} /></span>
               </>
-            }
+            ) : <>{party.mandats}<DeltaChip delta={partySeatDeltas[party.party]} /></>}
             bar={{ width, color }}
             votes={
               editable ? (
@@ -241,6 +245,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
       )}
     </div>
     <PartyBars
+      electionNight={isLatestElection}
       editable={editable}
       parties={parties}
       blocs={blocs}
