@@ -1,6 +1,9 @@
 {
   "25": {
-    "order": ["gushA", "gushB"],
+    "order": [
+      "gushA",
+      "gushB"
+    ],
     "blocks": {
       "gushA": {
         "label": "גוש א",
@@ -11,6 +14,46 @@
         "label": "גוש ב",
         "color": "#dc2626",
         "parties": []
+      }
+    }
+  },
+  "26": {
+    "order": [
+      "gushA",
+      "gushB",
+      "gushC"
+    ],
+    "blocks": {
+      "gushA": {
+        "label": "גוש הימין",
+        "color": "#2563eb",
+        "parties": [
+          "מחל",
+          "שס",
+          "ג",
+          "ט",
+          "ב",
+          "ך"
+        ]
+      },
+      "gushB": {
+        "label": "גוש השמאל־מרכז",
+        "color": "#dc2626",
+        "parties": [
+          "רק",
+          "ל",
+          "דרך",
+          "אמת"
+        ]
+      },
+      "gushC": {
+        "label": "המפלגות הערביות",
+        "color": "#e87583",
+        "parties": [
+          "עם",
+          "ודם"
+        ],
+        "complementaryTo": "gushB"
       }
     }
   }
