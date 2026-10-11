@@ -111,18 +111,22 @@ export default function App() {
       <div className="screen">
         <AppHeader
           statusText={statusText}
-          showViewControl={false}
+          showSimulator={false}
           isEdited={false}
           currentElection={currentElection}
           setCurrentElection={setCurrentElection}
           availableElections={availableElections}
-          viewMode={viewMode}
+          viewMode={viewMode === 'simulator' ? 'results' : viewMode}
           setViewMode={setViewMode}
         />
-        <PreElectionView
-          electionId={currentElection}
-          manifest={electionManifest}
-        />
+        {viewMode === 'summary' ? (
+          <AllElectionsSummary />
+        ) : (
+          <PreElectionView
+            manifest={electionManifest}
+            electionConfig={electionConfig}
+          />
+        )}
       </div>
     );
   }
@@ -257,7 +261,7 @@ export default function App() {
     <div className="screen">
       <AppHeader
         statusText={statusText}
-        showViewControl
+        showSimulator
         isEdited={displayedIsEdited}
         currentElection={currentElection}
         setCurrentElection={setCurrentElection}
