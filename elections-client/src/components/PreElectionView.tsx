@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ElectionConfig, ElectionManifest } from '../types';
 import PartyRow from './PartyRow';
-import SummarySection from './SummarySection';
+import ElectionSettingsSection from './ElectionSettingsSection';
 
 interface PreElectionViewProps {
   manifest: ElectionManifest;
@@ -16,9 +16,8 @@ const formatElectionDate = (date: string): string =>
 
 const PreElectionView: React.FC<PreElectionViewProps> = ({ manifest, electionConfig }) => (
   <main>
-    <SummarySection
+    <ElectionSettingsSection
       editable={false}
-      sumVotes={null}
       blockThreshold={null}
       activeConfig={electionConfig}
     />

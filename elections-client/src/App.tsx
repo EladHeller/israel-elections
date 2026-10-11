@@ -5,8 +5,8 @@ import {
 } from './lib/analytics';
 import AppHeader from './components/AppHeader';
 import AllElectionsSummary from './components/AllElectionsSummary';
-import SummarySection from './components/SummarySection';
-import SecondarySummarySection from './components/SecondarySummarySection';
+import ElectionSettingsSection from './components/ElectionSettingsSection';
+import VoteDistributionSection from './components/VoteDistributionSection';
 import ElectionStatsSection from './components/ElectionStatsSection';
 import { BottomPanels, PartyPanel, BlocsDistributionPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
@@ -274,29 +274,30 @@ export default function App() {
         <AllElectionsSummary />
       ) : (
         <>
-          <SummarySection
+          <div className="election-summary">
+            <ElectionStatsSection
+              turnoutPercentage={electionConfig.turnoutPercentage}
+              totalVotes={electionConfig.totalVotes}
+              invalidVotes={invalidVotesDerived}
+              validVotes={baseSumVotes}
+              isSimulator={isSimulator}
+            />
+            <VoteDistributionSection
+              nonParticipatingVotes={nonParticipatingVotes}
+              nonParticipatingPercent={nonParticipatingPercent}
+              participatingVotes={participatingVotes}
+              votesPerMandate={votesPerMandate}
+              isEdited={displayedIsEdited}
+            />
+          </div>
+          <ElectionSettingsSection
             editable={isSimulator}
-            sumVotes={totalVotes}
-            baseSumVotes={baseSumVotes}
             blockThreshold={blockThreshold}
             baseBlockThreshold={baseBlockThreshold}
             activeConfig={displayedConfig}
             isEdited={displayedIsEdited}
             onBlockPercentageChange={onBlockPercentageChange}
             onAlgorithmChange={onAlgorithmChange}
-          />
-
-          <SecondarySummarySection
-            nonParticipatingVotes={nonParticipatingVotes}
-            nonParticipatingPercent={nonParticipatingPercent}
-            participatingVotes={participatingVotes}
-            votesPerMandate={votesPerMandate}
-          />
-
-          <ElectionStatsSection
-            turnoutPercentage={electionConfig.turnoutPercentage}
-            totalVotes={electionConfig.totalVotes}
-            invalidVotes={invalidVotesDerived}
           />
 
           <section className="grid grid-single">
