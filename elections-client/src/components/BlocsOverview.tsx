@@ -1,5 +1,6 @@
 import React from 'react';
 import type { BlocsConfig, ResultsMap } from '../types';
+import { computeBlocOverview } from '../lib/bloc-overview';
 
 interface Props {
   blocs: BlocsConfig;
@@ -23,6 +24,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
   getPartyName, onAssign, onRename, onReset, customized, saveFailed, hasResults,
   isCounting, isSimulator }: Props) {
   const order = blocs.order || Object.keys(blocs.blocks);
+  const overview = computeBlocOverview(blocs, totals);
   const assigned = parties.some((party) => partyToBloc[party]);
   const unassigned = parties.filter((party) => !partyToBloc[party]);
   const unassignedSeats = unassigned.reduce((sum, party) => sum + (results[party]?.mandats || 0), 0);
@@ -36,31 +38,62 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
       </div>
       {assigned ? (
         <>
-          <div className="bloc-scoreboard" style={{ '--bloc-count': order.length } as React.CSSProperties}>
-            {order.map((key) => {
+          <div className="bloc-scoreboard" style={{ '--bloc-count': overview.length } as React.CSSProperties}>
+            {overview.map(({ key, complementaryKeys, ownSeats, combinedSeats, majorityText }) => {
               const bloc = blocs.blocks[key];
-              const members = parties.filter((party) => partyToBloc[party] === key);
-              const total = totals[key] || 0;
               const delta = deltas[key] || 0;
+              const segments = [key, ...complementaryKeys];
+              const chartDescription = segments.map((segment) => `${blocs.blocks[segment].label}: ${totals[segment] || 0}`).join(', ');
               return (
                 <div className="bloc-score" key={key} style={{ '--bloc-color': bloc.color } as React.CSSProperties}>
                   <h3><span className="bloc-color" />{bloc.label}</h3>
-                  <div className="bloc-number">
-                    <strong>{hasResults ? total : '—'}</strong>
-                    {hasResults && <span>מנדטים</span>}
-                    {hasResults && delta !== 0 && <span dir="ltr" className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}
-                      aria-label={`${delta > 0 ? 'תוספת' : 'ירידה של'} ${Math.abs(delta)} מנדטים ${isSimulator ? 'לעומת התוצאות' : 'מהעדכון הקודם'}`}>
-                      {delta > 0 ? '+' : '−'}{Math.abs(delta)}
-                    </span>}
+                  <div className="bloc-totals">
+                    <div className="bloc-number">
+                      <strong>{hasResults ? ownSeats : '—'}</strong>
+                      {hasResults && <span>מנדטים</span>}
+                      {hasResults && delta !== 0 && <span dir="ltr" className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}
+                        aria-label={`${delta > 0 ? 'תוספת' : 'ירידה של'} ${Math.abs(delta)} מנדטים ${isSimulator ? 'לעומת התוצאות' : 'מהעדכון הקודם'}`}>
+                        {delta > 0 ? '+' : '−'}{Math.abs(delta)}
+                      </span>}
+                    </div>
+                    {complementaryKeys.map((other) => (
+                      <div className="bloc-complement" key={other}>
+                        <div className="bloc-complement-value">
+                          <span aria-hidden="true">+</span>
+                          <strong>{hasResults ? totals[other] || 0 : '—'}</strong>
+                          {hasResults && !!deltas[other] && <span dir="ltr" className={`delta-chip ${deltas[other] > 0 ? 'gain' : 'lose'}`}
+                            aria-label={`שינוי של ${deltas[other]} מנדטים ${isSimulator ? 'לעומת התוצאות' : 'מהעדכון הקודם'}`}>
+                            {deltas[other] > 0 ? '+' : '−'}{Math.abs(deltas[other])}
+                          </span>}
+                        </div>
+                        <span className="bloc-complement-label"><span className="bloc-color" style={{ background: blocs.blocks[other].color }} />{blocs.blocks[other].label}</span>
+                      </div>
+                    ))}
                   </div>
+                  <div className="bloc-outcome">
                   {hasResults && <>
-                    <div className="majority-track" role="img" aria-label={`${bloc.label}: ${total} מתוך 120 מנדטים, רוב ב־61`}>
-                      <div style={{ width: `${Math.min(total, 120) / 120 * 100}%` }} />
+                    <div className="majority-track" role="img" aria-label={`${chartDescription}. סך הכול ${combinedSeats} מתוך 120 מנדטים, רוב ב־61`}>
+                      {segments.map((segment) => <div key={segment}
+                        style={{ width: `${Math.min(totals[segment] || 0, 120) / 120 * 100}%`, background: blocs.blocks[segment].color }} />)}
                       <span className="majority-marker" />
                     </div>
-                    <div className="majority-caption"><span>{total >= 61 ? 'רוב בכנסת' : `עוד ${61 - total} לרוב`}</span><span>61 לרוב</span></div>
+                    <div className="majority-caption">
+                      {complementaryKeys.length > 0 && <span>יחד: {combinedSeats} מנדטים</span>}
+                      <span>61 לרוב</span>
+                    </div>
+                    <p className="majority-status">{majorityText}</p>
                   </>}
-                  <p className="bloc-members">{members.length ? members.map(getPartyName).join(' · ') : 'אין מפלגות משויכות'}</p>
+                  </div>
+                  <div className="bloc-members-list">
+                  {segments.map((segment) => {
+                    const members = parties.filter((party) => partyToBloc[party] === segment);
+                    return <p className="bloc-members" key={segment}>
+                      {complementaryKeys.length > 0 && <span className="bloc-members-label">
+                        <span className="bloc-color" style={{ background: blocs.blocks[segment].color }} />{blocs.blocks[segment].label}: </span>}
+                      {members.length ? members.map(getPartyName).join(' · ') : 'אין מפלגות משויכות'}
+                    </p>;
+                  })}
+                  </div>
                 </div>
               );
             })}
