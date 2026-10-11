@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import blocsConfigAll from '../data/blocs.json';
+import { getElectionBlocs } from '../lib/bloc-preferences';
 import electionsConfigAll from '../data/elections-config.json';
 import electionsManifestsAll from '../data/elections-manifests.json';
 import partyNamesAll from '../data/party-names.json';
@@ -42,9 +43,7 @@ const getElectionConfig = (electionId: string | null): ElectionConfig => {
 };
 
 const getBlocConfig = (electionId: string | null): BlocsConfig => {
-  const key = electionId ?? '25';
-  const all = blocsConfigAll as unknown as Record<string, BlocsConfig>;
-  return all[key] || all['25'];
+  return getElectionBlocs(blocsConfigAll as Record<string, BlocsConfig>, electionId);
 };
 
 const getPartyNames = (electionId: string | null): PartyNames => {
