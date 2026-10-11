@@ -36,7 +36,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
       </div>
       {assigned ? (
         <>
-          <div className="bloc-scoreboard">
+          <div className="bloc-scoreboard" style={{ '--bloc-count': order.length } as React.CSSProperties}>
             {order.map((key) => {
               const bloc = blocs.blocks[key];
               const members = parties.filter((party) => partyToBloc[party] === key);
@@ -75,7 +75,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
       <details className="bloc-settings">
         <summary>{assigned ? 'עריכת הגושים' : 'הגדרת הגושים'}</summary>
         <div className="bloc-settings-body">
-          <div className="bloc-name-fields">
+          <div className="bloc-name-fields" style={{ '--bloc-count': order.length } as React.CSSProperties}>
             {order.map((key) => <label key={key}>שם {blocs.blocks[key].label}
               <input key={blocs.blocks[key].label} aria-label={`שם ${blocs.blocks[key].label}`}
                 maxLength={40} defaultValue={blocs.blocks[key].label}

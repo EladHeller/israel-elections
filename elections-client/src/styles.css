@@ -1344,7 +1344,7 @@ body {
 .bloc-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .bloc-heading h2 { font-size: 20px; margin: 0; }
 .bloc-heading > span, .bloc-empty { font-size: 14px; color: var(--ink-50); }
-.bloc-scoreboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; margin-top: 22px; }
+.bloc-scoreboard { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 48px; margin-top: 22px; }
 .bloc-score { min-width: 0; }
 .bloc-score h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; overflow-wrap: anywhere; }
 .bloc-color { width: 10px; height: 10px; flex-shrink: 0; background: var(--bloc-color); }
@@ -1364,7 +1364,7 @@ body {
 .bloc-settings { margin-top: 20px; }
 .bloc-settings > summary, .election-details > summary { cursor: pointer; font-weight: 700; padding: 12px 0; }
 .bloc-settings-body { padding-top: 16px; }
-.bloc-name-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.bloc-name-fields { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
 .bloc-name-fields label { display: grid; gap: 6px; color: var(--ink-50); font-size: 14px; }
 .bloc-settings input, .bloc-settings select { width: 100%; min-width: 0; min-height: 44px; font: inherit; color: var(--ink-90); background: #fff; border: 1px solid var(--ink-20); border-radius: 5px; padding: 8px; }
 .bloc-assignments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
@@ -1412,7 +1412,20 @@ body {
   .screen { padding: 20px 16px 40px; }
   .header { gap: 16px; }
   .results-layout { grid-template-columns: minmax(0, 1fr); gap: 30px; }
-  .bloc-scoreboard { gap: 24px; }
+  .bloc-scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .bloc-scoreboard > .bloc-score:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    border-top: 1px solid var(--ink-20);
+    padding-top: 16px;
+  }
+  .bloc-scoreboard > .bloc-score:last-child:nth-child(odd) > .majority-track,
+  .bloc-scoreboard > .bloc-score:last-child:nth-child(odd) > .majority-caption,
+  .bloc-scoreboard > .bloc-score:last-child:nth-child(odd) > .bloc-members { grid-column: 1 / -1; }
+  .bloc-scoreboard > .bloc-score:last-child:nth-child(odd) .bloc-number strong { font-size: 40px; }
+  .bloc-name-fields { grid-template-columns: minmax(0, 1fr); }
   .bloc-score h3 { font-size: 17px; }
   .bloc-number { gap: 6px; flex-wrap: wrap; }
   .bloc-number strong { font-size: 56px; }
