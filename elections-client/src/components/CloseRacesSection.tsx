@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React from 'react';
 import {
   isCloseSeatMargin,
   THRESHOLD_PROXIMITY,
@@ -18,12 +18,39 @@ interface Props {
   blockPercentage: number;
   getPartyName: (party: string) => string;
   isCounting: boolean;
+  onVoteDelta?: (party: string, delta: number) => void;
 }
 
-const SeatTable = ({ races, limit, getPartyName }: {
+const SeatMarginValue = ({ party, partyName, margin, direction, limit, onVoteDelta }: {
+  party: string;
+  partyName: string;
+  margin: number | null;
+  direction: 'gain' | 'loss';
+  limit: number;
+  onVoteDelta: Props['onVoteDelta'];
+}) => {
+  const className = `close-seat-${direction}${isCloseSeatMargin(margin, limit) ? ' close-seat-value' : ''}`;
+  const value = margin === null ? '—' : `${direction === 'gain' ? '+' : '−'}${numberFormat.format(margin)}`;
+
+  if (margin === null || !onVoteDelta) {
+    return <span dir="ltr" className={className}>{value}</span>;
+  }
+
+  const label = `${direction === 'gain' ? 'הוסף' : 'הפחת'} ${numberFormat.format(margin)} קולות ${direction === 'gain' ? 'ל' : 'מ'}${partyName}`;
+  return (
+    <button type="button" dir="ltr" className={`close-seat-action ${className}`}
+      aria-label={label} title={label}
+      onClick={() => onVoteDelta(party, direction === 'gain' ? margin : -margin)}>
+      {value}
+    </button>
+  );
+};
+
+const SeatTable = ({ races, limit, getPartyName, onVoteDelta }: {
   races: SeatRace[];
   limit: number;
   getPartyName: Props['getPartyName'];
+  onVoteDelta: Props['onVoteDelta'];
 }) => (
   <table className="close-seat-table" aria-label="מרחק בקולות מהשגת מנדט ומאיבוד מנדט">
     <thead>
@@ -35,12 +62,10 @@ const SeatTable = ({ races, limit, getPartyName }: {
         <tr key={race.party}>
           <th scope="row">{getPartyName(race.party)}</th>
           <td>{numberFormat.format(race.mandats)}</td>
-          <td><span dir="ltr" className={`close-seat-gain${isCloseSeatMargin(race.gain, limit) ? ' close-seat-value' : ''}`}>
-            {race.gain === null ? '—' : `+${numberFormat.format(race.gain)}`}
-          </span></td>
-          <td><span dir="ltr" className={`close-seat-loss${isCloseSeatMargin(race.lose, limit) ? ' close-seat-value' : ''}`}>
-            {race.lose === null ? '—' : `−${numberFormat.format(race.lose)}`}
-          </span>
+          <td><SeatMarginValue party={race.party} partyName={getPartyName(race.party)}
+            margin={race.gain} direction="gain" limit={limit} onVoteDelta={onVoteDelta} /></td>
+          <td><SeatMarginValue party={race.party} partyName={getPartyName(race.party)}
+            margin={race.lose} direction="loss" limit={limit} onVoteDelta={onVoteDelta} />
           {race.loseCrossesThreshold && (
             <span className="close-threshold-loss">ירידה מתחת לאחוז החסימה</span>
           )}</td>
@@ -51,12 +76,9 @@ const SeatTable = ({ races, limit, getPartyName }: {
 );
 
 export default function CloseRacesSection({
-  proximity, blockPercentage, getPartyName, isCounting,
+  proximity, blockPercentage, getPartyName, isCounting, onVoteDelta,
 }: Props) {
-  const [showAllParties, setShowAllParties] = useState(false);
-  const seatListId = useId();
-  const { thresholdRaces, seatRaces, closeSeatRaces, seatLimit } = proximity;
-  const visibleSeatRaces = showAllParties ? seatRaces : closeSeatRaces;
+  const { thresholdRaces, seatRaces, seatLimit } = proximity;
   const axisStart = Math.max(0, blockPercentage - THRESHOLD_PROXIMITY);
   const axisEnd = Math.min(1, blockPercentage + THRESHOLD_PROXIMITY);
   const position = (share: number) => `${(share - axisStart) / (axisEnd - axisStart) * 100}%`;
@@ -104,21 +126,15 @@ export default function CloseRacesSection({
         </div>
         <div className="panel">
           <h2>קרובות לשינוי מנדט</h2>
-          <p className="close-races-subtitle">עד 10% ממודד המנדט · עד {numberFormat.format(seatLimit)} קולות</p>
-          <div id={seatListId}>
-            {visibleSeatRaces.length === 0 ? (
-              <p className="close-races-empty">אין מפלגות במרחק של עד 10% ממודד המנדט משינוי.</p>
+          <p className="close-races-subtitle">מודגשים: עד 10% ממודד המנדט · עד {numberFormat.format(seatLimit)} קולות</p>
+          <div>
+            {seatRaces.length === 0 ? (
+              <p className="close-races-empty">אין מפלגות להצגה.</p>
             ) : (
-              <SeatTable races={visibleSeatRaces} limit={seatLimit} getPartyName={getPartyName} />
+              <SeatTable races={seatRaces} limit={seatLimit} getPartyName={getPartyName}
+                onVoteDelta={onVoteDelta} />
             )}
           </div>
-          {seatRaces.length > closeSeatRaces.length && (
-            <button type="button" className="close-races-toggle"
-              aria-expanded={showAllParties} aria-controls={seatListId}
-              onClick={() => setShowAllParties((showAll) => !showAll)}>
-              {showAllParties ? 'הצג פחות' : `הצג את כל המפלגות (${seatRaces.length})`}
-            </button>
-          )}
         </div>
       </div>
     </section>

@@ -111,18 +111,22 @@ export default function App() {
       <div className="screen">
         <AppHeader
           statusText={statusText}
-          showViewControl={false}
+          showSimulator={false}
           isEdited={false}
           currentElection={currentElection}
           setCurrentElection={setCurrentElection}
           availableElections={availableElections}
-          viewMode={viewMode}
+          viewMode={viewMode === 'simulator' ? 'results' : viewMode}
           setViewMode={setViewMode}
         />
-        <PreElectionView
-          electionId={currentElection}
-          manifest={electionManifest}
-        />
+        {viewMode === 'summary' ? (
+          <AllElectionsSummary />
+        ) : (
+          <PreElectionView
+            manifest={electionManifest}
+            electionConfig={electionConfig}
+          />
+        )}
       </div>
     );
   }
@@ -257,7 +261,7 @@ export default function App() {
     <div className="screen">
       <AppHeader
         statusText={statusText}
-        showViewControl
+        showSimulator
         isEdited={displayedIsEdited}
         currentElection={currentElection}
         setCurrentElection={setCurrentElection}
@@ -322,6 +326,9 @@ export default function App() {
             blockPercentage={displayedConfig.blockPercentage}
             getPartyName={getPartyName}
             isCounting={!isSimulator && electionManifest.phase === 'counting'}
+            onVoteDelta={isSimulator
+              ? (party, delta) => onVoteChange(party, voteData[party].votes + delta)
+              : undefined}
           />
 
           <BottomPanels
