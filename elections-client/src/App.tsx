@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { computeBlocTotals } from './lib/analytics';
+import { computeBlocTotals, computeBlocMap } from './lib/analytics';
 import AppHeader from './components/AppHeader';
+import { BlocsDistributionPanel } from './components/BlocsDistributionPanel';
 import BlocsOverview from './components/BlocsOverview';
 import ResultsUpdate from './components/ResultsUpdate';
 import { useBlocPreferences } from './hooks/use-bloc-preferences';
@@ -49,8 +50,16 @@ export default function App() {
     isLatestElection,
   } = useElectionData();
 
-  const { blocs, partyToBloc, assignParty, renameBloc, reset: resetBlocs, customized, saveFailed } =
+  const { blocs: personalBlocs, partyToBloc: personalPartyToBloc, assignParty, renameBloc, reset: resetBlocs, customized, saveFailed } =
     useBlocPreferences(currentElection, defaultBlocs);
+  const [historicalAssignments, setHistoricalAssignments] = useState<Record<string, Record<string, string | null>>>({});
+  const blocs = isLatestElection ? personalBlocs : defaultBlocs;
+  const partyToBloc = isLatestElection ? personalPartyToBloc : {
+    ...computeBlocMap(defaultBlocs),
+    ...historicalAssignments[currentElection || ''],
+  };
+  const electionNight = isLatestElection && viewMode !== 'summary';
+  const screenClass = electionNight ? 'screen election-night' : 'screen';
 
   const {
     scenarioConfig,
@@ -104,7 +113,7 @@ export default function App() {
 
   if (!showResults) {
     return (
-      <div className="screen">
+      <div className={screenClass}>
         <AppHeader
           statusText={statusText}
           showSimulator={false}
@@ -119,13 +128,13 @@ export default function App() {
           <AllElectionsSummary />
         ) : (
           <>
-            <BlocsOverview key={currentElection} blocs={blocs} totals={{}} deltas={{}} results={{}}
+            {electionNight && <BlocsOverview key={currentElection} blocs={blocs} totals={{}} deltas={{}} results={{}}
               parties={electionManifest.lists.map((list) => list.ballotLetter)}
               partyToBloc={partyToBloc}
               getPartyName={(party) => electionManifest.lists.find((list) => list.ballotLetter === party)?.name || party}
               onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
-              customized={customized} saveFailed={saveFailed} hasResults={false} />
-            <PreElectionView manifest={electionManifest} electionConfig={electionConfig} />
+              customized={customized} saveFailed={saveFailed} hasResults={false} />}
+            <PreElectionView manifest={electionManifest} electionConfig={electionConfig} electionNight={electionNight} />
           </>
         )}
       </div>
@@ -225,8 +234,98 @@ export default function App() {
 
   const proximity = computeProximity(realResults, voteData, displayedConfig);
 
+  const blocEntries = (blocs.order || Object.keys(blocs.blocks))
+    .map((key) => ({ ...blocs.blocks[key], value: blocTotals[key] || 0 }))
+    .filter(({ value }) => value > 0);
+
+  const partyPanel = (
+    <section className="grid grid-single">
+      <PartyPanel
+        editable={isSimulator}
+        isLatestElection={isLatestElection}
+        isEdited={displayedIsEdited}
+        parties={parties}
+        mandateParties={mandateParties}
+        blocs={blocs}
+        partyToBloc={partyToBloc}
+        getPartyName={getPartyName}
+        partySeatDeltas={displayedPartySeatDeltas}
+        normalizedScenario={{ voteData: displayedVoteData }}
+        onVoteChange={onVoteChange}
+        showAllParties={showAllParties}
+        setShowAllParties={setShowAllParties}
+        showZeroSeatLabel={canPassThresholdWithoutMandate(
+          displayedConfig.blockPercentage,
+        )}
+        resetScenario={resetScenario}
+      />
+    </section>
+  );
+  const closeRaces = (
+    <CloseRacesSection
+      proximity={proximity}
+      blockPercentage={displayedConfig.blockPercentage}
+      getPartyName={getPartyName}
+      isCounting={!isSimulator && electionManifest.phase === 'counting'}
+      onVoteDelta={isSimulator
+        ? (party, delta) => onVoteChange(party, voteData[party].votes + delta)
+        : undefined}
+    />
+  );
+  const statistics = (
+    <div className="election-summary">
+      <ElectionStatsSection
+        turnoutPercentage={electionConfig.turnoutPercentage}
+        totalVotes={electionConfig.totalVotes}
+        invalidVotes={invalidVotesDerived}
+        validVotes={baseSumVotes}
+        isSimulator={isSimulator}
+      />
+      <VoteDistributionSection
+        nonParticipatingVotes={nonParticipatingVotes}
+        nonParticipatingPercent={nonParticipatingPercent}
+        participatingVotes={participatingVotes}
+        votesPerMandate={votesPerMandate}
+        isEdited={displayedIsEdited}
+      />
+    </div>
+  );
+  const settings = (
+    <ElectionSettingsSection
+      editable={isSimulator}
+      blockThreshold={blockThreshold}
+      baseBlockThreshold={baseBlockThreshold}
+      activeConfig={displayedConfig}
+      isEdited={displayedIsEdited}
+      onBlockPercentageChange={onBlockPercentageChange}
+      onAlgorithmChange={onAlgorithmChange}
+    />
+  );
+  const agreements = (
+    <BottomPanels
+      editable={isSimulator}
+      getPartyName={getPartyName}
+      scenarioConfig={displayedConfig}
+      removeAgreement={removeAgreement}
+      addAgreementA={addAgreementA}
+      setAddAgreementA={setAddAgreementA}
+      addAgreementB={addAgreementB}
+      setAddAgreementB={setAddAgreementB}
+      agreementSelectableParties={agreementSelectableParties}
+      addAgreement={addAgreement}
+      agreementValidation={agreementValidation}
+    />
+  );
+  const calculationDetails = (
+    <CalcDetailsCard
+      voteData={voteData}
+      activeConfig={displayedConfig}
+      getPartyName={getPartyName}
+    />
+  );
+
   return (
-    <div className="screen">
+    <div className={screenClass}>
       <AppHeader
         statusText={statusText}
         showSimulator
@@ -240,7 +339,7 @@ export default function App() {
 
       {viewMode === 'summary' ? (
         <AllElectionsSummary />
-      ) : (
+      ) : electionNight ? (
         <>
           {!isSimulator && electionManifest.phase === 'counting' && (
             <ResultsUpdate previous={previousResults} current={results}
@@ -253,89 +352,46 @@ export default function App() {
             customized={customized} saveFailed={saveFailed} hasResults
             isCounting={electionManifest.phase === 'counting'} isSimulator={isSimulator} />
           <main className="results-layout">
-            <section className="grid grid-single">
-              <PartyPanel
-                editable={isSimulator}
-                isLatestElection={isLatestElection}
-                isEdited={displayedIsEdited}
-                parties={parties}
-                mandateParties={mandateParties}
-                blocs={blocs}
-                partyToBloc={partyToBloc}
-                getPartyName={getPartyName}
-                partySeatDeltas={displayedPartySeatDeltas}
-                normalizedScenario={{ voteData: displayedVoteData }}
-                onVoteChange={onVoteChange}
-                showAllParties={showAllParties}
-                setShowAllParties={setShowAllParties}
-                showZeroSeatLabel={canPassThresholdWithoutMandate(
-                  displayedConfig.blockPercentage,
-                )}
-                resetScenario={resetScenario}
-              />
-            </section>
+            {partyPanel}
 
-            <CloseRacesSection
-              proximity={proximity}
-              blockPercentage={displayedConfig.blockPercentage}
-              getPartyName={getPartyName}
-              isCounting={!isSimulator && electionManifest.phase === 'counting'}
-              onVoteDelta={isSimulator
-                ? (party, delta) => onVoteChange(party, voteData[party].votes + delta)
-                : undefined}
-            />
+            {closeRaces}
 
           </main>
           <details className="election-details" key={`${currentElection}-${viewMode}`} open={isSimulator || undefined}>
             <summary>נתוני ההצבעה והגדרות החישוב</summary>
             <div className="election-details-body">
-              <div className="election-summary">
-                <ElectionStatsSection
-                  turnoutPercentage={electionConfig.turnoutPercentage}
-                  totalVotes={electionConfig.totalVotes}
-                  invalidVotes={invalidVotesDerived}
-                  validVotes={baseSumVotes}
-                  isSimulator={isSimulator}
-                />
-                <VoteDistributionSection
-                  nonParticipatingVotes={nonParticipatingVotes}
-                  nonParticipatingPercent={nonParticipatingPercent}
-                  participatingVotes={participatingVotes}
-                  votesPerMandate={votesPerMandate}
-                  isEdited={displayedIsEdited}
-                />
-              </div>
-              <ElectionSettingsSection
-                editable={isSimulator}
-                blockThreshold={blockThreshold}
-                baseBlockThreshold={baseBlockThreshold}
-                activeConfig={displayedConfig}
-                isEdited={displayedIsEdited}
-                onBlockPercentageChange={onBlockPercentageChange}
-                onAlgorithmChange={onAlgorithmChange}
-              />
+              {statistics}
+              {settings}
 
-              <BottomPanels
-                editable={isSimulator}
-                getPartyName={getPartyName}
-                scenarioConfig={displayedConfig}
-                removeAgreement={removeAgreement}
-                addAgreementA={addAgreementA}
-                setAddAgreementA={setAddAgreementA}
-                addAgreementB={addAgreementB}
-                setAddAgreementB={setAddAgreementB}
-                agreementSelectableParties={agreementSelectableParties}
-                addAgreement={addAgreement}
-                agreementValidation={agreementValidation}
-              />
+              {agreements}
 
-              <CalcDetailsCard
-                voteData={voteData}
-                activeConfig={displayedConfig}
-                getPartyName={getPartyName}
-              />
+              {calculationDetails}
             </div>
           </details>
+        </>
+      ) : (
+        <>
+          {statistics}
+          {settings}
+          {partyPanel}
+          {closeRaces}
+          {agreements}
+          <section className="grid grid-single">
+            <BlocsDistributionPanel
+              editable blocs={blocs}
+              blocData={blocEntries.map(({ value }) => value)}
+              blocColors={blocEntries.map(({ color }) => color)}
+              blocLabels={blocEntries.map(({ label }) => label)}
+              blocTotals={blocTotals} blocSeatDeltas={blocSeatDeltas}
+              partyToBloc={partyToBloc}
+              onPartyBlocChange={(party, blocKey) => setHistoricalAssignments((previous) => ({
+                ...previous,
+                [currentElection]: { ...previous[currentElection], [party]: blocKey },
+              }))}
+              getPartyName={getPartyName} mandateParties={mandateParties}
+            />
+          </section>
+          {calculationDetails}
         </>
       )}
     </div>
