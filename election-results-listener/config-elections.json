@@ -1,4 +1,9 @@
 {
+  "26": {
+    "algorithm": "baderOffer",
+    "blockPercentage": 0.0325,
+    "agreements": [["רק", "ל"], ["דרך", "אמת"], ["עם", "ודם"], ["מחל", "ט"], ["שס", "ג"]]
+  },
   "25": {
     "algorithm": "baderOffer",
     "csvUrl": "https://media25.bechirot.gov.il/files/expc.csv",
