@@ -34,7 +34,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
     <section className="panel blocs-overview" aria-label="תמונת הגושים">
       <div className="bloc-heading">
         <h2>תמונת הגושים</h2>
-        <span>{isDemo ? 'נתוני דמה' : isSimulator ? 'סימולציה' : isCounting ? 'לפי הספירה הנוכחית' : 'הרכב הגושים'}
+        <span>{isDemo ? (isSimulator ? 'סימולציה · נתוני דמה' : 'נתוני דמה') : isSimulator ? 'סימולציה' : isCounting ? 'לפי הספירה הנוכחית' : 'הרכב הגושים'}
           {customized && ' · חלוקה אישית'}</span>
       </div>
       {assigned ? (

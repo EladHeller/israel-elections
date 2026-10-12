@@ -53,7 +53,7 @@ export default function App() {
   } = useElectionData();
 
   const canPreviewDemo = canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection);
-  const isDemo = canPreviewDemo && demoElection === currentElection && viewMode === 'results';
+  const isDemo = canPreviewDemo && demoElection === currentElection && viewMode !== 'summary';
   const results = isDemo ? electionDemo.current : officialResults;
   const previousResults = isDemo ? electionDemo.previous : previousOfficialResults;
   const electionConfig = isDemo ? electionDemoConfig : officialConfig;
@@ -65,7 +65,7 @@ export default function App() {
     selectElection(id);
   };
   const changeViewMode = (mode: AppViewMode) => {
-    setDemoElection(null);
+    if (mode === 'summary') setDemoElection(null);
     setViewMode(mode);
   };
 
@@ -307,6 +307,7 @@ export default function App() {
         invalidVotes={invalidVotesDerived}
         validVotes={baseSumVotes}
         isSimulator={isSimulator}
+        isDemo={isDemo}
       />
       <VoteDistributionSection
         nonParticipatingVotes={nonParticipatingVotes}
@@ -355,7 +356,7 @@ export default function App() {
     <div className={screenClass}>
       <AppHeader
         statusText={statusText}
-        showSimulator={!isDemo}
+        showSimulator
         isEdited={displayedIsEdited}
         currentElection={currentElection}
         setCurrentElection={setCurrentElection}

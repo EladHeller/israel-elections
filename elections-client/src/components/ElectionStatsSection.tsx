@@ -7,6 +7,7 @@ interface ElectionStatsSectionProps {
   invalidVotes?: number;
   validVotes: number;
   isSimulator: boolean;
+  isDemo?: boolean;
 }
 
 const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
@@ -15,6 +16,7 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
   invalidVotes,
   validVotes,
   isSimulator,
+  isDemo,
 }) => {
   const invalidVotePercent =
     invalidVotes != null && totalVotes
@@ -23,7 +25,7 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
 
   return (
     <section className="panel election-summary-panel" aria-labelledby="voting-summary-title">
-      <h2 id="voting-summary-title">{isSimulator ? 'הצבעה בפועל' : 'הצבעה'}</h2>
+      <h2 id="voting-summary-title">{isDemo ? 'הצבעה בדמו' : isSimulator ? 'הצבעה בפועל' : 'הצבעה'}</h2>
       <div className="summary-headline">
         <span className="summary-value">
           {turnoutPercentage != null ? `${Number(turnoutPercentage).toFixed(2)}%` : '—'}
