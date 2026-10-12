@@ -1,6 +1,7 @@
 import { calcVotesResults } from './calc';
 import { phaseHasResults } from './election-manifest';
 import manifests from '../data/elections-manifests.json';
+import electionsConfig from '../data/elections-config.json';
 import type { ElectionConfig, ElectionPhase, VoteData } from '../types';
 
 export const canPreviewElectionDemo = (
@@ -28,14 +29,12 @@ previousVoteData['דרך'].votes -= 10000;
 previousVoteData['די'].votes -= 18000;
 
 export const electionDemoConfig: ElectionConfig = {
-  algorithm: 'baderOffer',
-  blockPercentage: 0.0325,
-  agreements: [],
+  ...electionsConfig['26'],
   turnoutPercentage: 64.2,
   totalVotes: Object.values(voteData).reduce((sum, party) => sum + party.votes, 0) + 23000,
 };
 
 export const electionDemo = {
-  current: calcVotesResults(voteData, 0.0325, [], 'baderOffer'),
-  previous: calcVotesResults(previousVoteData, 0.0325, [], 'baderOffer'),
+  current: calcVotesResults(voteData, electionDemoConfig.blockPercentage, electionDemoConfig.agreements, 'baderOffer'),
+  previous: calcVotesResults(previousVoteData, electionDemoConfig.blockPercentage, electionDemoConfig.agreements, 'baderOffer'),
 };
