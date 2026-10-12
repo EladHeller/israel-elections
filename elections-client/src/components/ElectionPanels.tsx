@@ -203,6 +203,7 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
 interface PartyPanelProps {
   editable: boolean;
   isLatestElection: boolean;
+  isDemo?: boolean;
   isEdited: boolean;
   parties: PartySummary[];
   mandateParties: PartySummary[];
@@ -221,6 +222,7 @@ interface PartyPanelProps {
 export const PartyPanel: React.FC<PartyPanelProps> = ({
   editable,
   isLatestElection,
+  isDemo,
   isEdited,
   parties,
   mandateParties,
@@ -237,7 +239,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
 }) => (
   <div className="panel party-panel">
     <div className="panel-head">
-      <h2>מפלגות</h2>
+      <h2>מפלגות{isDemo && <span className="demo-label"> · נתוני דמה</span>}</h2>
       {editable && isEdited && (
         <button type="button" className="ghost" onClick={resetScenario}>
           איפוס לתוצאות מקור
