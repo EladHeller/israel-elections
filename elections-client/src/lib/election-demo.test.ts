@@ -30,6 +30,9 @@ describe('election-night demo', () => {
     const changes = getResultChanges(electionDemo.previous, electionDemo.current, electionDemoConfig.blockPercentage);
     assert.ok(changes.some(change => change.delta !== 0));
     const totals = computeBlocTotals(electionDemo.current.realResults, blocs['26']);
-    assert.ok(totals.gushB < 61 && totals.gushB + totals.gushC >= 61);
+    assert.deepEqual(totals, { gushA: 57, gushB: 51, gushC: 12 });
+    assert.ok(electionDemo.current.realResults['דרך'].mandats > electionDemo.current.realResults['רק'].mandats);
+    assert.equal(electionDemo.current.realResults['די'], undefined);
+    assert.ok(electionDemo.current.voteData['די'].votes / votes > 0.03);
   });
 });
