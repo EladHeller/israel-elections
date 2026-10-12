@@ -94,19 +94,13 @@
   .election-night .bloc-name-fields { grid-template-columns: minmax(0, 1fr); }
 }
 
-.election-night .demo-invitation { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-.election-night .demo-invitation h2 { margin: 0 0 6px; }
-.election-night .demo-invitation p { margin: 0; color: var(--ink-50); }
-.election-night .demo-invitation button { background: var(--ink-70); color: white; border-color: var(--ink-70); padding: 12px 18px; }
 .election-night .demo-banner { position: sticky; top: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px 22px; background: #fff0ca; border: 2px solid #c78c1b; border-radius: 18px; color: #624006; box-shadow: 0 6px 20px #1c254118; }
 .election-night .demo-banner > div { display: grid; gap: 3px; }
 .election-night .demo-banner strong { font-size: 20px; }
-.election-night .demo-banner button { background: #fffaf0; border-color: #ad7719; color: #624006; }
 .election-night .demo-label { color: #8a5700; font-size: 14px; font-weight: 600; }
 @media (max-width: 760px) {
   .election-night .blocs-overview { padding: 20px 16px; }
   .election-night .demo-banner { top: 6px; padding: 12px 14px; gap: 8px; }
   .election-night .demo-banner strong { font-size: 17px; }
   .election-night .demo-banner span { font-size: 13px; }
-  .election-night .demo-banner button { padding: 6px 10px; }
 }

@@ -34,14 +34,13 @@ const filterRealParties = (data: VoteData) =>
     .filter(([, value]) => value && Number.isFinite(value.votes));
 
 export default function App() {
-  const [demoElection, setDemoElection] = useState<string | null>(null);
   const [showAllParties, setShowAllParties] = useState(false);
   const [viewMode, setViewMode] = useState<AppViewMode>(DEFAULT_VIEW_MODE);
 
   const {
     availableElections,
     currentElection,
-    setCurrentElection: selectElection,
+    setCurrentElection,
     results: officialResults,
     previousResults: previousOfficialResults,
     error,
@@ -52,22 +51,14 @@ export default function App() {
     isLatestElection,
   } = useElectionData();
 
-  const canPreviewDemo = canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection);
-  const isDemo = canPreviewDemo && demoElection === currentElection && viewMode !== 'summary';
+  const isDemo = canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection)
+    && viewMode !== 'summary';
   const results = isDemo ? electionDemo.current : officialResults;
   const previousResults = isDemo ? electionDemo.previous : previousOfficialResults;
   const electionConfig = isDemo ? electionDemoConfig : officialConfig;
   const electionManifest = isDemo && officialManifest
     ? { ...officialManifest, phase: 'counting' as const }
     : officialManifest;
-  const setCurrentElection = (id: string) => {
-    setDemoElection(null);
-    selectElection(id);
-  };
-  const changeViewMode = (mode: AppViewMode) => {
-    if (mode === 'summary') setDemoElection(null);
-    setViewMode(mode);
-  };
 
   const { blocs: personalBlocs, partyToBloc: personalPartyToBloc, assignParty, renameBloc, reset: resetBlocs, customized, saveFailed } =
     useBlocPreferences(currentElection, defaultBlocs);
@@ -141,19 +132,12 @@ export default function App() {
           setCurrentElection={setCurrentElection}
           availableElections={availableElections}
           viewMode={viewMode === 'simulator' ? 'results' : viewMode}
-          setViewMode={changeViewMode}
+          setViewMode={setViewMode}
         />
         {viewMode === 'summary' ? (
           <AllElectionsSummary />
         ) : (
           <>
-            {canPreviewDemo && <section className="panel demo-invitation">
-              <div><h2>הצצה לתוצאות המתעדכנות</h2><p>כך תיראה התצוגה בזמן הספירה, עם תוצאות דמה.</p></div>
-              <button type="button" className="ghost" onClick={() => {
-                setViewMode('results');
-                setDemoElection(currentElection);
-              }}>תצוגת דמה של התוצאות</button>
-            </section>}
             {electionNight && <BlocsOverview key={currentElection} blocs={blocs} totals={{}} deltas={{}} results={{}}
               parties={electionManifest.lists.map((list) => list.ballotLetter)}
               partyToBloc={partyToBloc}
@@ -362,7 +346,7 @@ export default function App() {
         setCurrentElection={setCurrentElection}
         availableElections={availableElections}
         viewMode={viewMode}
-        setViewMode={changeViewMode}
+        setViewMode={setViewMode}
       />
 
       {viewMode === 'summary' ? (
@@ -371,7 +355,6 @@ export default function App() {
         <>
           {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
             <div><strong>מידע דמה בלבד</strong><span>המספרים מומצאים להמחשה — אינם תוצאות אמת או סקר.</span></div>
-            <button type="button" className="ghost" onClick={() => setDemoElection(null)}>יציאה מתצוגת הדמה</button>
           </aside>}
           {!isSimulator && electionManifest.phase === 'counting' && (
             <ResultsUpdate isDemo={isDemo} previous={previousResults} current={results}
