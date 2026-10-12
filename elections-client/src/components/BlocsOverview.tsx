@@ -18,11 +18,12 @@ interface Props {
   hasResults: boolean;
   isCounting?: boolean;
   isSimulator?: boolean;
+  isDemo?: boolean;
 }
 
 export default function BlocsOverview({ blocs, totals, deltas, parties, results, partyToBloc,
   getPartyName, onAssign, onRename, onReset, customized, saveFailed, hasResults,
-  isCounting, isSimulator }: Props) {
+  isCounting, isSimulator, isDemo }: Props) {
   const order = blocs.order || Object.keys(blocs.blocks);
   const overview = computeBlocOverview(blocs, totals);
   const assigned = parties.some((party) => partyToBloc[party]);
@@ -30,10 +31,10 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
   const unassignedSeats = unassigned.reduce((sum, party) => sum + (results[party]?.mandats || 0), 0);
 
   return (
-    <section className="blocs-overview" aria-label="תמונת הגושים">
+    <section className="panel blocs-overview" aria-label="תמונת הגושים">
       <div className="bloc-heading">
         <h2>תמונת הגושים</h2>
-        <span>{isSimulator ? 'סימולציה' : isCounting ? 'לפי הספירה הנוכחית' : 'הרכב הגושים'}
+        <span>{isDemo ? 'נתוני דמה' : isSimulator ? 'סימולציה' : isCounting ? 'לפי הספירה הנוכחית' : 'הרכב הגושים'}
           {customized && ' · חלוקה אישית'}</span>
       </div>
       {assigned ? (
