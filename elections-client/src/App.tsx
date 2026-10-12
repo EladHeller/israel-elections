@@ -128,7 +128,7 @@ export default function App() {
   }
 
   const showResults = phaseHasResults(electionManifest.phase);
-  const statusText = isDemo ? 'ליל הבחירות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
+  const statusText = isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
 
   if (!showResults) {
     return (
@@ -148,11 +148,11 @@ export default function App() {
         ) : (
           <>
             {canPreviewDemo && <section className="panel demo-invitation">
-              <div><h2>הצצה לליל הבחירות</h2><p>כך תיראה התצוגה בזמן הספירה, עם תוצאות דמה.</p></div>
+              <div><h2>הצצה לתוצאות המתעדכנות</h2><p>כך תיראה התצוגה בזמן הספירה, עם תוצאות דמה.</p></div>
               <button type="button" className="ghost" onClick={() => {
                 setViewMode('results');
                 setDemoElection(currentElection);
-              }}>תצוגת דמה של ליל הבחירות</button>
+              }}>תצוגת דמה של התוצאות</button>
             </section>}
             {electionNight && <BlocsOverview key={currentElection} blocs={blocs} totals={{}} deltas={{}} results={{}}
               parties={electionManifest.lists.map((list) => list.ballotLetter)}
