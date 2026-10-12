@@ -1,0 +1,112 @@
+/* Election-night reading order: update, majority, parties, close races. */
+.election-night .blocs-overview { margin: 24px 0; }
+.election-night .bloc-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.election-night .bloc-heading h2 { font-size: 20px; margin: 0; }
+.election-night .bloc-heading > span, .election-night .bloc-empty { font-size: 14px; color: var(--ink-50); }
+.election-night .bloc-scoreboard { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 0 36px; margin-top: 22px; }
+.election-night .bloc-score { min-width: 0; display: grid; grid-template-rows: subgrid; grid-row: span 4; }
+.election-night .bloc-score h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; overflow-wrap: anywhere; }
+.election-night .bloc-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: var(--bloc-color); }
+.election-night .bloc-number { display: flex; gap: 12px; align-items: baseline; font-variant-numeric: tabular-nums; }
+.election-night .bloc-number strong { font-size: clamp(56px, 8vw, 80px); line-height: 1.2; font-weight: 800; letter-spacing: -2px; }
+.election-night .bloc-number > span { color: var(--ink-50); font-size: 14px; }
+.election-night .bloc-number .delta-chip.gain { color: #0f7a34; font-size: 20px; }
+.election-night .bloc-number .delta-chip.lose { color: #b20000; font-size: 20px; }
+.election-night .majority-track { display: flex; position: relative; background: var(--ink-20); height: 12px; border-radius: 999px; margin-top: 14px; }
+.election-night .majority-track > div { flex-shrink: 0; height: 100%; background: var(--bloc-color); transition: width 300ms ease; }
+.election-night .majority-track > div:first-child { border-start-start-radius: 999px; border-end-start-radius: 999px; }
+.election-night .majority-marker { position: absolute; inset-inline-start: 50.8333%; top: -5px; height: 20px; width: 2px; background: var(--ink-90); }
+.election-night .majority-caption { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; color: var(--ink-50); }
+.election-night .majority-caption > span:last-child { margin-inline-start: auto; }
+.election-night .majority-status { margin: 10px 0 0; font-size: 15px; font-weight: 700; line-height: 1.5; }
+.election-night .bloc-totals { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.election-night .bloc-complement { display: flex; flex-direction: column; gap: 3px; }
+.election-night .bloc-complement-value { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.election-night .bloc-complement-value strong { font-size: 36px; line-height: 1.2; }
+.election-night .bloc-complement-value > span:first-child { font-size: 24px; color: var(--ink-50); }
+.election-night .bloc-complement-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-50); }
+.election-night .bloc-members-label { color: var(--ink-90); }
+.election-night .bloc-members-label .bloc-color { display: inline-block; margin-inline-end: 5px; }
+.election-night .bloc-members { font-size: 14px; line-height: 1.7; color: var(--ink-50); margin: 14px 0 0; overflow-wrap: anywhere; }
+.election-night .unassigned-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 22px; font-size: 14px; }
+.election-night .unassigned-summary > span { color: var(--ink-50); }
+.election-night .bloc-settings { margin-top: 20px; }
+.election-night .bloc-settings > summary { cursor: pointer; font-weight: 700; padding: 12px 0; }
+.election-night .bloc-settings-body { padding-top: 16px; }
+.election-night .bloc-name-fields { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.election-night .bloc-name-fields label { display: grid; gap: 6px; color: var(--ink-50); font-size: 14px; }
+.election-night .bloc-settings input, .election-night .bloc-settings select { width: 100%; min-width: 0; min-height: 44px; font: inherit; color: var(--ink-90); background: #fff; border: 1px solid var(--ink-20); border-radius: 10px; padding: 8px; }
+.election-night .bloc-assignments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+.election-night .bloc-assignment { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, 1fr); gap: 12px; align-items: center; border-top: 1px solid var(--ink-20); padding: 10px 0; }
+.election-night .bloc-assignment > span { overflow-wrap: anywhere; }
+.election-night .bloc-settings-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.election-night .bloc-settings-footer > span { font-size: 13px; color: var(--ink-50); }
+.election-night .results-update { margin-bottom: 24px; }
+.election-night .update-label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+.election-night .live-dot { width: 7px; height: 7px; background: #147246; border-radius: 50%; }
+.election-night .update-label time { color: var(--ink-50); margin-inline-start: auto; }
+.election-night .results-update [role="status"] { margin-top: 10px; line-height: 1.7; }
+.election-night .results-update [role="status"] > strong { margin-inline-end: 12px; }
+.election-night .results-update summary { cursor: pointer; color: var(--ink-50); }
+.election-night .results-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.election-night .results-layout > .grid { margin: 0; }
+.election-night .results-layout .close-races-section > .grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.election-night .party-bars { gap: 0; }
+.election-night .party-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name seats' 'bar bar' 'votes votes'; gap: 7px 14px; padding: 14px 0; border-bottom: 1px solid var(--ink-20); }
+.election-night .party-meta { grid-area: name; overflow: visible; }
+.election-night .party-name { white-space: normal; overflow: visible; font-size: 16px; line-height: 1.4; }
+.election-night .party-seats { grid-area: seats; font-size: 24px; font-weight: 800; background: var(--ink-20); border-radius: 999px; padding: 3px 12px; gap: 8px; font-variant-numeric: tabular-nums; }
+.election-night .party-seats .delta-chip { font-size: 14px; }
+.election-night .party-bar { grid-area: bar; display: block; height: 8px; border-radius: 999px; background: var(--ink-20); }
+.election-night .party-bar-fill { border-radius: 999px; transition: width 300ms ease; }
+.election-night .party-bar-empty { opacity: 0.3; }
+.election-night .party-votes { grid-area: votes; justify-content: space-between; font-variant-numeric: tabular-nums; font-size: 13px; }
+.election-night .party-percentage { color: var(--ink-90); }
+.election-night .party-vote-total { display: inline-flex; align-items: baseline; gap: 5px; }
+.election-night .party-vote-input { min-height: 40px; width: 125px; font-size: 16px; }
+.election-night .election-details { margin-top: 24px; }
+.election-night .seat-number.seat-changed { animation: seat-change 900ms ease-out; }
+@keyframes seat-change { from { background: #fff0c2; } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) {
+  .election-night .seat-number.seat-changed { animation: none; }
+  .election-night .party-bar-fill, .election-night .majority-track > div { transition: none; }
+}
+@media (max-width: 760px) {
+  .screen.election-night { padding: 20px 16px 40px; }
+  .election-night .results-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .election-night .bloc-scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+  .election-night .bloc-name-fields { grid-template-columns: minmax(0, 1fr); }
+  .election-night .bloc-score h3 { font-size: 17px; }
+  .election-night .bloc-number { gap: 6px; flex-wrap: wrap; }
+  .election-night .bloc-number strong { font-size: 48px; }
+  .election-night .bloc-totals { gap: 8px; }
+  .election-night .bloc-complement-value strong { font-size: 30px; }
+  .election-night .majority-status { font-size: 14px; }
+  .election-night .bloc-number > span { font-size: 12px; }
+  .election-night .bloc-assignments { grid-template-columns: minmax(0, 1fr); }
+  .election-night .bloc-settings input, .election-night .bloc-settings select { font-size: 16px; }
+  .election-night .party-panel .panel-head { flex-direction: row; align-items: center; }
+  .election-night .ghost { min-height: 44px; }
+}
+@media (max-width: 380px) {
+  .election-night .bloc-number > span:not(.delta-chip) { display: none; }
+  .election-night .bloc-scoreboard { gap: 0 16px; }
+  .election-night .bloc-name-fields { grid-template-columns: minmax(0, 1fr); }
+}
+
+.election-night .demo-invitation { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.election-night .demo-invitation h2 { margin: 0 0 6px; }
+.election-night .demo-invitation p { margin: 0; color: var(--ink-50); }
+.election-night .demo-invitation button { background: var(--ink-70); color: white; border-color: var(--ink-70); padding: 12px 18px; }
+.election-night .demo-banner { position: sticky; top: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px 22px; background: #fff0ca; border: 2px solid #c78c1b; border-radius: 18px; color: #624006; box-shadow: 0 6px 20px #1c254118; }
+.election-night .demo-banner > div { display: grid; gap: 3px; }
+.election-night .demo-banner strong { font-size: 20px; }
+.election-night .demo-banner button { background: #fffaf0; border-color: #ad7719; color: #624006; }
+.election-night .demo-label { color: #8a5700; font-size: 14px; font-weight: 600; }
+@media (max-width: 760px) {
+  .election-night .blocs-overview { padding: 20px 16px; }
+  .election-night .demo-banner { top: 6px; padding: 12px 14px; gap: 8px; }
+  .election-night .demo-banner strong { font-size: 17px; }
+  .election-night .demo-banner span { font-size: 13px; }
+  .election-night .demo-banner button { padding: 6px 10px; }
+}

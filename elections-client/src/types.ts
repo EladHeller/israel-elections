@@ -25,7 +25,7 @@ export interface ElectionConfig {
 }
 
 export interface BlocsConfig {
-  blocks: Record<string, { label: string; color: string; parties: string[] }>;
+  blocks: Record<string, { label: string; color: string; parties: string[]; complementaryTo?: string }>;
   order?: string[];
 }
 
