@@ -388,17 +388,12 @@ export default function App() {
             {closeRaces}
 
           </main>
-          <details className="election-details" key={`${currentElection}-${viewMode}`} open={isSimulator || undefined}>
-            <summary>נתוני ההצבעה והגדרות החישוב</summary>
-            <div className="election-details-body">
-              {statistics}
-              {settings}
-
-              {agreements}
-
-              {calculationDetails}
-            </div>
-          </details>
+          <div className="election-details">
+            {statistics}
+            {settings}
+            {agreements}
+            {calculationDetails}
+          </div>
         </>
       ) : (
         <>
