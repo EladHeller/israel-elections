@@ -403,7 +403,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         viewMode={viewMode}
         setViewMode={setViewMode}
         statusAction={shared && <Link className="shared-scenario-return" to={`/simulator/${currentElection}`}>חזרה לנתונים העדכניים</Link>}
-        actions={isSimulator && <ScenarioShare disabled={!agreementValidation.isValid} snapshot={{
+        actions={displayedIsEdited && <ScenarioShare disabled={!agreementValidation.isValid} snapshot={{
           version: 1, election: currentElection, demo: isDemo,
           base: { voteData: Object.fromEntries(Object.entries(baseVoteData).map(([party, data]) =>
             [party, { ...data, name: getPartyName(party) }])), config: baseConfig },
