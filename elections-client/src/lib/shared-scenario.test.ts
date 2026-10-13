@@ -62,3 +62,38 @@ test('decompression is bounded to avoid oversized payloads', async () => {
   const token = btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
   await assert.rejects(decodeSharedScenario(token, '25'));
 });
+
+test('rejects incomplete snapshots and empty party collections', () => {
+  for (const base of [null, {}, { voteData: {}, config: snapshot.base.config },
+    { voteData: [], config: snapshot.base.config }, { voteData: snapshot.base.voteData, config: null }]) {
+    assert.throws(() => validateSharedScenario({ ...snapshot, base }, '25'));
+  }
+  const tooMany = Object.fromEntries(Array.from({ length: 201 }, (_, i) => [String(i), { votes: 1, mandats: 0 }]));
+  assert.throws(() => validateSharedScenario({ ...snapshot, base: { ...snapshot.base, voteData: tooMany } }, '25'));
+});
+
+test('rejects snapshots whose UTF-8 representation exceeds the uncompressed size limit', async () => {
+  const value = structuredClone(snapshot);
+  const voteData = Object.fromEntries(Array.from({ length: 200 }, (_, i) =>
+    [String(i), { votes: 1, mandats: 0, name: 'א'.repeat(200) }]));
+  value.base = { voteData, config: { ...snapshot.scenario.config } };
+  value.scenario = structuredClone(value.base);
+  assert.ok(new TextEncoder().encode(JSON.stringify(value)).length > 100_000);
+  await assert.rejects(encodeSharedScenario(value), /קישור התרחיש אינו תקין/);
+});
+
+test('rejects valid but poorly compressible snapshots that would create an oversized URL', async () => {
+  const { createHash } = await import('node:crypto');
+  const value = structuredClone(snapshot);
+  for (const key of ['base', 'scenario'] as const) {
+    value[key] = {
+      config: { ...snapshot.scenario.config },
+      voteData: Object.fromEntries(Array.from({ length: 150 }, (_, i) => [String(i), {
+        votes: 1, mandats: 0,
+        name: Array.from({ length: 3 }, (_, j) => createHash('sha256').update(`${key}:${i}:${j}`).digest('hex')).join(''),
+      }])),
+    };
+  }
+  assert.ok(new TextEncoder().encode(JSON.stringify(value)).length < 100_000);
+  await assert.rejects(encodeSharedScenario(value), /התרחיש גדול מדי לשיתוף בקישור/);
+});
