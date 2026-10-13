@@ -6,14 +6,14 @@
 .election-night .bloc-scoreboard { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 0 36px; margin-top: 22px; }
 .election-night .bloc-score { min-width: 0; display: grid; grid-template-rows: subgrid; grid-row: span 4; }
 .election-night .bloc-score h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; overflow-wrap: anywhere; }
-.election-night .bloc-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: var(--bloc-color); }
+.election-night .bloc-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: color-mix(in srgb, var(--bloc-color), white var(--chart-tint)); }
 .election-night .bloc-number { display: flex; gap: 12px; align-items: baseline; font-variant-numeric: tabular-nums; }
 .election-night .bloc-number strong { font-size: clamp(56px, 8vw, 80px); line-height: 1.2; font-weight: 800; letter-spacing: -2px; }
 .election-night .bloc-number > span { color: var(--ink-50); font-size: 14px; }
 .election-night .bloc-number .delta-chip.gain { color: var(--gain); font-size: 20px; }
 .election-night .bloc-number .delta-chip.lose { color: var(--loss); font-size: 20px; }
 .election-night .majority-track { display: flex; position: relative; background: var(--ink-20); height: 12px; border-radius: 999px; margin-top: 14px; }
-.election-night .majority-track > div { flex-shrink: 0; height: 100%; background: var(--bloc-color); transition: width 300ms ease; }
+.election-night .majority-track > div { flex-shrink: 0; height: 100%; background: color-mix(in srgb, var(--bloc-color), white var(--chart-tint)); transition: width 300ms ease; }
 .election-night .majority-track > div:first-child { border-start-start-radius: 999px; border-end-start-radius: 999px; }
 .election-night .majority-marker { position: absolute; inset-inline-start: 50.8333%; top: -5px; height: 20px; width: 2px; background: var(--ink-90); }
 .election-night .majority-caption { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; color: var(--ink-50); }
@@ -104,3 +104,7 @@
   .election-night .demo-banner strong { font-size: 17px; }
   .election-night .demo-banner span { font-size: 13px; }
 }
+
+.election-night .bloc-settings input, .election-night .bloc-settings select { border-color: var(--control-border); }
+
+.election-night .majority-track, .election-night .party-bar { background: var(--chart-track); }

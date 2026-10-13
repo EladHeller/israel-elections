@@ -34,7 +34,7 @@ const Donut: React.FC<DonutProps> = ({ data, total, colors, labels }) => {
         cy="110"
         r={radius}
         fill="none"
-        stroke="var(--ink-20)"
+        stroke="var(--chart-track)"
         strokeWidth={stroke}
       />
       {data.map((value, i) => {
@@ -49,7 +49,8 @@ const Donut: React.FC<DonutProps> = ({ data, total, colors, labels }) => {
             cy="110"
             r={radius}
             fill="none"
-            stroke={colors[i]}
+            className="donut-segment"
+            style={{ '--chart-color': colors[i] } as React.CSSProperties}
             strokeWidth={stroke}
             strokeDasharray={dash}
             strokeDashoffset={dashOffset}
@@ -79,7 +80,7 @@ const BlocLegend: React.FC<BlocLegendProps> = ({ blocs, totals, deltas }) => (
       <div key={key} className="legend-item">
         <span
           className="legend-swatch"
-          style={{ background: blocs.blocks[key].color }}
+          style={{ '--chart-color': blocs.blocks[key].color } as React.CSSProperties}
         />
         <span>{blocs.blocks[key].label}</span>
         <span className="legend-value">

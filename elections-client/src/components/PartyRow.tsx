@@ -26,7 +26,7 @@ const PartyRow: React.FC<PartyRowProps> = ({ name, electionNight = false, ballot
       {bar && (
         <div
           className="party-bar-fill"
-          style={{ width: `${bar.width}%`, background: bar.color }}
+          style={{ width: `${bar.width}%`, '--chart-color': bar.color } as React.CSSProperties}
         />
       )}
     </div>

@@ -67,7 +67,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
                             {deltas[other] > 0 ? '+' : '−'}{Math.abs(deltas[other])}
                           </span>}
                         </div>
-                        <span className="bloc-complement-label"><span className="bloc-color" style={{ background: blocs.blocks[other].color }} />{blocs.blocks[other].label}</span>
+                        <span className="bloc-complement-label"><span className="bloc-color" style={{ '--bloc-color': blocs.blocks[other].color } as React.CSSProperties} />{blocs.blocks[other].label}</span>
                       </div>
                     ))}
                   </div>
@@ -75,7 +75,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
                   {hasResults && <>
                     <div className="majority-track" role="img" aria-label={`${chartDescription}. סך הכול ${combinedSeats} מתוך 120 מנדטים, רוב ב־61`}>
                       {segments.map((segment) => <div key={segment}
-                        style={{ width: `${Math.min(totals[segment] || 0, 120) / 120 * 100}%`, background: blocs.blocks[segment].color }} />)}
+                        style={{ width: `${Math.min(totals[segment] || 0, 120) / 120 * 100}%`, '--bloc-color': blocs.blocks[segment].color } as React.CSSProperties} />)}
                       <span className="majority-marker" />
                     </div>
                     <div className="majority-caption">
@@ -90,7 +90,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
                     const members = parties.filter((party) => partyToBloc[party] === segment);
                     return <p className="bloc-members" key={segment}>
                       {complementaryKeys.length > 0 && <span className="bloc-members-label">
-                        <span className="bloc-color" style={{ background: blocs.blocks[segment].color }} />{blocs.blocks[segment].label}: </span>}
+                        <span className="bloc-color" style={{ '--bloc-color': blocs.blocks[segment].color } as React.CSSProperties} />{blocs.blocks[segment].label}: </span>}
                       {members.length ? members.map(getPartyName).join(' · ') : 'אין מפלגות משויכות'}
                     </p>;
                   })}

@@ -1,5 +1,12 @@
 :root {
   color-scheme: light;
+  --control-border: #8793a7;
+  --chart-tint: 0%;
+  --chart-track: #dce1f0;
+  --ink-60: #3a506b;
+  --ink-10: #f5f7fb;
+  --ink-5: #f5f7fb;
+  --ink-02: #f5f7fb;
   --page-background: radial-gradient(circle at top right, #f7f0d6 0%, #eef1f6 40%, #e6ecf8 100%);
   --button-background: #1c2541;
   --strong-background: #0b132b;
@@ -45,19 +52,26 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --ink-90: #eef3fc;
-  --ink-70: #d5dfef;
-  --ink-50: #b1bfd4;
-  --ink-20: #38485f;
-  --bg: #111a29;
-  --card: #1b2638;
+  --control-border: #8492a6;
+  --chart-tint: 35%;
+  --chart-track: #303d50;
+  --ink-60: #c5cfdd;
+  --ink-10: #293446;
+  --ink-5: #293446;
+  --ink-02: #293446;
+  --ink-90: #f5f7fb;
+  --ink-70: #e1e7f0;
+  --ink-50: #c5cfdd;
+  --ink-20: #46556b;
+  --bg: #0e141f;
+  --card: #202b3c;
   --shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-  --page-background: radial-gradient(circle at top right, #292719 0%, #111a29 40%, #152136 100%);
-  --button-background: #d5dfef;
+  --page-background: #0e141f;
+  --button-background: #e1e7f0;
   --strong-background: #101827;
-  --button-text: #eef3fc;
-  --surface-muted: #222f43;
-  --surface-hover: #2c3c53;
+  --button-text: #f5f7fb;
+  --surface-muted: #293446;
+  --surface-hover: #34435a;
   --selection-background: #49391d;
   --warning-text: #ffd18a;
   --edited-background: #513b1c;
@@ -78,7 +92,7 @@
   --remainder-text: #ffd18a;
   --winner-background: #49391d;
   --winner-border: #8b7039;
-  --switcher-background: #1b2638;
+  --switcher-background: #202b3c;
   --change-background: #655024;
   --demo-background: #49391d;
   --demo-text: #ffe0a3;
@@ -1660,3 +1674,32 @@ body {
 .scenario-share-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .shared-scenario-return { color: var(--ink-50); font-size: 0.9em; text-decoration: none; }
 .shared-scenario-return:hover { text-decoration: underline; }
+
+/* Keep interactive boundaries distinct from quiet table separators. */
+.theme-toggle,
+.election-selector-trigger,
+.algorithm-select,
+.block-percentage-editor,
+.party-vote-input,
+.ghost,
+.scenario-config-row input,
+.add-agreement select,
+.add-agreement button,
+.vote-row input {
+  border-color: var(--control-border);
+}
+
+:root[data-theme='dark'] .panel {
+  box-shadow: 0 0 0 1px var(--ink-20), var(--shadow);
+}
+
+:root[data-theme='dark'] a { color: #a9d1ff; }
+
+.party-bar-fill,
+.legend-swatch {
+  background: color-mix(in srgb, var(--chart-color), white var(--chart-tint));
+}
+
+.donut-segment {
+  stroke: color-mix(in srgb, var(--chart-color), white var(--chart-tint));
+}
