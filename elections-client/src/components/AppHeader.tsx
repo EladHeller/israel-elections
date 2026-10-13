@@ -7,6 +7,7 @@ interface AppHeaderProps {
   statusText: string;
   actions?: React.ReactNode;
   statusAction?: React.ReactNode;
+  resultsOverview?: React.ReactNode;
   showSimulator: boolean;
   isEdited: boolean;
   currentElection: string | null;
@@ -26,6 +27,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   statusText,
   actions,
   statusAction,
+  resultsOverview,
   showSimulator,
   isEdited,
   currentElection,
@@ -34,7 +36,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   viewMode,
   setViewMode,
 }) => (
-  <header className="header">
+  <header className={`header${resultsOverview ? ' header-results-first' : ''}`}>
     <div>
       <h1>תוצאות הבחירות לכנסת</h1>
       <div className="subtitle">
@@ -43,6 +45,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         {isEdited && <span className="edited-tag">נתונים נערכו</span>}
       </div>
     </div>
+    {resultsOverview}
     <div className="controls">
       <ThemeToggle />
       <div className="view-control">

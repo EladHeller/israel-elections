@@ -396,6 +396,12 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
       <AppHeader
         statusText={statusText}
         showSimulator
+        resultsOverview={electionNight && <div className="current-results-overview">
+          {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
+            <div><strong>מידע דמה בלבד</strong><span>המספרים מומצאים להמחשה — אינם תוצאות אמת או סקר.</span></div>
+          </aside>}
+          {partyPanel}
+        </div>}
         isEdited={displayedIsEdited}
         currentElection={currentElection}
         setCurrentElection={setCurrentElection}
@@ -413,9 +419,6 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
 
       {electionNight ? (
         <>
-          {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
-            <div><strong>מידע דמה בלבד</strong><span>המספרים מומצאים להמחשה — אינם תוצאות אמת או סקר.</span></div>
-          </aside>}
           {!isSimulator && electionManifest.phase === 'counting' && (
             <ResultsUpdate isDemo={isDemo} previous={previousResults} current={results}
               blockPercentage={baseConfig.blockPercentage} getPartyName={getPartyName} />
@@ -426,9 +429,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
             onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
             customized={customized} saveFailed={saveFailed} hasResults
             isCounting={electionManifest.phase === 'counting'} isSimulator={isSimulator} isDemo={isDemo} />
-          <main className="results-layout">
-            {partyPanel}
-
+          <main>
             {closeRaces}
 
           </main>
