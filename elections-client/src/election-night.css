@@ -108,3 +108,33 @@
 .election-night .bloc-settings input, .election-night .bloc-settings select { border-color: var(--control-border); }
 
 .election-night .majority-track, .election-night .party-bar { background: var(--chart-track); }
+
+/* Put the current seat count before navigation, with one compact cell per party. */
+.election-night .header-results-first { flex-direction: column; align-items: stretch; gap: 16px; }
+.election-night .current-results-overview > .grid { margin: 0; }
+.election-night .current-results-overview .demo-banner { position: static; margin-bottom: 12px; padding: 8px 14px; border-width: 1px; border-radius: 10px; box-shadow: none; }
+.election-night .current-results-overview .demo-banner > div { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.election-night .current-results-overview .demo-banner strong { font-size: 14px; }
+.election-night .current-results-overview .demo-banner span { font-size: 13px; }
+.election-night .compact-party-panel { padding: 16px; }
+.election-night .compact-party-panel .panel-head { margin-bottom: 8px; }
+.election-night .compact-party-panel h2 { font-size: 16px; }
+.election-night .compact-party-panel .party-bars { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 24px; }
+.election-night .compact-party-panel .party-row { grid-template-areas: 'name seats' 'votes votes' 'bar bar'; gap: 3px 6px; padding: 8px 0; border: 0; }
+.election-night .compact-party-panel .party-name { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+.election-night .compact-party-panel .party-seats { padding: 0; background: none; border-radius: 0; font-size: 28px; line-height: 1.2; gap: 3px; }
+.election-night .compact-party-panel .party-seats .delta-chip { font-size: 11px; }
+.election-night .compact-party-panel .party-bar { height: 4px; }
+.election-night .compact-party-panel .party-votes { font-size: 11px; gap: 4px; flex-wrap: wrap; }
+.election-night .compact-party-panel .party-vote-total { gap: 3px; }
+.election-night .compact-party-panel .party-vote-input { width: 100%; max-width: 110px; min-height: 36px; }
+.election-night .compact-party-panel .toggle { margin-top: 12px; font-size: 13px; }
+@media (min-width: 1200px) {
+  .election-night .compact-party-panel .party-bars { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .election-night .header-results-first { gap: 12px; }
+  .election-night .header-results-first h1 { font-size: 26px; }
+  .election-night .compact-party-panel { padding: 12px; }
+  .election-night .compact-party-panel .party-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+}
