@@ -35,6 +35,7 @@ export interface UseScenarioArgs {
   results: (ElectionResultsPayload & { voteData?: CalcVoteData }) | null;
   electionConfig: ElectionConfig;
   currentElection: string | null;
+  initialScenario?: ScenarioState;
 }
 
 export interface UseScenarioResult {
@@ -67,6 +68,7 @@ export const useScenario = ({
   results,
   electionConfig,
   currentElection,
+  initialScenario,
 }: UseScenarioArgs): UseScenarioResult => {
   const [scenarioConfig, setScenarioConfig] = useState<ElectionConfig | null>(null);
   const [scenarioVoteData, setScenarioVoteData] = useState<CalcVoteData | null>(null);
@@ -81,11 +83,11 @@ export const useScenario = ({
 
   useEffect(() => {
     if (!results) return;
-    setScenarioConfig(cloneConfig(electionConfig));
-    setScenarioVoteData(cloneVoteData((results as any).voteData || {}));
+    setScenarioConfig(cloneConfig(initialScenario?.config ?? electionConfig));
+    setScenarioVoteData(cloneVoteData(initialScenario?.voteData ?? (results as any).voteData ?? {}));
     setAddAgreementA('');
     setAddAgreementB('');
-  }, [currentElection, electionConfig, results]);
+  }, [currentElection, electionConfig, results, initialScenario]);
 
   const normalizedScenario = useMemo<ScenarioState | null>(() => {
     if (!scenarioConfig || !scenarioVoteData) return null;

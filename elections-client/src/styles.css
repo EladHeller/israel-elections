@@ -1533,3 +1533,7 @@ body {
     font-size: 20px;
   }
 }
+
+.scenario-share { display: grid; gap: 0.6rem; }
+.scenario-share > div { display: flex; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
+.scenario-share input { width: 100%; min-width: 0; box-sizing: border-box; }
