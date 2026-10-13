@@ -20,6 +20,7 @@ interface SummaryRow {
   totalVotes: number | null;
   invalidVotes: number | null;
   validVotes: number | null;
+  thresholdPercentage: number | null;
   belowThresholdPercentage: number | null;
 }
 
@@ -45,6 +46,7 @@ const rows: SummaryRow[] = Object.keys(electionsConfigAll as Record<string, any>
       invalidVotes,
       validVotes,
       belowThresholdPercentage,
+      thresholdPercentage: Number(election.blockPercentage) * 100
     };
   })
   .sort((a, b) => b.id - a.id);
@@ -61,7 +63,8 @@ const AllElectionsSummary: React.FC = () => (
             <th>סה&quot;כ מצביעים</th>
             <th>קולות פסולים</th>
             <th>קולות כשרים</th>
-            <th>אחוז הקולות שלא עברו את אחוז החסימה</th>
+            <th>אחוז החסימה</th>
+            <th>לא עברו את אחוז החסימה</th>
           </tr>
         </thead>
         <tbody>
@@ -72,6 +75,7 @@ const AllElectionsSummary: React.FC = () => (
               <td>{formatNumber(row.totalVotes)}</td>
               <td>{formatNumber(row.invalidVotes)}</td>
               <td>{formatNumber(row.validVotes)}</td>
+              <td>{formatPercent(row.thresholdPercentage)}</td>
               <td>{formatPercent(row.belowThresholdPercentage)}</td>
             </tr>
           ))}
