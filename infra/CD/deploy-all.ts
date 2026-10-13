@@ -13,6 +13,8 @@ import {
   CreateInvalidationCommand,
 } from '@aws-sdk/client-cloudfront';
 import fs from 'fs/promises';
+import electionManifests from '../../elections-client/src/data/elections-manifests.json';
+import { LATEST_ELECTION_ID } from '../../elections-client/src/lib/data';
 import { exec as execCallback } from 'child_process';
 import { promisify } from 'util';
 import { FileData, getAllDirsFiles, upload } from '../s3';
@@ -146,6 +148,7 @@ async function main() {
     { ParameterKey: 'ClientCodeName', ParameterValue: clientCodeName },
     { ParameterKey: 'SubDomain', ParameterValue: subDomain },
     { ParameterKey: 'Environment', ParameterValue: environment },
+    { ParameterKey: 'LatestElectionId', ParameterValue: String(Math.max(LATEST_ELECTION_ID, ...Object.keys(electionManifests).map(Number))) },
   ];
 
   if (domainName) t00Params.push({ ParameterKey: 'DomainName', ParameterValue: domainName });

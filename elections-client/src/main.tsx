@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { BrowserRouter } from 'react-router-dom';
 import './styles.css';
 import './election-night.css';
 
@@ -12,7 +13,7 @@ if (!container) {
 
 createRoot(container).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter><App /></BrowserRouter>
   </React.StrictMode>,
 );
 

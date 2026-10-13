@@ -4,7 +4,7 @@ import { getElectionBlocs } from '../lib/bloc-preferences';
 import electionsConfigAll from '../data/elections-config.json';
 import electionsManifestsAll from '../data/elections-manifests.json';
 import partyNamesAll from '../data/party-names.json';
-import { detectAvailableElections, fetchElectionResults } from '../lib/data';
+import { detectAvailableElections, fetchElectionResults, LATEST_ELECTION_ID } from '../lib/data';
 import { getDefaultElectionId, phaseHasResults } from '../lib/election-manifest';
 import {
   LIVE_RESULTS_REFRESH_INTERVAL_MS,
@@ -63,7 +63,6 @@ const getElectionManifest = (electionId: string | null): ElectionManifest | null
 export interface UseElectionDataResult {
   availableElections: string[];
   currentElection: string | null;
-  setCurrentElection: (id: string) => void;
   results: ElectionResultsPayload | null;
   previousResults: ElectionResultsPayload | null;
   error: string | null;
@@ -74,9 +73,11 @@ export interface UseElectionDataResult {
   isLatestElection: boolean;
 }
 
-export const useElectionData = (): UseElectionDataResult => {
+export const useElectionData = (requestedElection?: string, loadResults = true): UseElectionDataResult => {
   const [availableElections, setAvailableElections] = useState<string[]>([]);
-  const [currentElection, setCurrentElection] = useState<string | null>(null);
+  const currentElection = requestedElection === undefined
+    ? getDefaultElectionId(availableElections, electionManifests)
+    : availableElections.includes(requestedElection) ? requestedElection : null;
   const [results, setResults] = useState<ElectionResultsPayload | null>(null);
   const [previousResults, setPreviousResults] =
     useState<ElectionResultsPayload | null>(null);
@@ -86,10 +87,9 @@ export const useElectionData = (): UseElectionDataResult => {
     const load = async () => {
       try {
         const configuredElectionIds = Object.keys(electionManifests).map(Number);
-        const latestElectionId = Math.max(25, ...configuredElectionIds);
+        const latestElectionId = Math.max(LATEST_ELECTION_ID, ...configuredElectionIds);
         const available = await detectAvailableElections(latestElectionId);
         setAvailableElections(available);
-        setCurrentElection(getDefaultElectionId(available, electionManifests));
       } catch (e) {
         setError((e as Error).message);
       }
@@ -98,7 +98,7 @@ export const useElectionData = (): UseElectionDataResult => {
   }, []);
 
   useEffect(() => {
-    if (!currentElection) return;
+    if (!currentElection || !loadResults) return;
     setResults(null);
     setPreviousResults(null);
     setError(null);
@@ -160,7 +160,7 @@ export const useElectionData = (): UseElectionDataResult => {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', refreshIfVisible);
     };
-  }, [currentElection]);
+  }, [currentElection, loadResults]);
 
   const electionConfig = useMemo(
     () => getElectionConfig(currentElection),
@@ -182,7 +182,6 @@ export const useElectionData = (): UseElectionDataResult => {
   return {
     availableElections,
     currentElection,
-    setCurrentElection,
     results,
     previousResults,
     error,
