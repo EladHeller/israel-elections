@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { computeBlocTotals, computeBlocMap } from './lib/analytics';
 import { canPreviewElectionDemo, electionDemo, electionDemoConfig } from './lib/election-demo';
 import AppHeader from './components/AppHeader';
@@ -20,7 +21,7 @@ import { useScenario } from './hooks/use-scenario';
 import { computeSeatDeltas } from './lib/scenario';
 import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
 import { canPassThresholdWithoutMandate, hasMandate } from './lib/calc';
-import { DEFAULT_VIEW_MODE, selectViewData, viewUsesScenario } from './lib/view-mode';
+import { selectViewData, viewUsesScenario } from './lib/view-mode';
 import type { AppViewMode, PartyResult, ResultsMap, VoteData } from './types';
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
@@ -33,15 +34,37 @@ const filterRealParties = (data: VoteData) =>
     .filter(([party]) => !NON_PARTY_KEYS.has(party))
     .filter(([, value]) => value && Number.isFinite(value.votes));
 
+function NotFound() {
+  return <main className="screen error">
+    <h1>404 — הדף לא נמצא</h1>
+    <p>הכתובת או מערכת הבחירות שביקשת אינן קיימות.</p>
+    <Link to="/">חזרה לתוצאות הבחירות</Link>
+  </main>;
+}
+
+function ElectionRoute({ viewMode }: { viewMode: AppViewMode }) {
+  const { electionId } = useParams();
+  return <ElectionScreen key={electionId ?? 'default'} electionId={electionId} viewMode={viewMode} />;
+}
+
 export default function App() {
-  const [demoElection, setDemoElection] = useState<string | null>(null);
+  return <Routes>
+    <Route caseSensitive path="/index.html" element={<Navigate to="/" replace />} />
+    <Route caseSensitive path="/" element={<ElectionRoute viewMode="results" />} />
+    <Route caseSensitive path="/results/:electionId" element={<ElectionRoute viewMode="results" />} />
+    <Route caseSensitive path="/simulator/:electionId" element={<ElectionRoute viewMode="simulator" />} />
+    <Route caseSensitive path="/summary" element={<ElectionRoute viewMode="summary" />} />
+    <Route caseSensitive path="*" element={<NotFound />} />
+  </Routes>;
+}
+
+function ElectionScreen({ electionId, viewMode }: { electionId?: string; viewMode: AppViewMode }) {
+  const navigate = useNavigate();
   const [showAllParties, setShowAllParties] = useState(false);
-  const [viewMode, setViewMode] = useState<AppViewMode>(DEFAULT_VIEW_MODE);
 
   const {
     availableElections,
     currentElection,
-    setCurrentElection: selectElection,
     results: officialResults,
     previousResults: previousOfficialResults,
     error,
@@ -50,24 +73,19 @@ export default function App() {
     blocs: defaultBlocs,
     partyNames,
     isLatestElection,
-  } = useElectionData();
+  } = useElectionData(electionId, viewMode !== 'summary');
 
-  const canPreviewDemo = canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection);
-  const isDemo = canPreviewDemo && demoElection === currentElection && viewMode !== 'summary';
+  const setCurrentElection = (id: string) => navigate(`/${viewMode === 'summary' ? 'results' : viewMode}/${id}`);
+  const setViewMode = (mode: AppViewMode) => navigate(mode === 'summary' ? '/summary' : `/${mode}/${currentElection}`);
+
+  const isDemo = canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection)
+    && viewMode !== 'summary';
   const results = isDemo ? electionDemo.current : officialResults;
   const previousResults = isDemo ? electionDemo.previous : previousOfficialResults;
   const electionConfig = isDemo ? electionDemoConfig : officialConfig;
   const electionManifest = isDemo && officialManifest
     ? { ...officialManifest, phase: 'counting' as const }
     : officialManifest;
-  const setCurrentElection = (id: string) => {
-    setDemoElection(null);
-    selectElection(id);
-  };
-  const changeViewMode = (mode: AppViewMode) => {
-    if (mode === 'summary') setDemoElection(null);
-    setViewMode(mode);
-  };
 
   const { blocs: personalBlocs, partyToBloc: personalPartyToBloc, assignParty, renameBloc, reset: resetBlocs, customized, saveFailed } =
     useBlocPreferences(currentElection, defaultBlocs);
@@ -119,6 +137,25 @@ export default function App() {
     );
   }
 
+  if (availableElections.length && electionId !== undefined && !availableElections.includes(electionId)) {
+    return <NotFound />;
+  }
+
+  if (currentElection && electionId === undefined && viewMode !== 'summary') {
+    return <Navigate to={`/results/${currentElection}`} replace />;
+  }
+
+  if (viewMode === 'summary') {
+    return <div className="screen">
+      <AppHeader statusText="סיכום כל מערכות הבחירות"
+        showSimulator={!!officialManifest && (phaseHasResults(officialManifest.phase)
+          || canPreviewElectionDemo(currentElection, officialManifest.phase, isLatestElection))}
+        isEdited={false} currentElection={currentElection} setCurrentElection={setCurrentElection}
+        availableElections={availableElections} viewMode={viewMode} setViewMode={setViewMode} />
+      <AllElectionsSummary />
+    </div>;
+  }
+
   if (!currentElection || !electionManifest) {
     return (
       <div className="screen loading">
@@ -130,6 +167,10 @@ export default function App() {
   const showResults = phaseHasResults(electionManifest.phase);
   const statusText = isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
 
+  if (!showResults && viewMode === 'simulator') {
+    return <Navigate to={`/results/${currentElection}`} replace />;
+  }
+
   if (!showResults) {
     return (
       <div className={screenClass}>
@@ -140,29 +181,16 @@ export default function App() {
           currentElection={currentElection}
           setCurrentElection={setCurrentElection}
           availableElections={availableElections}
-          viewMode={viewMode === 'simulator' ? 'results' : viewMode}
-          setViewMode={changeViewMode}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
         />
-        {viewMode === 'summary' ? (
-          <AllElectionsSummary />
-        ) : (
-          <>
-            {canPreviewDemo && <section className="panel demo-invitation">
-              <div><h2>הצצה לתוצאות המתעדכנות</h2><p>כך תיראה התצוגה בזמן הספירה, עם תוצאות דמה.</p></div>
-              <button type="button" className="ghost" onClick={() => {
-                setViewMode('results');
-                setDemoElection(currentElection);
-              }}>תצוגת דמה של התוצאות</button>
-            </section>}
-            {electionNight && <BlocsOverview key={currentElection} blocs={blocs} totals={{}} deltas={{}} results={{}}
-              parties={electionManifest.lists.map((list) => list.ballotLetter)}
-              partyToBloc={partyToBloc}
-              getPartyName={(party) => electionManifest.lists.find((list) => list.ballotLetter === party)?.name || party}
-              onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
-              customized={customized} saveFailed={saveFailed} hasResults={false} />}
-            <PreElectionView manifest={electionManifest} electionConfig={electionConfig} electionNight={electionNight} />
-          </>
-        )}
+        {electionNight && <BlocsOverview key={currentElection} blocs={blocs} totals={{}} deltas={{}} results={{}}
+          parties={electionManifest.lists.map((list) => list.ballotLetter)}
+          partyToBloc={partyToBloc}
+          getPartyName={(party) => electionManifest.lists.find((list) => list.ballotLetter === party)?.name || party}
+          onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
+          customized={customized} saveFailed={saveFailed} hasResults={false} />}
+        <PreElectionView manifest={electionManifest} electionConfig={electionConfig} electionNight={electionNight} />
       </div>
     );
   }
@@ -362,16 +390,13 @@ export default function App() {
         setCurrentElection={setCurrentElection}
         availableElections={availableElections}
         viewMode={viewMode}
-        setViewMode={changeViewMode}
+        setViewMode={setViewMode}
       />
 
-      {viewMode === 'summary' ? (
-        <AllElectionsSummary />
-      ) : electionNight ? (
+      {electionNight ? (
         <>
           {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
             <div><strong>מידע דמה בלבד</strong><span>המספרים מומצאים להמחשה — אינם תוצאות אמת או סקר.</span></div>
-            <button type="button" className="ghost" onClick={() => setDemoElection(null)}>יציאה מתצוגת הדמה</button>
           </aside>}
           {!isSimulator && electionManifest.phase === 'counting' && (
             <ResultsUpdate isDemo={isDemo} previous={previousResults} current={results}

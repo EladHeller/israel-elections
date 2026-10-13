@@ -22,6 +22,11 @@ Parameters:
     Type: AWS::Route53::HostedZone::Id
     Description: The ID of the existing Route53 hosted zone
 
+  LatestElectionId:
+    Type: Number
+    MinValue: 1
+    Description: Highest election ID supported by the client
+
   Environment:
     Type: String
     Default: production
@@ -70,6 +75,34 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Ref ElectionsClientCode
+  ClientRoutesFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub '${ClientCodeName}-routes'
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Rewrite screen routes and return 404 for unknown pages
+        Runtime: cloudfront-js-2.0
+      FunctionCode: !Sub |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+          var isResource = /^\/(assets|data)(\/|$)/.test(uri) || /\.[^/]+\/?$/.test(uri);
+          if ((request.method !== 'GET' && request.method !== 'HEAD') || isResource) return request;
+          var election = /^\/(results|simulator)\/([1-9][0-9]*)\/?$/.exec(uri);
+          if (uri === '/' || /^\/summary\/?$/.test(uri) || (election && Number(election[2]) <= ${LatestElectionId})) {
+            request.uri = '/index.html';
+          } else {
+            return {
+              statusCode: 404,
+              statusDescription: 'Not Found',
+              headers: { 'content-type': { value: 'text/html; charset=utf-8' } },
+              body: '<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>404 — הדף לא נמצא</title><body style="font-family:system-ui;background:#f5f7fb;color:#18243c;padding:8vw"><main><h1>404 — הדף לא נמצא</h1><p>הכתובת או מערכת הבחירות שביקשת אינן קיימות.</p><a href="/">חזרה לתוצאות הבחירות</a></main></body></html>'
+            };
+          }
+          return request;
+        }
+
   CDN:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -81,6 +114,9 @@ Resources:
         DefaultCacheBehavior:
           TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
           ViewerProtocolPolicy: redirect-to-https
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt ClientRoutesFunction.FunctionARN
           ForwardedValues:
             QueryString: true
             Cookies:
