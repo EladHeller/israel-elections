@@ -5,6 +5,8 @@ import ThemeToggle from './ThemeToggle';
 
 interface AppHeaderProps {
   statusText: string;
+  actions?: React.ReactNode;
+  statusAction?: React.ReactNode;
   showSimulator: boolean;
   isEdited: boolean;
   currentElection: string | null;
@@ -22,6 +24,8 @@ const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
 
 const AppHeader: React.FC<AppHeaderProps> = ({
   statusText,
+  actions,
+  statusAction,
   showSimulator,
   isEdited,
   currentElection,
@@ -35,6 +39,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       <h1>תוצאות הבחירות לכנסת</h1>
       <div className="subtitle">
         {statusText}
+        {statusAction}
         {isEdited && <span className="edited-tag">נתונים נערכו</span>}
       </div>
     </div>
@@ -58,6 +63,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           ))}
         </div>
       </div>
+      {actions}
       <ElectionSelector
         value={currentElection}
         elections={availableElections}

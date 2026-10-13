@@ -188,6 +188,7 @@ body {
 .subtitle {
   color: var(--ink-50);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
@@ -1669,9 +1670,27 @@ body {
   }
 }
 
-.scenario-share { display: grid; gap: 0.6rem; }
-.scenario-share > div { display: flex; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
-.scenario-share input { width: 100%; min-width: 0; box-sizing: border-box; }
+/* Keep sharing with the header controls; feedback never shifts the page. */
+.scenario-share { position: relative; align-self: flex-end; }
+.scenario-share-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 44px; padding: 9px 12px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--ink-50); font: inherit; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.scenario-share-button:hover { background: var(--surface-hover); color: var(--ink-90); }
+.scenario-share-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.scenario-share-button:disabled { opacity: 0.5; cursor: default; }
+.scenario-share-feedback {
+  position: absolute; z-index: 20; inset-block-start: calc(100% + 8px); inset-inline-start: 0;
+  width: max-content; max-width: min(300px, calc(100vw - 48px)); padding: 10px 14px;
+  border: 1px solid var(--ink-20); border-radius: 12px; box-shadow: var(--shadow);
+  background: var(--card); color: var(--ink-90); font-size: 14px;
+}
+.scenario-share-feedback input { display: block; width: 100%; min-width: 0; margin-top: 8px; }
+.scenario-share-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.shared-scenario-return { color: var(--ink-50); font-size: 0.9em; text-decoration: none; }
+.shared-scenario-return:hover { text-decoration: underline; }
 
 /* Keep interactive boundaries distinct from quiet table separators. */
 .theme-toggle,

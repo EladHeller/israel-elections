@@ -176,7 +176,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
   }
 
   const showResults = !!shared || phaseHasResults(electionManifest.phase);
-  const statusText = shared ? (isDemo ? 'תרחיש משותף · מידע דמה בלבד' : 'תרחיש משותף · תמונת מצב שמורה') : isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
+  const statusText = shared ? (isDemo ? 'תרחיש משותף · מידע דמה בלבד' : 'תרחיש משותף') : isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
 
   if (!showResults && viewMode === 'simulator') {
     return <Navigate to={`/results/${currentElection}`} replace />;
@@ -402,18 +402,15 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         availableElections={availableElections}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        statusAction={shared && <Link className="shared-scenario-return" to={`/simulator/${currentElection}`}>חזרה לנתונים העדכניים</Link>}
+        actions={isSimulator && <ScenarioShare disabled={!agreementValidation.isValid} snapshot={{
+          version: 1, election: currentElection, demo: isDemo,
+          base: { voteData: Object.fromEntries(Object.entries(baseVoteData).map(([party, data]) =>
+            [party, { ...data, name: getPartyName(party) }])), config: baseConfig },
+          scenario: normalizedScenario,
+        }} />}
       />
 
-      {isSimulator && <ScenarioShare disabled={!agreementValidation.isValid} snapshot={{
-        version: 1, election: currentElection, demo: isDemo,
-        base: { voteData: Object.fromEntries(Object.entries(baseVoteData).map(([party, data]) =>
-          [party, { ...data, name: getPartyName(party) }])), config: baseConfig },
-        scenario: normalizedScenario,
-      }} />}
-      {shared && <aside className="panel" aria-label="תרחיש משותף">
-        הקולות וההגדרות נטענו מהקישור ואינם מתעדכנים עם תוצאות הבחירות.{' '}
-        <Link to={`/simulator/${currentElection}`}>חזרה לנתונים העדכניים</Link>
-      </aside>}
       {electionNight ? (
         <>
           {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
