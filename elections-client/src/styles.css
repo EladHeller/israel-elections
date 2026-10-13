@@ -1,4 +1,38 @@
 :root {
+  color-scheme: light;
+  --page-background: radial-gradient(circle at top right, #f7f0d6 0%, #eef1f6 40%, #e6ecf8 100%);
+  --button-background: #1c2541;
+  --strong-background: #0b132b;
+  --button-text: #fff;
+  --surface-muted: #f5f7fb;
+  --surface-hover: #f2f5fb;
+  --selection-background: #fff3d5;
+  --warning-text: #8a4b00;
+  --edited-background: #ffd48a;
+  --gain: #0f7a34;
+  --gain-strong: #126b38;
+  --loss: #b20000;
+  --gain-background: #e8f5eb;
+  --loss-background: #fdeaea;
+  --error-background: #ffe7e7;
+  --error-border: #ffc8c8;
+  --pass-background: #d4f0de;
+  --pass-text: #0f5c26;
+  --fail-background: #ffe0e0;
+  --fail-text: #8b0000;
+  --info-background: #dce9f8;
+  --info-text: #1a3c6e;
+  --remainder-background: #fff0d4;
+  --remainder-text: #7a4700;
+  --winner-background: #fff8e1;
+  --winner-border: #ffe082;
+  --switcher-background: rgba(255, 255, 255, 0.72);
+  --change-background: #fff0c2;
+  --demo-background: #fff0ca;
+  --demo-text: #624006;
+  --demo-label: #8a5700;
+  --live-dot: #147246;
+
   --ink-90: #0b132b;
   --ink-70: #1c2541;
   --ink-50: #3a506b;
@@ -9,6 +43,73 @@
   --shadow: 0 20px 50px rgba(28, 37, 65, 0.12);
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ink-90: #eef3fc;
+  --ink-70: #d5dfef;
+  --ink-50: #b1bfd4;
+  --ink-20: #38485f;
+  --bg: #111a29;
+  --card: #1b2638;
+  --shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  --page-background: radial-gradient(circle at top right, #292719 0%, #111a29 40%, #152136 100%);
+  --button-background: #d5dfef;
+  --strong-background: #101827;
+  --button-text: #eef3fc;
+  --surface-muted: #222f43;
+  --surface-hover: #2c3c53;
+  --selection-background: #49391d;
+  --warning-text: #ffd18a;
+  --edited-background: #513b1c;
+  --gain: #79dda0;
+  --gain-strong: #79dda0;
+  --loss: #ff9292;
+  --gain-background: #193d30;
+  --loss-background: #49272f;
+  --error-background: #49272f;
+  --error-border: #8c4a56;
+  --pass-background: #193d30;
+  --pass-text: #79dda0;
+  --fail-background: #49272f;
+  --fail-text: #ff9292;
+  --info-background: #233c5c;
+  --info-text: #b1d4ff;
+  --remainder-background: #49391d;
+  --remainder-text: #ffd18a;
+  --winner-background: #49391d;
+  --winner-border: #8b7039;
+  --switcher-background: #1b2638;
+  --change-background: #655024;
+  --demo-background: #49391d;
+  --demo-text: #ffe0a3;
+  --demo-label: #ffd18a;
+  --live-dot: #79dda0;
+}
+
+:root[data-theme='dark'] .view-switcher button.is-active {
+  color: #111a29;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid var(--ink-20);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink-90);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.theme-toggle:hover { border-color: var(--ink-50); }
+.theme-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.theme-toggle svg { width: 20px; height: 20px; }
+
 * {
   box-sizing: border-box;
 }
@@ -16,7 +117,7 @@
 body {
   margin: 0;
   font-family: 'Assistant', sans-serif;
-  background: radial-gradient(circle at top right, #f7f0d6 0%, #eef1f6 40%, #e6ecf8 100%);
+  background: var(--page-background);
   color: var(--ink-90);
 }
 
@@ -63,8 +164,8 @@ body {
 .edited-tag {
   font-size: 12px;
   font-weight: 700;
-  color: #8a4b00;
-  background: #ffd48a;
+  color: var(--warning-text);
+  background: var(--edited-background);
   border-radius: 999px;
   padding: 3px 10px;
 }
@@ -83,7 +184,7 @@ body {
   padding: 3px;
   border: 1px solid var(--ink-20);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--switcher-background);
 }
 
 .view-switcher button {
@@ -103,8 +204,8 @@ body {
 }
 
 .view-switcher button.is-active {
-  background: var(--ink-70);
-  color: #fff;
+  background: var(--button-background);
+  color: var(--button-text);
   box-shadow: 0 4px 10px rgba(28, 37, 65, 0.18);
 }
 
@@ -205,11 +306,11 @@ body {
 .election-selector-menu button:hover,
 .election-selector-menu button:focus-visible {
   outline: none;
-  background: #f2f5fb;
+  background: var(--surface-hover);
 }
 
 .election-selector-menu button.is-selected {
-  background: #fff3d5;
+  background: var(--selection-background);
   font-weight: 700;
 }
 
@@ -356,7 +457,7 @@ body {
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--ink-20);
-  background: #fff;
+  background: var(--card);
   color: var(--ink-90);
 }
 
@@ -366,7 +467,8 @@ body {
   position: relative;
   border: 1px solid var(--ink-20);
   border-radius: 10px;
-  background: #fff;
+  background: var(--card);
+  color: var(--ink-90);
   padding: 0;
   overflow: hidden;
   flex: 0 0 auto;
@@ -495,11 +597,11 @@ body {
 }
 
 .delta-chip.gain {
-  color: #0f7a34;
+  color: var(--gain);
 }
 
 .delta-chip.lose {
-  color: #b20000;
+  color: var(--loss);
 }
 
 .party-bar {
@@ -529,7 +631,8 @@ body {
   border-radius: 10px;
   padding: 6px 8px;
   font-size: 14px;
-  background: #fff;
+  background: var(--card);
+  color: var(--ink-90);
 }
 
 .toggle {
@@ -682,7 +785,7 @@ body {
   padding: 10px 20px;
   border-radius: 999px;
   border: 1px solid var(--ink-20);
-  background: #f5f7fb;
+  background: var(--surface-muted);
   color: var(--ink-70);
   font-size: 16px;
   cursor: pointer;
@@ -797,11 +900,11 @@ body {
 }
 
 .close-threshold-dot.above {
-  background: #126b38;
+  background: var(--gain-strong);
 }
 
 .close-threshold-dot.below {
-  background: #b20000;
+  background: var(--loss);
 }
 
 .close-threshold-detail {
@@ -812,8 +915,8 @@ body {
 .close-race-badge {
   border-radius: 999px;
   padding: 3px 8px;
-  background: #fff3d5;
-  color: #8a4b00;
+  background: var(--selection-background);
+  color: var(--warning-text);
   white-space: nowrap;
 }
 
@@ -857,11 +960,11 @@ body {
 }
 
 .close-seat-gain {
-  color: #126b38;
+  color: var(--gain-strong);
 }
 
 .close-seat-loss {
-  color: #b20000;
+  color: var(--loss);
 }
 
 .close-seat-value {
@@ -871,16 +974,16 @@ body {
 }
 
 .close-seat-gain.close-seat-value {
-  background: #e8f5eb;
+  background: var(--gain-background);
 }
 
 .close-seat-loss.close-seat-value {
-  background: #fdeaea;
+  background: var(--loss-background);
 }
 
 .close-threshold-loss {
   display: block;
-  color: #b20000;
+  color: var(--loss);
   font-size: 12px;
   margin-top: 6px;
 }
@@ -933,7 +1036,7 @@ body {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: #f5f7fb;
+  background: var(--surface-muted);
   font-weight: 700;
 }
 
@@ -955,7 +1058,7 @@ body {
 }
 
 .ghost.danger {
-  color: #b20000;
+  color: var(--loss);
 }
 
 .scenario-config-row {
@@ -979,7 +1082,8 @@ body {
   border-radius: 10px;
   padding: 8px 10px;
   font-size: 15px;
-  background: #fff;
+  background: var(--card);
+  color: var(--ink-90);
 }
 
 .scenario-columns {
@@ -1021,7 +1125,7 @@ body {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
-  background: #f5f7fb;
+  background: var(--surface-muted);
   border-radius: 10px;
   padding: 8px 10px;
 }
@@ -1045,8 +1149,8 @@ body {
 }
 
 .add-agreement button {
-  background: var(--ink-90);
-  color: #fff;
+  background: var(--strong-background);
+  color: var(--button-text);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -1055,9 +1159,9 @@ body {
   display: grid;
   gap: 6px;
   font-size: 13px;
-  color: #b20000;
-  background: #ffe7e7;
-  border: 1px solid #ffc8c8;
+  color: var(--loss);
+  background: var(--error-background);
+  border: 1px solid var(--error-border);
   border-radius: 10px;
   padding: 10px;
 }
@@ -1087,7 +1191,7 @@ body {
 .summary-table th {
   color: var(--ink-50);
   font-weight: 700;
-  background: #f5f7fb;
+  background: var(--surface-muted);
 }
 
 .election-date,
@@ -1231,7 +1335,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  background: #f5f7fb;
+  background: var(--surface-muted);
   border: none;
   cursor: pointer;
   font-family: 'Assistant', sans-serif;
@@ -1254,7 +1358,7 @@ body {
   height: 26px;
   border-radius: 50%;
   background: var(--accent);
-  color: var(--ink-90);
+  color: #0b132b;
   font-size: 13px;
   font-weight: 700;
   flex-shrink: 0;
@@ -1269,8 +1373,8 @@ body {
 .calc-step-badge {
   font-size: 12px;
   font-weight: 700;
-  background: var(--ink-90);
-  color: #fff;
+  background: var(--strong-background);
+  color: var(--button-text);
   border-radius: 999px;
   padding: 3px 10px;
   white-space: nowrap;
@@ -1311,7 +1415,7 @@ body {
   flex-wrap: wrap;
   justify-content: center;
   padding: 16px;
-  background: #f5f7fb;
+  background: var(--surface-muted);
   border-radius: 12px;
   direction: ltr;
 }
@@ -1330,7 +1434,7 @@ body {
   font-size: 28px;
   font-weight: 700;
   color: var(--accent);
-  background: var(--ink-90);
+  background: var(--strong-background);
   padding: 6px 16px;
   border-radius: 10px;
 }
@@ -1363,7 +1467,7 @@ body {
   border-bottom: 2px solid var(--ink-20);
   color: var(--ink-50);
   font-weight: 700;
-  background: #f5f7fb;
+  background: var(--surface-muted);
 }
 
 .calc-table td {
@@ -1399,23 +1503,23 @@ body {
 }
 
 .calc-tag-pass {
-  background: #d4f0de;
-  color: #0f5c26;
+  background: var(--pass-background);
+  color: var(--pass-text);
 }
 
 .calc-tag-fail {
-  background: #ffe0e0;
-  color: #8b0000;
+  background: var(--fail-background);
+  color: var(--fail-text);
 }
 
 .calc-tag-whole {
-  background: #dce9f8;
-  color: #1a3c6e;
+  background: var(--info-background);
+  color: var(--info-text);
 }
 
 .calc-tag-remainder {
-  background: #fff0d4;
-  color: #7a4700;
+  background: var(--remainder-background);
+  color: var(--remainder-text);
 }
 
 /* ── agreement split blocks (step 6) ── */
@@ -1472,8 +1576,8 @@ body {
 }
 
 .calc-ratio-winner {
-  background-color: #fff8e1;
-  border-color: #ffe082;
+  background-color: var(--winner-background);
+  border-color: var(--winner-border);
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }

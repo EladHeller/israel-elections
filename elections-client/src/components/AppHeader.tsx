@@ -1,6 +1,7 @@
 import React from 'react';
 import type { AppViewMode } from '../types';
 import ElectionSelector from './ElectionSelector';
+import ThemeToggle from './ThemeToggle';
 
 interface AppHeaderProps {
   statusText: string;
@@ -38,6 +39,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
     </div>
     <div className="controls">
+      <ThemeToggle />
       <div className="view-control">
         <span>תצוגה</span>
         <div className="view-switcher" role="group" aria-label="בחירת תצוגה">
