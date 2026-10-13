@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Link, Navigate, Route, Routes, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { computeBlocTotals, computeBlocMap } from './lib/analytics';
 import { canPreviewElectionDemo, electionDemo, electionDemoConfig } from './lib/election-demo';
 import AppHeader from './components/AppHeader';
@@ -18,7 +18,10 @@ import { computeProximity } from './lib/proximity';
 import PreElectionView from './components/PreElectionView';
 import { useElectionData } from './hooks/use-election-data';
 import { useScenario } from './hooks/use-scenario';
-import { computeSeatDeltas } from './lib/scenario';
+import ScenarioShare from './components/ScenarioShare';
+import SharedScenarioRoute from './components/SharedScenarioRoute';
+import type { SharedScenario } from './lib/shared-scenario';
+import { computeScenarioResults, computeSeatDeltas } from './lib/scenario';
 import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
 import { canPassThresholdWithoutMandate, hasMandate } from './lib/calc';
 import { selectViewData, viewUsesScenario } from './lib/view-mode';
@@ -44,6 +47,12 @@ function NotFound() {
 
 function ElectionRoute({ viewMode }: { viewMode: AppViewMode }) {
   const { electionId } = useParams();
+  const { hash } = useLocation();
+  if (viewMode === 'simulator' && electionId && hash.startsWith('#scenario=')) {
+    return <SharedScenarioRoute key={`${electionId}${hash}`} token={hash.slice(10)} election={electionId}>
+      {snapshot => <ElectionScreen electionId={electionId} viewMode={viewMode} shared={snapshot} />}
+    </SharedScenarioRoute>;
+  }
   return <ElectionScreen key={electionId ?? 'default'} electionId={electionId} viewMode={viewMode} />;
 }
 
@@ -58,7 +67,7 @@ export default function App() {
   </Routes>;
 }
 
-function ElectionScreen({ electionId, viewMode }: { electionId?: string; viewMode: AppViewMode }) {
+function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string; viewMode: AppViewMode; shared?: SharedScenario }) {
   const navigate = useNavigate();
   const [showAllParties, setShowAllParties] = useState(false);
 
@@ -73,16 +82,17 @@ function ElectionScreen({ electionId, viewMode }: { electionId?: string; viewMod
     blocs: defaultBlocs,
     partyNames,
     isLatestElection,
-  } = useElectionData(electionId, viewMode !== 'summary');
+  } = useElectionData(electionId, viewMode !== 'summary' && !shared);
 
   const setCurrentElection = (id: string) => navigate(`/${viewMode === 'summary' ? 'results' : viewMode}/${id}`);
   const setViewMode = (mode: AppViewMode) => navigate(mode === 'summary' ? '/summary' : `/${mode}/${currentElection}`);
 
-  const isDemo = canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection)
+  const isDemo = shared ? shared.demo : canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection)
     && viewMode !== 'summary';
-  const results = isDemo ? electionDemo.current : officialResults;
+  const sharedResults = useMemo(() => shared ? computeScenarioResults(shared.base.voteData, shared.base.config) : null, [shared]);
+  const results = sharedResults ?? (isDemo ? electionDemo.current : officialResults);
   const previousResults = isDemo ? electionDemo.previous : previousOfficialResults;
-  const electionConfig = isDemo ? electionDemoConfig : officialConfig;
+  const electionConfig = shared?.base.config ?? (isDemo ? electionDemoConfig : officialConfig);
   const electionManifest = isDemo && officialManifest
     ? { ...officialManifest, phase: 'counting' as const }
     : officialManifest;
@@ -126,6 +136,7 @@ function ElectionScreen({ electionId, viewMode }: { electionId?: string; viewMod
     results: results as any,
     electionConfig,
     currentElection,
+    initialScenario: shared?.scenario,
   });
 
   if (error) {
@@ -164,8 +175,8 @@ function ElectionScreen({ electionId, viewMode }: { electionId?: string; viewMod
     );
   }
 
-  const showResults = phaseHasResults(electionManifest.phase);
-  const statusText = isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
+  const showResults = !!shared || phaseHasResults(electionManifest.phase);
+  const statusText = shared ? (isDemo ? 'תרחיש משותף · מידע דמה בלבד' : 'תרחיש משותף · תמונת מצב שמורה') : isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
 
   if (!showResults && viewMode === 'simulator') {
     return <Navigate to={`/results/${currentElection}`} replace />;
@@ -234,7 +245,7 @@ function ElectionScreen({ electionId, viewMode }: { electionId?: string; viewMod
   );
 
   const getPartyName = (party: string): string =>
-    partyNames[party] || partyNameOverrides[party] || party;
+    shared?.base.voteData[party]?.name || partyNames[party] || partyNameOverrides[party] || party;
 
   const totalVotes = sumVotes(voteData);
   const blockThreshold = Math.ceil(totalVotes * displayedConfig.blockPercentage);
@@ -393,6 +404,16 @@ function ElectionScreen({ electionId, viewMode }: { electionId?: string; viewMod
         setViewMode={setViewMode}
       />
 
+      {isSimulator && <ScenarioShare disabled={!agreementValidation.isValid} snapshot={{
+        version: 1, election: currentElection, demo: isDemo,
+        base: { voteData: Object.fromEntries(Object.entries(baseVoteData).map(([party, data]) =>
+          [party, { ...data, name: getPartyName(party) }])), config: baseConfig },
+        scenario: normalizedScenario,
+      }} />}
+      {shared && <aside className="panel" aria-label="תרחיש משותף">
+        הקולות וההגדרות נטענו מהקישור ואינם מתעדכנים עם תוצאות הבחירות.{' '}
+        <Link to={`/simulator/${currentElection}`}>חזרה לנתונים העדכניים</Link>
+      </aside>}
       {electionNight ? (
         <>
           {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
