@@ -29,7 +29,7 @@ previousVoteData['דרך'].votes -= 10000;
 previousVoteData['די'].votes -= 18000;
 
 export const electionDemoConfig: ElectionConfig = {
-  ...electionsConfig['26'],
+  ...(electionsConfig['26'] as ElectionConfig),
   turnoutPercentage: 64.2,
   totalVotes: Object.values(voteData).reduce((sum, party) => sum + party.votes, 0) + 23000,
 };
