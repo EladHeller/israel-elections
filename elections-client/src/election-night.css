@@ -10,8 +10,8 @@
 .election-night .bloc-number { display: flex; gap: 12px; align-items: baseline; font-variant-numeric: tabular-nums; }
 .election-night .bloc-number strong { font-size: clamp(56px, 8vw, 80px); line-height: 1.2; font-weight: 800; letter-spacing: -2px; }
 .election-night .bloc-number > span { color: var(--ink-50); font-size: 14px; }
-.election-night .bloc-number .delta-chip.gain { color: #0f7a34; font-size: 20px; }
-.election-night .bloc-number .delta-chip.lose { color: #b20000; font-size: 20px; }
+.election-night .bloc-number .delta-chip.gain { color: var(--gain); font-size: 20px; }
+.election-night .bloc-number .delta-chip.lose { color: var(--loss); font-size: 20px; }
 .election-night .majority-track { display: flex; position: relative; background: var(--ink-20); height: 12px; border-radius: 999px; margin-top: 14px; }
 .election-night .majority-track > div { flex-shrink: 0; height: 100%; background: var(--bloc-color); transition: width 300ms ease; }
 .election-night .majority-track > div:first-child { border-start-start-radius: 999px; border-end-start-radius: 999px; }
@@ -35,7 +35,7 @@
 .election-night .bloc-settings-body { padding-top: 16px; }
 .election-night .bloc-name-fields { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
 .election-night .bloc-name-fields label { display: grid; gap: 6px; color: var(--ink-50); font-size: 14px; }
-.election-night .bloc-settings input, .election-night .bloc-settings select { width: 100%; min-width: 0; min-height: 44px; font: inherit; color: var(--ink-90); background: #fff; border: 1px solid var(--ink-20); border-radius: 10px; padding: 8px; }
+.election-night .bloc-settings input, .election-night .bloc-settings select { width: 100%; min-width: 0; min-height: 44px; font: inherit; color: var(--ink-90); background: var(--card); border: 1px solid var(--ink-20); border-radius: 10px; padding: 8px; }
 .election-night .bloc-assignments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
 .election-night .bloc-assignment { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, 1fr); gap: 12px; align-items: center; border-top: 1px solid var(--ink-20); padding: 10px 0; }
 .election-night .bloc-assignment > span { overflow-wrap: anywhere; }
@@ -43,7 +43,7 @@
 .election-night .bloc-settings-footer > span { font-size: 13px; color: var(--ink-50); }
 .election-night .results-update { margin-bottom: 24px; }
 .election-night .update-label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; }
-.election-night .live-dot { width: 7px; height: 7px; background: #147246; border-radius: 50%; }
+.election-night .live-dot { width: 7px; height: 7px; background: var(--live-dot); border-radius: 50%; }
 .election-night .update-label time { color: var(--ink-50); margin-inline-start: auto; }
 .election-night .results-update [role="status"] { margin-top: 10px; line-height: 1.7; }
 .election-night .results-update [role="status"] > strong { margin-inline-end: 12px; }
@@ -66,7 +66,7 @@
 .election-night .party-vote-input { min-height: 40px; width: 125px; font-size: 16px; }
 .election-night .election-details { margin-top: 24px; }
 .election-night .seat-number.seat-changed { animation: seat-change 900ms ease-out; }
-@keyframes seat-change { from { background: #fff0c2; } to { background: transparent; } }
+@keyframes seat-change { from { background: var(--change-background); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) {
   .election-night .seat-number.seat-changed { animation: none; }
   .election-night .party-bar-fill, .election-night .majority-track > div { transition: none; }
@@ -94,10 +94,10 @@
   .election-night .bloc-name-fields { grid-template-columns: minmax(0, 1fr); }
 }
 
-.election-night .demo-banner { position: sticky; top: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px 22px; background: #fff0ca; border: 2px solid #c78c1b; border-radius: 18px; color: #624006; box-shadow: 0 6px 20px #1c254118; }
+.election-night .demo-banner { position: sticky; top: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px 22px; background: var(--demo-background); border: 2px solid #c78c1b; border-radius: 18px; color: var(--demo-text); box-shadow: 0 6px 20px #1c254118; }
 .election-night .demo-banner > div { display: grid; gap: 3px; }
 .election-night .demo-banner strong { font-size: 20px; }
-.election-night .demo-label { color: #8a5700; font-size: 14px; font-weight: 600; }
+.election-night .demo-label { color: var(--demo-label); font-size: 14px; font-weight: 600; }
 @media (max-width: 760px) {
   .election-night .blocs-overview { padding: 20px 16px; }
   .election-night .demo-banner { top: 6px; padding: 12px 14px; gap: 8px; }
