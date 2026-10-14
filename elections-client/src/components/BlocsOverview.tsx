@@ -1,4 +1,5 @@
 import React from 'react';
+import BlocEditor from './BlocEditor';
 import type { BlocsConfig, ResultsMap } from '../types';
 import { computeBlocOverview } from '../lib/bloc-overview';
 
@@ -101,15 +102,6 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
       <details className="bloc-settings">
         <summary>{assigned ? 'עריכת הגושים' : 'הגדרת הגושים'}</summary>
         <div className="bloc-settings-body">
-          <div className="bloc-members-summary">
-            {order.map((key) => {
-              const members = parties.filter((party) => partyToBloc[party] === key);
-              return <p className="bloc-members" key={key}>
-                <strong>{blocs.blocks[key].label}: </strong>
-                {members.length ? members.map(getPartyName).join(' · ') : 'אין מפלגות משויכות'}
-              </p>;
-            })}
-          </div>
           <div className="bloc-name-fields" style={{ '--bloc-count': order.length } as React.CSSProperties}>
             {order.map((key) => <label key={key}>שם {blocs.blocks[key].label}
               <input key={blocs.blocks[key].label} aria-label={`שם ${blocs.blocks[key].label}`}
@@ -117,16 +109,8 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
                 onBlur={(event) => onRename(key, event.target.value)} />
             </label>)}
           </div>
-          <div className="bloc-assignments">
-            {parties.map((party) => <label className="bloc-assignment" key={party}>
-              <span>{getPartyName(party)}</span>
-              <select aria-label={`שיוך ${getPartyName(party)} לגוש`} value={partyToBloc[party] || ''}
-                onChange={(event) => onAssign(party, event.target.value || null)}>
-                <option value="">ללא שיוך</option>
-                {order.map((key) => <option key={key} value={key}>{blocs.blocks[key].label}</option>)}
-              </select>
-            </label>)}
-          </div>
+          <BlocEditor blocs={blocs} parties={parties} partyToBloc={partyToBloc}
+            onPartyBlocChange={onAssign} getPartyName={getPartyName} />
           <div className="bloc-settings-footer">
             <span role="status">{saveFailed ? 'לא ניתן לשמור במכשיר הזה. הבחירה תקפה לביקור הנוכחי.' : 'שינויים נשמרים במכשיר הזה, לכנסת הנבחרת.'}</span>
             {customized && <button type="button" className="ghost" onClick={onReset}>איפוס החלוקה האישית</button>}
