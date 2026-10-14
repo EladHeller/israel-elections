@@ -6,8 +6,7 @@
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "strictNullChecks": true,
-        "outDir": "dist",
-        "sourceMap": true
+        "outDir": "dist"
     },
     "include": [
         "election-results-listener"

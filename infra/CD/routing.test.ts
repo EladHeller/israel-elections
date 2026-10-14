@@ -39,3 +39,21 @@ test('CloudFront leaves static resources and non-read requests unchanged', () =>
   assert.equal(handler({ request }), request);
   assert.equal(request.uri, '/summary');
 });
+
+test('only current mutable result files have a short CDN lifetime', () => {
+  const behaviors = template.split('        CacheBehaviors:\n')[1]
+    .split('        DefaultCacheBehavior:')[0]
+    .split('          - PathPattern: ').slice(1);
+  assert.equal(behaviors.length, 3);
+  assert.ok(behaviors[0].startsWith("!Sub '/data/${CurrentElections}/allResults.json'"));
+  assert.ok(behaviors[1].startsWith("!Sub '/data/${CurrentElections}/elections.csv'"));
+  for (const behavior of behaviors.slice(0, 2)) {
+    assert.match(behavior, /MinTTL: 0\n/);
+    assert.match(behavior, /DefaultTTL: 15\n/);
+    assert.match(behavior, /MaxTTL: 30\n/);
+  }
+  assert.ok(behaviors[2].startsWith('/data/*'));
+  assert.match(behaviors[2], /MinTTL: 86400\n/);
+  assert.match(behaviors[2], /DefaultTTL: 86400\n/);
+  assert.match(behaviors[2], /MaxTTL: 31536000\n/);
+});

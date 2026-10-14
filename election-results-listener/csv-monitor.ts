@@ -11,13 +11,13 @@ const {
 const { csvUrl, agreements, blockPercentage } = electionsConfig[currElections];
 
 async function uploadCsv(csvData: string, elections: number, time: string = new Date().toISOString()) {
-  await upload(`data/${elections}/elections.csv`, csvData);
+  await upload(`data/${elections}/elections.csv`, csvData, elections === currElections);
   await invalidCache([`data/${elections}/elections.csv`], distributionID);
   await upload(`data/${elections}/${time}_elections.csv`, csvData);
 }
 
 export async function uploadResults(results, elections: number, time: string = new Date().toISOString()) {
-  await upload(`data/${elections}/allResults.json`, JSON.stringify({ ...results, time }));
+  await upload(`data/${elections}/allResults.json`, JSON.stringify({ ...results, time }), elections === currElections);
   await invalidCache([`data/${elections}/allResults.json`], distributionID);
   await upload(`data/${elections}/${time}_allResults.json`, JSON.stringify({ ...results, time }));
 }

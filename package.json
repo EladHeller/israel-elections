@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "lint:test": "eslint . --max-warnings 0",
-    "test": "npm run build && tsx --test ./election-results-listener/**/*.test.ts ./elections-client/src/**/*.test.ts ./infra/**/*.test.ts",
+    "test": "npm run build:test && tsx --test ./election-results-listener/**/*.test.ts ./elections-client/src/**/*.test.ts ./infra/**/*.test.ts",
     "test:coverage": "c8 -r=lcov -r=json-summary npm test",
     "check-coverage": "tsx ./infra/CI/check-coverage.ts",
     "upload-coverage": "tsx ./infra/CI/upload-coverage-s3.ts",
     "type-check": "tsc --noEmit",
     "upload-client": "node uploadClient.js",
     "build": "rm -rf dist && tsc",
+    "build:test": "rm -rf dist && tsc --sourceMap",
     "deploy": "tsx ./infra/CD/deploy-all.ts",
     "test:ci": "npm run type-check && npm run test:coverage && npm run lint:test",
     "build:client": "cd elections-client && npm ci && npm run build"
