@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getCsvData, fetchResultsCsv } from '../csv-data';
+import { getCsvData, fetchResultsCsv } from '../../dist/csv-data.js';
 
 const metadata = ['סמל ישוב', 'כשרים'];
 test('aggregates a real CSV shape, skips metadata and handles BOM and blank lines', () => {
