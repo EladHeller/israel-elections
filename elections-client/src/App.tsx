@@ -327,17 +327,6 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
       />
     </section>
   );
-  const closeRaces = (
-    <CloseRacesSection
-      proximity={proximity}
-      blockPercentage={displayedConfig.blockPercentage}
-      getPartyName={getPartyName}
-      isCounting={!isDemo && !isSimulator && electionManifest.phase === 'counting'}
-      onVoteDelta={isSimulator
-        ? (party, delta) => onVoteChange(party, voteData[party].votes + delta)
-        : undefined}
-    />
-  );
   const statistics = (
     <div className="election-summary">
       <ElectionStatsSection
@@ -356,6 +345,18 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         isEdited={displayedIsEdited}
       />
     </div>
+  );
+  const closeRaces = (
+    <CloseRacesSection
+      supportingContent={electionNight ? statistics : undefined}
+      proximity={proximity}
+      blockPercentage={displayedConfig.blockPercentage}
+      getPartyName={getPartyName}
+      isCounting={!isDemo && !isSimulator && electionManifest.phase === 'counting'}
+      onVoteDelta={isSimulator
+        ? (party, delta) => onVoteChange(party, voteData[party].votes + delta)
+        : undefined}
+    />
   );
   const settings = (
     <ElectionSettingsSection
@@ -400,13 +401,17 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
           {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
             <div><strong>מידע דמה בלבד</strong><span>המספרים מומצאים להמחשה — אינם תוצאות אמת או סקר.</span></div>
           </aside>}
-          {partyPanel}
           <BlocsOverview key={currentElection} blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas}
             parties={filterRealParties(voteData).map(([party]) => party)} results={realResults}
             partyToBloc={partyToBloc} getPartyName={getPartyName}
             onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
             customized={customized} saveFailed={saveFailed} hasResults
             isCounting={electionManifest.phase === 'counting'} isSimulator={isSimulator} isDemo={isDemo} />
+          {partyPanel}
+          {!isSimulator && electionManifest.phase === 'counting' && (
+            <ResultsUpdate isDemo={isDemo} previous={previousResults} current={results}
+              blockPercentage={baseConfig.blockPercentage} getPartyName={getPartyName} />
+          )}
         </div>}
         isEdited={displayedIsEdited}
         currentElection={currentElection}
@@ -425,16 +430,11 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
 
       {electionNight ? (
         <>
-          {!isSimulator && electionManifest.phase === 'counting' && (
-            <ResultsUpdate isDemo={isDemo} previous={previousResults} current={results}
-              blockPercentage={baseConfig.blockPercentage} getPartyName={getPartyName} />
-          )}
-          <main>
+          <main aria-label="ניתוח תוצאות הבחירות">
             {closeRaces}
 
           </main>
           <div className="election-details">
-            {statistics}
             {settings}
             {agreements}
             {calculationDetails}

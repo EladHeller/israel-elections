@@ -36,16 +36,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   viewMode,
   setViewMode,
 }) => (
-  <header className={`header${resultsOverview ? ' header-results-first' : ''}`}>
-    <div>
-      <h1>תוצאות הבחירות לכנסת</h1>
+  <header className={`header${resultsOverview ? ' header-dashboard' : ''}`}>
+    <div className="header-context">
       <div className="subtitle">
         {statusText}
         {statusAction}
         {isEdited && <span className="edited-tag">נתונים נערכו</span>}
       </div>
     </div>
-    {resultsOverview}
     <div className="controls">
       <ThemeToggle />
       <div className="view-control">
@@ -74,6 +72,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         disabled={viewMode === 'summary'}
       />
     </div>
+    {resultsOverview}
   </header>
 );
 

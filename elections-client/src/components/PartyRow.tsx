@@ -11,7 +11,7 @@ interface PartyRowProps {
 }
 
 const PartyRow: React.FC<PartyRowProps> = ({ name, electionNight = false, ballotLetter, percentage, seats, votes, bar }) => (
-  <div className="party-row">
+  <div className="party-row" style={bar ? { '--party-share': `${bar.width}%` } as React.CSSProperties : undefined}>
     <div className="party-meta" title={name}>
       {ballotLetter && (
         <span className="party-ballot-letter" aria-label={`אותיות בקלפי: ${ballotLetter}`}>
@@ -26,7 +26,7 @@ const PartyRow: React.FC<PartyRowProps> = ({ name, electionNight = false, ballot
       {bar && (
         <div
           className="party-bar-fill"
-          style={{ width: `${bar.width}%`, '--chart-color': bar.color } as React.CSSProperties}
+          style={{ '--chart-color': bar.color } as React.CSSProperties}
         />
       )}
     </div>
