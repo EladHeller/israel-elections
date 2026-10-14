@@ -1,9 +1,13 @@
 import React from 'react';
 import type { AppViewMode } from '../types';
 import ElectionSelector from './ElectionSelector';
+import ThemeToggle from './ThemeToggle';
 
 interface AppHeaderProps {
   statusText: string;
+  actions?: React.ReactNode;
+  statusAction?: React.ReactNode;
+  resultsOverview?: React.ReactNode;
   showSimulator: boolean;
   isEdited: boolean;
   currentElection: string | null;
@@ -21,6 +25,9 @@ const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
 
 const AppHeader: React.FC<AppHeaderProps> = ({
   statusText,
+  actions,
+  statusAction,
+  resultsOverview,
   showSimulator,
   isEdited,
   currentElection,
@@ -29,15 +36,16 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   viewMode,
   setViewMode,
 }) => (
-  <header className="header">
-    <div>
-      <h1>תוצאות הבחירות לכנסת</h1>
+  <header className={`header${resultsOverview ? ' header-dashboard' : ''}`}>
+    <div className="header-context">
       <div className="subtitle">
         {statusText}
+        {statusAction}
         {isEdited && <span className="edited-tag">נתונים נערכו</span>}
       </div>
     </div>
     <div className="controls">
+      <ThemeToggle />
       <div className="view-control">
         <span>תצוגה</span>
         <div className="view-switcher" role="group" aria-label="בחירת תצוגה">
@@ -56,6 +64,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           ))}
         </div>
       </div>
+      {actions}
       <ElectionSelector
         value={currentElection}
         elections={availableElections}
@@ -63,6 +72,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         disabled={viewMode === 'summary'}
       />
     </div>
+    {resultsOverview}
   </header>
 );
 

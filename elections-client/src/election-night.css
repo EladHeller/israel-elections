@@ -6,14 +6,14 @@
 .election-night .bloc-scoreboard { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 0 36px; margin-top: 22px; }
 .election-night .bloc-score { min-width: 0; display: grid; grid-template-rows: subgrid; grid-row: span 4; }
 .election-night .bloc-score h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; overflow-wrap: anywhere; }
-.election-night .bloc-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: var(--bloc-color); }
+.election-night .bloc-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: color-mix(in srgb, var(--bloc-color), white var(--chart-tint)); }
 .election-night .bloc-number { display: flex; gap: 12px; align-items: baseline; font-variant-numeric: tabular-nums; }
 .election-night .bloc-number strong { font-size: clamp(56px, 8vw, 80px); line-height: 1.2; font-weight: 800; letter-spacing: -2px; }
 .election-night .bloc-number > span { color: var(--ink-50); font-size: 14px; }
-.election-night .bloc-number .delta-chip.gain { color: #0f7a34; font-size: 20px; }
-.election-night .bloc-number .delta-chip.lose { color: #b20000; font-size: 20px; }
+.election-night .bloc-number .delta-chip.gain { color: var(--gain); font-size: 20px; }
+.election-night .bloc-number .delta-chip.lose { color: var(--loss); font-size: 20px; }
 .election-night .majority-track { display: flex; position: relative; background: var(--ink-20); height: 12px; border-radius: 999px; margin-top: 14px; }
-.election-night .majority-track > div { flex-shrink: 0; height: 100%; background: var(--bloc-color); transition: width 300ms ease; }
+.election-night .majority-track > div { flex-shrink: 0; height: 100%; background: color-mix(in srgb, var(--bloc-color), white var(--chart-tint)); transition: width 300ms ease; }
 .election-night .majority-track > div:first-child { border-start-start-radius: 999px; border-end-start-radius: 999px; }
 .election-night .majority-marker { position: absolute; inset-inline-start: 50.8333%; top: -5px; height: 20px; width: 2px; background: var(--ink-90); }
 .election-night .majority-caption { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; color: var(--ink-50); }
@@ -35,7 +35,7 @@
 .election-night .bloc-settings-body { padding-top: 16px; }
 .election-night .bloc-name-fields { display: grid; grid-template-columns: repeat(var(--bloc-count, 2), minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
 .election-night .bloc-name-fields label { display: grid; gap: 6px; color: var(--ink-50); font-size: 14px; }
-.election-night .bloc-settings input, .election-night .bloc-settings select { width: 100%; min-width: 0; min-height: 44px; font: inherit; color: var(--ink-90); background: #fff; border: 1px solid var(--ink-20); border-radius: 10px; padding: 8px; }
+.election-night .bloc-settings input, .election-night .bloc-settings select { width: 100%; min-width: 0; min-height: 44px; font: inherit; color: var(--ink-90); background: var(--card); border: 1px solid var(--ink-20); border-radius: 10px; padding: 8px; }
 .election-night .bloc-assignments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
 .election-night .bloc-assignment { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, 1fr); gap: 12px; align-items: center; border-top: 1px solid var(--ink-20); padding: 10px 0; }
 .election-night .bloc-assignment > span { overflow-wrap: anywhere; }
@@ -43,7 +43,7 @@
 .election-night .bloc-settings-footer > span { font-size: 13px; color: var(--ink-50); }
 .election-night .results-update { margin-bottom: 24px; }
 .election-night .update-label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; }
-.election-night .live-dot { width: 7px; height: 7px; background: #147246; border-radius: 50%; }
+.election-night .live-dot { width: 7px; height: 7px; background: var(--live-dot); border-radius: 50%; }
 .election-night .update-label time { color: var(--ink-50); margin-inline-start: auto; }
 .election-night .results-update [role="status"] { margin-top: 10px; line-height: 1.7; }
 .election-night .results-update [role="status"] > strong { margin-inline-end: 12px; }
@@ -66,7 +66,7 @@
 .election-night .party-vote-input { min-height: 40px; width: 125px; font-size: 16px; }
 .election-night .election-details { margin-top: 24px; }
 .election-night .seat-number.seat-changed { animation: seat-change 900ms ease-out; }
-@keyframes seat-change { from { background: #fff0c2; } to { background: transparent; } }
+@keyframes seat-change { from { background: var(--change-background); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) {
   .election-night .seat-number.seat-changed { animation: none; }
   .election-night .party-bar-fill, .election-night .majority-track > div { transition: none; }
@@ -94,13 +94,149 @@
   .election-night .bloc-name-fields { grid-template-columns: minmax(0, 1fr); }
 }
 
-.election-night .demo-banner { position: sticky; top: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px 22px; background: #fff0ca; border: 2px solid #c78c1b; border-radius: 18px; color: #624006; box-shadow: 0 6px 20px #1c254118; }
+.election-night .demo-banner { position: sticky; top: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px 22px; background: var(--demo-background); border: 2px solid #c78c1b; border-radius: 18px; color: var(--demo-text); box-shadow: 0 6px 20px #1c254118; }
 .election-night .demo-banner > div { display: grid; gap: 3px; }
 .election-night .demo-banner strong { font-size: 20px; }
-.election-night .demo-label { color: #8a5700; font-size: 14px; font-weight: 600; }
+.election-night .demo-label { color: var(--demo-label); font-size: 14px; font-weight: 600; }
 @media (max-width: 760px) {
   .election-night .blocs-overview { padding: 20px 16px; }
   .election-night .demo-banner { top: 6px; padding: 12px 14px; gap: 8px; }
   .election-night .demo-banner strong { font-size: 17px; }
   .election-night .demo-banner span { font-size: 13px; }
+}
+
+.election-night .bloc-settings input, .election-night .bloc-settings select { border-color: var(--control-border); }
+
+.election-night .majority-track, .election-night .party-bar { background: var(--chart-track); }
+
+/* Current results: a desktop column chart and compact mobile rows. */
+.screen.election-night { max-width: 1360px; padding-top: 20px; }
+.election-night .panel { border: 1px solid var(--ink-20); border-radius: 16px; box-shadow: none; }
+.election-night .header-dashboard { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+.election-night .header-context { min-width: 0; font-size: 14px; }
+.election-night .header-dashboard .controls { align-items: center; }
+.election-night .header-dashboard .view-control > span,
+.election-night .header-dashboard .election-control > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.election-night .header-dashboard .election-control { min-width: 150px; }
+.election-night .current-results-overview { grid-column: 1 / -1; display: grid; gap: 16px; min-width: 0; }
+.election-night .current-results-overview > .grid { margin: 0; }
+.election-night .current-results-overview .demo-banner { position: static; margin: 0; padding: 8px 14px; border-width: 1px; border-radius: 10px; box-shadow: none; }
+.election-night .current-results-overview .demo-banner > div { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.election-night .current-results-overview .demo-banner strong { font-size: 14px; }
+.election-night .current-results-overview .demo-banner span { font-size: 13px; }
+
+.election-night .current-results-overview .blocs-overview { margin: 0; padding: 18px 22px 0; }
+.election-night .current-results-overview .bloc-heading h2 { font-size: 16px; }
+.election-night .current-results-overview .bloc-heading > span { font-size: 12px; }
+.election-night .current-results-overview .bloc-scoreboard { margin-top: 14px; gap: 0 36px; }
+.election-night .current-results-overview .bloc-score { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: subgrid; grid-row: span 2; align-items: start; column-gap: 16px; }
+.election-night .current-results-overview .bloc-score h3 { font-size: 18px; align-self: center; }
+.election-night .current-results-overview .bloc-totals { justify-content: end; gap: 10px; }
+.election-night .current-results-overview .bloc-number { gap: 6px; }
+.election-night .current-results-overview .bloc-number strong { font-size: 48px; line-height: 1; letter-spacing: -1px; }
+.election-night .current-results-overview .bloc-number > span:not(.delta-chip) { display: none; }
+.election-night .current-results-overview .bloc-number .delta-chip { font-size: 14px; }
+.election-night .current-results-overview .bloc-complement { gap: 0; }
+.election-night .current-results-overview .bloc-complement-value strong { font-size: 28px; }
+.election-night .current-results-overview .bloc-complement-label { font-size: 11px; }
+.election-night .current-results-overview .bloc-outcome { grid-column: 1 / -1; }
+.election-night .current-results-overview .majority-track { height: 10px; margin-top: 12px; }
+.election-night .current-results-overview .majority-marker { height: 18px; top: -4px; }
+.election-night .current-results-overview .majority-caption { margin-top: 7px; font-size: 12px; }
+.election-night .current-results-overview .majority-status { margin-top: 3px; font-size: 14px; }
+.election-night .bloc-members-summary { margin-bottom: 16px; }
+.election-night .current-results-overview .unassigned-summary { font-size: 12px; margin: 8px 0; gap: 6px 12px; }
+.election-night .current-results-overview .bloc-settings { margin-top: 8px; border-top: 1px solid var(--ink-20); }
+.election-night .current-results-overview .bloc-settings > summary { font-size: 13px; font-weight: 600; }
+.election-night .current-results-overview .bloc-settings-body { padding-bottom: 18px; }
+
+.election-night .dashboard-party-panel { padding: 18px 22px; }
+.election-night .dashboard-party-panel .panel-head { margin-bottom: 16px; }
+.election-night .dashboard-party-panel h2 { font-size: 16px; }
+.election-night .dashboard-party-panel .party-bars { grid-template-columns: repeat(auto-fit, minmax(74px, 1fr)); gap: 20px 12px; align-items: start; }
+.election-night .dashboard-party-panel .party-row { grid-template-columns: minmax(0, 1fr); grid-template-rows: 36px 112px minmax(38px, auto) auto; grid-template-areas: 'seats' 'bar' 'name' 'votes'; gap: 6px; padding: 0; border: 0; text-align: center; }
+.election-night .dashboard-party-panel .party-meta { justify-content: center; align-self: start; }
+.election-night .dashboard-party-panel .party-name { font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.election-night .dashboard-party-panel .party-seats { justify-content: center; padding: 0; background: none; border-radius: 0; font-size: 32px; line-height: 1; gap: 3px; }
+.election-night .dashboard-party-panel .party-seats .delta-chip { font-size: 12px; }
+.election-night .dashboard-party-panel .party-bar { height: 112px; width: 100%; display: flex; align-items: end; justify-content: center; border-radius: 0; background: linear-gradient(to top, var(--ink-20) 1px, transparent 1px); }
+.election-night .dashboard-party-panel .party-bar-fill { width: 68%; max-width: 54px; height: var(--party-share); border-radius: 5px 5px 0 0; transition: height 300ms ease; }
+.election-night .dashboard-party-panel .party-votes { flex-direction: column; justify-content: start; font-size: 11px; gap: 2px; text-align: center; }
+.election-night .dashboard-party-panel .party-percentage { font-size: 13px; font-weight: 600; }
+.election-night .dashboard-party-panel .party-vote-total { gap: 3px; flex-wrap: wrap; justify-content: center; }
+.election-night .dashboard-party-panel .party-vote-input { width: 100%; min-width: 0; max-width: 110px; min-height: 44px; }
+.election-night .dashboard-party-panel .toggle { margin-top: 14px; font-size: 13px; min-height: 32px; }
+.election-night .current-results-overview .results-update { margin: 0; padding: 12px 18px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 20px; background: var(--surface-muted); font-size: 14px; }
+.election-night .current-results-overview .results-update [role="status"] { margin: 0; }
+.election-night .current-results-overview .update-label { gap: 8px; font-size: 13px; }
+.election-night .current-results-overview .update-label time { margin-inline-start: 8px; }
+.election-night .election-details { margin-top: 16px; }
+.election-night .close-races-section > .grid { gap: 16px; }
+.election-night summary:focus-visible { outline: 2px solid var(--ink-50); outline-offset: 3px; border-radius: 4px; }
+
+@media (max-width: 900px) {
+  .election-night .header-dashboard { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .election-night .header-dashboard .controls { grid-row: 1; justify-content: space-between; }
+  .election-night .current-results-overview { gap: 12px; }
+  .election-night .dashboard-party-panel .party-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
+  .election-night .dashboard-party-panel .party-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto 4px; grid-template-areas: 'name seats' 'votes seats' 'bar bar'; text-align: start; gap: 4px 8px; padding: 12px 0; }
+  .election-night .dashboard-party-panel .party-meta { align-self: center; justify-content: start; }
+  .election-night .dashboard-party-panel .party-seats { font-size: 30px; }
+  .election-night .dashboard-party-panel .party-bar { height: 4px; border-radius: 2px; background: var(--chart-track); justify-content: start; }
+  .election-night .dashboard-party-panel .party-bar-fill { width: var(--party-share); max-width: none; height: 100%; border-radius: 2px; transition: width 300ms ease; }
+  .election-night .dashboard-party-panel .party-votes { align-items: start; gap: 2px; }
+  .election-night .dashboard-party-panel .party-vote-total { justify-content: start; }
+  .election-night .dashboard-party-panel .party-percentage { font-size: 12px; }
+  .election-night .dashboard-party-panel .panel-head { margin-bottom: 2px; }
+  .election-night .current-results-overview .bloc-score { grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; grid-row: span 3; gap: 6px; }
+  .election-night .current-results-overview .bloc-totals { justify-content: start; flex-wrap: nowrap; align-items: start; }
+  .election-night .current-results-overview .bloc-number { flex-wrap: nowrap; }
+  .election-night .current-results-overview .bloc-score h3 { font-size: 16px; }
+  .election-night .current-results-overview .bloc-number strong { font-size: 42px; }
+}
+@media (max-width: 540px) {
+  .screen.election-night { padding: 12px 12px 32px; }
+  .election-night .header-dashboard .controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .election-night .header-dashboard .election-control { grid-row: 1; grid-column: 1; min-width: 0; }
+  .election-night .header-dashboard .theme-toggle { grid-row: 1; grid-column: 2; }
+  .election-night .header-dashboard .view-control { grid-column: 1 / -1; }
+  .election-night .header-dashboard .view-switcher { display: flex; }
+  .election-night .header-dashboard .view-switcher button { flex: 1; min-height: 44px; }
+  .election-night .header-context { font-size: 12px; }
+  .election-night .current-results-overview .blocs-overview { padding: 14px 14px 0; }
+  .election-night .current-results-overview .bloc-scoreboard { column-gap: 18px; }
+  .election-night .current-results-overview .bloc-heading { gap: 4px; }
+  .election-night .current-results-overview .majority-status { font-size: 13px; }
+  .election-night .current-results-overview .bloc-complement-value strong { font-size: 24px; }
+  .election-night .dashboard-party-panel { padding: 14px; }
+  .election-night .dashboard-party-panel .party-bars { column-gap: 18px; }
+  .election-night .dashboard-party-panel .party-name { font-size: 13px; }
+  .election-night .dashboard-party-panel .party-seats { font-size: 28px; }
+  .election-night .dashboard-party-panel .party-votes { font-size: 11px; }
+  .election-night .current-results-overview .results-update { padding: 12px 14px; }
+  .election-night .current-results-overview .bloc-settings > summary { min-height: 44px; align-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .election-night .dashboard-party-panel .party-bar-fill { transition: none; }
+}
+
+.election-night .close-races-context { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.election-night .close-races-context .election-summary { grid-template-columns: minmax(0, 1fr); }
+.election-night .close-races-section > .grid { align-items: start; }
+@media (max-width: 760px) {
+  .election-night .close-races-context { display: contents; }
+  .election-night .close-races-context .election-summary { order: 1; }
+}
+@media (max-width: 360px) {
+  .election-night .current-results-overview .bloc-totals { flex-wrap: wrap; }
+  .election-night .dashboard-party-panel .party-row { column-gap: 4px; }
+  .election-night .dashboard-party-panel .party-name { font-size: 12px; }
+}
+
+@media (max-width: 540px) {
+  .election-night .close-races-section .panel { padding: 16px 14px; }
+  .election-night .close-seat-table th:first-child { width: 34%; }
+  .election-night .close-seat-table th:nth-child(2) { width: 12%; }
+  .election-night .close-seat-table th,
+  .election-night .close-seat-table td { padding-inline: 2px; }
 }

@@ -92,6 +92,7 @@ const PartyBars: React.FC<PartyBarsProps> = ({
               editable ? (
                 <input
                   className="party-vote-input"
+                  aria-label={`קולות ${partyName}`}
                   type="number"
                   min="0"
                   step="1"
@@ -237,9 +238,9 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
   showZeroSeatLabel,
   resetScenario,
 }) => (
-  <div className="panel party-panel">
+  <div className={`panel party-panel${isLatestElection ? ' dashboard-party-panel' : ''}`}>
     <div className="panel-head">
-      <h2>מפלגות{isDemo && <span className="demo-label"> · נתוני דמה</span>}</h2>
+      <h2>{isLatestElection ? 'מנדטים לפי מפלגה' : 'מפלגות'}{isDemo && <span className="demo-label"> · נתוני דמה</span>}</h2>
       {editable && isEdited && (
         <button type="button" className="ghost" onClick={resetScenario}>
           איפוס לתוצאות מקור

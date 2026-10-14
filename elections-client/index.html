@@ -2,6 +2,14 @@
 <html lang="he" dir="rtl">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Apply the saved preference before the first paint. Light is always the default.
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('israel-elections-theme') === 'dark' ? 'dark' : 'light';
+      } catch {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <meta name="Description" content="תוצאות הבחירות לכנסת בזמן אמת" />

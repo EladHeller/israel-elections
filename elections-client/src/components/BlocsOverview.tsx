@@ -67,7 +67,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
                             {deltas[other] > 0 ? '+' : '−'}{Math.abs(deltas[other])}
                           </span>}
                         </div>
-                        <span className="bloc-complement-label"><span className="bloc-color" style={{ background: blocs.blocks[other].color }} />{blocs.blocks[other].label}</span>
+                        <span className="bloc-complement-label"><span className="bloc-color" style={{ '--bloc-color': blocs.blocks[other].color } as React.CSSProperties} />{blocs.blocks[other].label}</span>
                       </div>
                     ))}
                   </div>
@@ -75,31 +75,23 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
                   {hasResults && <>
                     <div className="majority-track" role="img" aria-label={`${chartDescription}. סך הכול ${combinedSeats} מתוך 120 מנדטים, רוב ב־61`}>
                       {segments.map((segment) => <div key={segment}
-                        style={{ width: `${Math.min(totals[segment] || 0, 120) / 120 * 100}%`, background: blocs.blocks[segment].color }} />)}
+                        style={{ width: `${Math.min(totals[segment] || 0, 120) / 120 * 100}%`, '--bloc-color': blocs.blocks[segment].color } as React.CSSProperties} />)}
                       <span className="majority-marker" />
                     </div>
                     <div className="majority-caption">
                       {complementaryKeys.length > 0 && <span>יחד: {combinedSeats} מנדטים</span>}
                       <span>61 לרוב</span>
                     </div>
-                    <p className="majority-status">{majorityText}</p>
+                    <p className="majority-status" aria-label={majorityText} title={majorityText}>
+                      {ownSeats >= 61 ? 'יש רוב' : combinedSeats >= 61 ? 'רוב חוסם יחד' : majorityText}
+                    </p>
                   </>}
-                  </div>
-                  <div className="bloc-members-list">
-                  {segments.map((segment) => {
-                    const members = parties.filter((party) => partyToBloc[party] === segment);
-                    return <p className="bloc-members" key={segment}>
-                      {complementaryKeys.length > 0 && <span className="bloc-members-label">
-                        <span className="bloc-color" style={{ background: blocs.blocks[segment].color }} />{blocs.blocks[segment].label}: </span>}
-                      {members.length ? members.map(getPartyName).join(' · ') : 'אין מפלגות משויכות'}
-                    </p>;
-                  })}
                   </div>
                 </div>
               );
             })}
           </div>
-          {unassigned.length > 0 && <div className="unassigned-summary">
+          {unassigned.length > 0 && (!hasResults || unassignedSeats > 0) && <div className="unassigned-summary">
             <strong>ללא שיוך{hasResults ? ` · ${unassignedSeats} מנדטים` : ''}</strong>
             <span>{unassigned.filter((party) => !hasResults || results[party]?.mandats > 0).map(getPartyName).join(' · ')}</span>
           </div>}
@@ -109,6 +101,15 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
       <details className="bloc-settings">
         <summary>{assigned ? 'עריכת הגושים' : 'הגדרת הגושים'}</summary>
         <div className="bloc-settings-body">
+          <div className="bloc-members-summary">
+            {order.map((key) => {
+              const members = parties.filter((party) => partyToBloc[party] === key);
+              return <p className="bloc-members" key={key}>
+                <strong>{blocs.blocks[key].label}: </strong>
+                {members.length ? members.map(getPartyName).join(' · ') : 'אין מפלגות משויכות'}
+              </p>;
+            })}
+          </div>
           <div className="bloc-name-fields" style={{ '--bloc-count': order.length } as React.CSSProperties}>
             {order.map((key) => <label key={key}>שם {blocs.blocks[key].label}
               <input key={blocs.blocks[key].label} aria-label={`שם ${blocs.blocks[key].label}`}
