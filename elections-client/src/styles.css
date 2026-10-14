@@ -1721,3 +1721,42 @@ body {
 .donut-segment {
   stroke: color-mix(in srgb, var(--chart-color), white var(--chart-tint));
 }
+
+.bloc-editor-columns.bloc-editor-all-groups {
+  grid-template-columns: repeat(var(--bloc-count), minmax(0, 1fr));
+  grid-template-areas: none;
+}
+.bloc-editor-all-groups .bloc-editor-column {
+  border-color: var(--ink-20);
+  min-width: 0;
+}
+.bloc-editor-target {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--ink-90);
+  font: inherit;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+.bloc-editor-target:disabled { opacity: 1; cursor: default; }
+.bloc-editor-all-groups .bloc-chip {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  padding: 8px 12px;
+  touch-action: manipulation;
+}
+.bloc-editor-all-groups .bloc-chip:focus-visible,
+.bloc-editor-target:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 700px) {
+  .bloc-editor-columns.bloc-editor-all-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .bloc-editor-columns.bloc-editor-all-groups { grid-template-columns: 1fr; }
+}
