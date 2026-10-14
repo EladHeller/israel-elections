@@ -8,7 +8,7 @@ export async function invalidCache(files: string[], distributionID: string) {
       CallerReference: Math.random().toString(),
       Paths: {
         Quantity: files.length,
-        Items: files,
+        Items: files.map(file => `/${file.replace(/^\/+/, '')}`),
       },
     },
     DistributionId: distributionID,

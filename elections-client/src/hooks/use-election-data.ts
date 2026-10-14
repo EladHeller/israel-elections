@@ -66,6 +66,7 @@ export interface UseElectionDataResult {
   results: ElectionResultsPayload | null;
   previousResults: ElectionResultsPayload | null;
   error: string | null;
+  refreshError: string | null;
   electionConfig: ElectionConfig;
   blocs: BlocsConfig;
   partyNames: PartyNames;
@@ -81,6 +82,7 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
   const [results, setResults] = useState<ElectionResultsPayload | null>(null);
   const [previousResults, setPreviousResults] =
     useState<ElectionResultsPayload | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,6 +104,7 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
     setResults(null);
     setPreviousResults(null);
     setError(null);
+    setRefreshError(null);
     const manifest = getElectionManifest(currentElection);
     if (manifest && !phaseHasResults(manifest.phase)) return;
 
@@ -127,9 +130,12 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
           setResults(data);
         }
         setError(null);
+        setRefreshError(null);
       } catch (e) {
         if (!cancelled && !hasLoadedResults) {
           setError((e as Error).message);
+        } else if (!cancelled) {
+          setRefreshError('עדכון התוצאות נכשל. מוצגים הנתונים האחרונים שהתקבלו; ננסה שוב אוטומטית.');
         }
       } finally {
         requestInFlight = false;
@@ -185,6 +191,7 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
     results,
     previousResults,
     error,
+    refreshError,
     electionConfig,
     blocs,
     partyNames,

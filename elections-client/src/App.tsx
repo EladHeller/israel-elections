@@ -77,6 +77,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     results: officialResults,
     previousResults: previousOfficialResults,
     error,
+    refreshError,
     electionConfig: officialConfig,
     electionManifest: officialManifest,
     blocs: defaultBlocs,
@@ -408,10 +409,11 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
             customized={customized} saveFailed={saveFailed} hasResults
             isCounting={electionManifest.phase === 'counting'} isSimulator={isSimulator} isDemo={isDemo} />
           {partyPanel}
-          {!isSimulator && electionManifest.phase === 'counting' && (
+          {!isSimulator && electionManifest.phase === 'counting' && (<>
+            {refreshError && !isDemo && <p role="alert">{refreshError}</p>}
             <ResultsUpdate isDemo={isDemo} previous={previousResults} current={results}
               blockPercentage={baseConfig.blockPercentage} getPartyName={getPartyName} />
-          )}
+          </>)}
         </div>}
         isEdited={displayedIsEdited}
         currentElection={currentElection}

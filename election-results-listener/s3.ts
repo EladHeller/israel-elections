@@ -27,13 +27,15 @@ export async function isFileAlreadyExists(key: string, stream: Buffer) {
   }
 }
 
-export async function upload(key: string, body: string) {
+export async function upload(key: string, body: string, isLive = false) {
   const parallelUploads3 = new Upload({
     client: s3,
     params: {
       Bucket: bucket,
       Key: key,
-      ACL: 'public-read',
+      CacheControl: isLive
+        ? 'public, max-age=0, s-maxage=15, must-revalidate'
+        : 'public, max-age=86400, s-maxage=86400',
       ContentType: mime.contentType(path.extname(key)) || 'application/octet-stream',
       Body: body,
     },
