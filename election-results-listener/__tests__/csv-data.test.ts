@@ -8,6 +8,10 @@ test('aggregates a real CSV shape, skips metadata and handles BOM and blank line
     מחל: { votes: 13 }, אמת: { votes: 7 },
   });
 });
+test('ignores empty header columns without interpreting them as parties', () => {
+  assert.deepEqual(getCsvData('סמל ישוב,,מחל\n1,,5', metadata), { מחל: { votes: 5 } });
+});
+
 test('rejects malformed source data before publication', () => {
   for (const csv of ['', 'סמל ישוב,מחל\n', 'סמל ישוב,מחל,מחל\n1,2,3',
     '<html>error</html>\nerror', 'סמל ישוב,כשרים\n1,10',
