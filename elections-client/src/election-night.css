@@ -220,8 +220,6 @@
   .election-night .dashboard-party-panel .party-bar-fill { transition: none; }
 }
 
-.election-night .election-explainer { border-top: 1px solid var(--ink-20); margin-top: 24px; }
-.election-night .election-explainer > summary { cursor: pointer; padding: 18px 0; font-size: 16px; font-weight: 700; }
 .election-night .close-races-context { display: grid; gap: 16px; align-content: start; min-width: 0; }
 .election-night .close-races-context .election-summary { grid-template-columns: minmax(0, 1fr); }
 .election-night .close-races-section > .grid { align-items: start; }

@@ -435,14 +435,9 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
 
           </main>
           <div className="election-details">
-            {isSimulator ? <>{settings}{agreements}{calculationDetails}</> : (
-              <details className="election-explainer">
-                <summary>הסכמי עודפים ואופן החישוב</summary>
-                {settings}
-                {agreements}
-                {calculationDetails}
-              </details>
-            )}
+            {settings}
+            {agreements}
+            {calculationDetails}
           </div>
         </>
       ) : (
