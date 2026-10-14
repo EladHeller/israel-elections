@@ -401,6 +401,12 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
             <div><strong>מידע דמה בלבד</strong><span>המספרים מומצאים להמחשה — אינם תוצאות אמת או סקר.</span></div>
           </aside>}
           {partyPanel}
+          <BlocsOverview key={currentElection} blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas}
+            parties={filterRealParties(voteData).map(([party]) => party)} results={realResults}
+            partyToBloc={partyToBloc} getPartyName={getPartyName}
+            onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
+            customized={customized} saveFailed={saveFailed} hasResults
+            isCounting={electionManifest.phase === 'counting'} isSimulator={isSimulator} isDemo={isDemo} />
         </div>}
         isEdited={displayedIsEdited}
         currentElection={currentElection}
@@ -423,12 +429,6 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
             <ResultsUpdate isDemo={isDemo} previous={previousResults} current={results}
               blockPercentage={baseConfig.blockPercentage} getPartyName={getPartyName} />
           )}
-          <BlocsOverview key={currentElection} blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas}
-            parties={filterRealParties(voteData).map(([party]) => party)} results={realResults}
-            partyToBloc={partyToBloc} getPartyName={getPartyName}
-            onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
-            customized={customized} saveFailed={saveFailed} hasResults
-            isCounting={electionManifest.phase === 'counting'} isSimulator={isSimulator} isDemo={isDemo} />
           <main>
             {closeRaces}
 
