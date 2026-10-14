@@ -111,6 +111,18 @@ Resources:
         DefaultRootObject: index.html
         Enabled: true
         Aliases: !If [ IsProd, [ !Sub '${SubDomain}.${DomainName}' ], !Ref "AWS::NoValue" ]
+        CacheBehaviors:
+          - PathPattern: /data/*
+            TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            MinTTL: 0
+            DefaultTTL: 15
+            MaxTTL: 30
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
         DefaultCacheBehavior:
           TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
           ViewerProtocolPolicy: redirect-to-https

@@ -33,7 +33,7 @@ export async function upload(key: string, body: string) {
     params: {
       Bucket: bucket,
       Key: key,
-      ACL: 'public-read',
+      CacheControl: 'public, max-age=0, s-maxage=15, must-revalidate',
       ContentType: mime.contentType(path.extname(key)) || 'application/octet-stream',
       Body: body,
     },

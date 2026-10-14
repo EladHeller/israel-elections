@@ -3,10 +3,10 @@ const { calcVotesResults } = require('./calc-elections');
 const { electionsConfig } = require('./config');
 
 const handler = async (req) => {
+  if (req.source === 'aws.events') {
+    return csvMonitor();
+  }
   try {
-    if (req.source === 'aws.events') {
-      return csvMonitor();
-    }
     const { voteData, blockPercentage, agreements } = JSON.parse(req.body);
     const res = calcVotesResults(voteData, blockPercentage, agreements);
     return {

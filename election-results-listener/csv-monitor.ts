@@ -1,5 +1,4 @@
-import { promisify } from 'util';
-import { parse } from 'csv-parse';
+import { getCsvData, fetchResultsCsv } from './csv-data';
 import { calcVotesResults } from './calc-elections';
 import { upload, isFileAlreadyExists } from './s3';
 import config from './config';
@@ -9,54 +8,29 @@ const {
   notPartiesKeys, currElections, electionsConfig, distributionID,
 } = config;
 
-const promisifyParse: (input: Buffer | string) => Promise<any> = promisify(parse);
-
 const { csvUrl, agreements, blockPercentage } = electionsConfig[currElections];
 
-async function getCsvData(csv: string) {
-  const data = await promisifyParse(csv);
-  const keys = data.shift();
-  return data.reduce((acc, city) => {
-    city.forEach((v, i) => {
-      const key = keys[i];
-      if (!key || notPartiesKeys.includes(key)) {
-        return;
-      }
-      if (!acc[key]) {
-        acc[key] = { votes: 0 };
-      }
-      acc[key].votes += Number(v);
-    });
-    return acc;
-  }, {});
+async function uploadCsv(csvData: string, elections: number, time: string = new Date().toISOString()) {
+  await upload(`data/${elections}/elections.csv`, csvData);
+  await invalidCache([`data/${elections}/elections.csv`], distributionID);
+  await upload(`data/${elections}/${time}_elections.csv`, csvData);
 }
 
-async function uploadCsv(csvData: string, elections: number, time: string) {
-  await upload(`${elections}/elections.csv`, csvData);
-  await invalidCache([`${elections}/elections.csv`], distributionID);
-  await upload(`${elections}/${time}_elections.csv`, csvData);
-}
-
-export async function uploadResults(results, elections: number, time: string) {
-  await upload(`${elections}/allResults.json`, JSON.stringify({ ...results, time }));
-  await invalidCache([`${elections}/allResults.json`], distributionID);
-  await upload(`${elections}/${time}_allResults.json`, JSON.stringify({ ...results, time }));
+export async function uploadResults(results, elections: number, time: string = new Date().toISOString()) {
+  await upload(`data/${elections}/allResults.json`, JSON.stringify({ ...results, time }));
+  await invalidCache([`data/${elections}/allResults.json`], distributionID);
+  await upload(`data/${elections}/${time}_allResults.json`, JSON.stringify({ ...results, time }));
 }
 
 export async function csvMonitor() {
   if (csvUrl == null) {
-    throw new Error('CSV url is missing')
+    throw new Error('CSV url is missing');
   }
-  const fetchRes = await fetch(csvUrl);
-  const csvData = await fetchRes.text();
-  const exists = (await isFileAlreadyExists(`${currElections}/elections.csv`, Buffer.from(csvData)));
+  const { csv: csvData, time } = await fetchResultsCsv(csvUrl);
+  const exists = (await isFileAlreadyExists(`data/${currElections}/elections.csv`, Buffer.from(csvData)));
   if (!exists) {
-    const electionsData = await getCsvData(csvData);
+    const electionsData = await getCsvData(csvData, notPartiesKeys);
     const results = calcVotesResults(electionsData, blockPercentage, agreements);
-    const lastModifiedHeader = fetchRes.headers.get('last-modified');
-    const time = (lastModifiedHeader
-      ? new Date(lastModifiedHeader)
-      : new Date()).toJSON();
     await uploadResults(results, currElections, time);
     await uploadCsv(csvData, currElections, time);
   }
