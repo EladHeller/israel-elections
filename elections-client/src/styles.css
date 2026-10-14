@@ -643,6 +643,7 @@ body {
 }
 
 .party-bar-fill {
+  width: var(--party-share);
   height: 100%;
   border-radius: 999px;
 }
