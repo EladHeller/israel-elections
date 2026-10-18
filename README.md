@@ -49,6 +49,26 @@ To publish the lists after registration closes, update the election's phase to `
 and populate its `lists` array. Move it to `counting` only after the corresponding
 `data/<election>/allResults.json` file is available.
 
+### Counting progress and turnout estimate
+
+Set `totalVotes` for the current election in
+`elections-client/src/data/elections-config.json` to the estimated **total number
+of people who voted**, including invalid ballots. Update this number after polls
+close and refine it as needed; do not set it to the number counted so far.
+Commit the change to the deployed branch and let the normal deployment finish.
+The build also publishes this configuration at `/election-config.json`.
+Open counting pages refresh the estimate alongside results every 30 seconds,
+without requiring a page reload (the CDN may cache it for up to 30 seconds).
+Historical election data keeps its existing long cache lifetime.
+
+The prominent counting indicator uses counted valid **and invalid** ballots from
+the same CSV snapshot. Older result files without `countedVotes` use the available
+valid-vote count with an explicit notice that invalid votes are excluded. Missing,
+zero, or exceeded turnout estimates display the counted number without inventing
+a percentage. Below 5%, a highlighted warning explains that the early results can
+differ substantially from the final outcome. The indicator appears only while
+counting, outside the simulator; demo data remains explicitly marked.
+
 ### infra
 
 Cloud-native infrastructure management:
