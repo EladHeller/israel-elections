@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import CountingProgress from '../components/CountingProgress';
+import ResultsUpdate from '../components/ResultsUpdate';
 import ElectionStatsSection from '../components/ElectionStatsSection';
 import { fetchCountingEstimate, getCountingProgress } from './counting-progress';
 import type { ElectionResultsPayload } from '../types';
@@ -45,7 +46,7 @@ test('renders the prominent count, accessible progress and early warning', () =>
   assert.match(early, /5,000,000/);
   assert.match(early, /הספירה בראשיתה/);
   assert.match(early, /counting-progress-warning/);
-  assert.match(render(0, 0, 1000), /כ־0%/);
+  assert.match(render(0, 0, 1000), /value="0"/);
   assert.match(render(1, 1, 10000), /פחות מ־0.1%/);
   assert.match(render(49999, 49999, 1000000), /כ־4.9%/);
   assert.match(render(99999, 99999, 100000), /כ־99.9%/);
@@ -116,4 +117,53 @@ test('statistics use counted ballots for invalid percentages and preserve histor
   assert.match(renderStats({ totalVotes: 50, invalidVotes: 1, turnoutPercentage: 65 }), /65.00%/);
   assert.match(renderStats({ totalVotes: 50, invalidVotes: 1, isDemo: true }), /הצבעה בדמו/);
   assert.match(renderStats({ isSimulator: true }), /הצבעה בפועל/);
+});
+
+
+test('explains waiting for first results regardless of the turnout estimate', () => {
+  for (const totalVotes of [undefined, 0, 1000]) {
+    const html = render(0, undefined, totalVotes);
+    assert.match(html, /ממתינים לתוצאות הראשונות/);
+    assert.match(html, /עדיין לא התקבלו תוצאות אמת/);
+    assert.match(html, /אוטומטית עם הגעתן/);
+    assert.doesNotMatch(html, /הספירה בעיצומה|הספירה בראשיתה|התוצאות חלקיות/);
+  }
+  assert.match(render(1, 1), /הספירה בעיצומה/);
+  assert.doesNotMatch(render(1, 1), /ממתינים לתוצאות/);
+  assert.doesNotMatch(render(0, 1), /ממתינים לתוצאות/);
+});
+
+test('zero snapshots do not announce a live update or unchanged seats', () => {
+  const current = { ...results(0, 0), time: '2026-10-18T12:00:00Z' };
+  for (const previous of [null, current]) {
+    const html = renderToStaticMarkup(createElement(ResultsUpdate, {
+      current, previous, blockPercentage: 0.0325, getPartyName: party => party,
+    }));
+    assert.match(html, /עדיין לא התקבלו תוצאות אמת/);
+    assert.doesNotMatch(html, /ללא שינוי|בעדכון האחרון|נתונים מ־|בספירה/);
+  }
+});
+
+test('announces arriving results and subsequent changes after waiting ends', () => {
+  const snapshot = (votes: number[], seats: number[]) => ({
+    voteData: Object.fromEntries(votes.map((votes, i) => [String(i), { votes, mandats: seats[i] }])),
+    realResults: Object.fromEntries(votes.map((votes, i) => [String(i), { votes, mandats: seats[i] }])),
+    time: '2026-10-18T12:00:00Z',
+  });
+  const renderUpdate = (current: ElectionResultsPayload, previous: ElectionResultsPayload | null, isDemo = false, blockPercentage = 0) =>
+    renderToStaticMarkup(createElement(ResultsUpdate, { current, previous, isDemo, blockPercentage, getPartyName: party => `Party${party}` }));
+  const previous = snapshot([50, 30, 20, 10], [50, 30, 20, 20]);
+  assert.match(renderUpdate(previous, null), /התוצאות מתעדכנות אוטומטית/);
+  assert.match(renderUpdate(previous, previous), /ללא שינוי בחלוקת המנדטים/);
+  assert.match(renderUpdate(previous, previous), /נתונים מ־/);
+  assert.match(renderUpdate(previous, previous, true), /מידע דמה|בדוגמה הזו/);
+  const next = snapshot([50, 30, 20, 10], [49, 31, 21, 19]);
+  const changed = renderUpdate(next, previous);
+  assert.match(changed, /עלתה ל־|ירדה ל־/);
+  assert.match(changed, /עוד 2 שינויים/);
+  assert.match(renderUpdate(snapshot([50, 30, 20], [49, 31, 21]), snapshot([50, 30, 20], [50, 30, 20])), /שינוי נוסף/);
+  const crossed = renderUpdate(snapshot([90, 0, 10], [100, 0, 20]), snapshot([90, 10, 0], [100, 20, 0]), false, 0.05);
+  assert.match(crossed, /עברה את אחוז החסימה/);
+  assert.match(crossed, /ירדה מתחת לאחוז החסימה/);
+  assert.doesNotMatch(changed, /ממתינים לתוצאות|עדיין לא התקבלו/);
 });
