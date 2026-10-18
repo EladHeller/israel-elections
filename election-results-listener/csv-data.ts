@@ -1,7 +1,7 @@
 import { parse } from 'csv-parse/sync';
 import type { VoteData } from './types';
 
-export function getCsvData(csv: string, notPartiesKeys: string[]): VoteData {
+export function getCsvResults(csv: string, notPartiesKeys: string[]): { voteData: VoteData; countedVotes?: number } {
   const rows: string[][] = parse(csv, { bom: true, skip_empty_lines: true });
   const keys = rows.shift();
   if (!keys || rows.length === 0 || new Set(keys).size !== keys.length) {
@@ -13,7 +13,17 @@ export function getCsvData(csv: string, notPartiesKeys: string[]): VoteData {
     throw new Error('Invalid results CSV: missing election columns');
   }
   const data: VoteData = Object.fromEntries(parties.map(({ key }) => [key, { votes: 0 }]));
+  const invalidIndex = keys.indexOf('פסולים');
+  let invalidVotes = 0;
   for (const row of rows) {
+    if (invalidIndex >= 0) {
+      const value = row[invalidIndex].trim();
+      const votes = Number(value);
+      if (!value || !Number.isSafeInteger(votes) || votes < 0 || !Number.isSafeInteger(invalidVotes + votes)) {
+        throw new Error('Invalid invalid-vote count');
+      }
+      invalidVotes += votes;
+    }
     for (const { key, index } of parties) {
       const value = row[index].trim();
       const votes = Number(value);
@@ -26,7 +36,15 @@ export function getCsvData(csv: string, notPartiesKeys: string[]): VoteData {
   if (!Object.values(data).some(({ votes }) => votes > 0)) {
     throw new Error('Results CSV contains no votes');
   }
-  return data;
+  const validVotes = Object.values(data).reduce((sum, { votes }) => sum + votes, 0);
+  if (!Number.isSafeInteger(validVotes + invalidVotes)) {
+    throw new Error('Invalid total vote count');
+  }
+  return { voteData: data, ...(invalidIndex >= 0 ? { countedVotes: validVotes + invalidVotes } : {}) };
+}
+
+export function getCsvData(csv: string, notPartiesKeys: string[]): VoteData {
+  return getCsvResults(csv, notPartiesKeys).voteData;
 }
 
 export async function fetchResultsCsv(url: string): Promise<{ csv: string; time: string }> {

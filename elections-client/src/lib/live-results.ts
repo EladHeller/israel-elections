@@ -12,6 +12,7 @@ export const resultSnapshotsDiffer = (
   next: ElectionResultsPayload,
 ): boolean =>
   previous.time !== next.time ||
+  previous.countedVotes !== next.countedVotes ||
   JSON.stringify(previous.voteData) !== JSON.stringify(next.voteData) ||
   JSON.stringify(previous.realResults) !== JSON.stringify(next.realResults);
 

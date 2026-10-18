@@ -1,8 +1,25 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getCsvData, fetchResultsCsv } from '../../dist/csv-data.js';
+import { getCsvData, getCsvResults, fetchResultsCsv } from '../../dist/csv-data.js';
 
 const metadata = ['סמל ישוב', 'כשרים'];
+test('counted ballots include invalid votes from the same CSV, including a zero-invalid count', () => {
+  for (const invalid of [0, 3]) {
+    assert.deepEqual(getCsvResults(`סמל ישוב,פסולים,מחל,אמת\n1,${invalid},10,2\n2,1,3,5`, [...metadata, 'פסולים']), {
+      voteData: { מחל: { votes: 13 }, אמת: { votes: 7 } }, countedVotes: 21 + invalid,
+    });
+  }
+  assert.deepEqual(getCsvResults('סמל ישוב,מחל\n1,5', metadata), { voteData: { מחל: { votes: 5 } } });
+});
+
+test('rejects malformed invalid counts and unsafe combined totals', () => {
+  for (const invalid of ['', '-1', '1.5', 'nope', '9007199254740992']) {
+    assert.throws(() => getCsvResults(`סמל ישוב,פסולים,מחל\n1,${invalid},5`, [...metadata, 'פסולים']));
+  }
+  assert.throws(() => getCsvResults('סמל ישוב,פסולים,מחל\n1,9007199254740991,1\n2,1,1', [...metadata, 'פסולים']));
+  assert.throws(() => getCsvResults('סמל ישוב,פסולים,מחל\n1,1,9007199254740991', [...metadata, 'פסולים']));
+  assert.throws(() => getCsvResults('סמל ישוב,מחל,אמת\n1,9007199254740991,1', metadata));
+});
 test('aggregates a real CSV shape, skips metadata and handles BOM and blank lines', () => {
   assert.deepEqual(getCsvData('\uFEFFסמל ישוב,כשרים,מחל,אמת\n1,12,10,2\n\n2,8,3,5\n', metadata), {
     מחל: { votes: 13 }, אמת: { votes: 7 },

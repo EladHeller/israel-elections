@@ -11,6 +11,8 @@ import AllElectionsSummary from './components/AllElectionsSummary';
 import ElectionSettingsSection from './components/ElectionSettingsSection';
 import VoteDistributionSection from './components/VoteDistributionSection';
 import ElectionStatsSection from './components/ElectionStatsSection';
+import CountingProgress from './components/CountingProgress';
+import { getCountingProgress } from './lib/counting-progress';
 import { BottomPanels, PartyPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
 import CloseRacesSection from './components/CloseRacesSection';
@@ -25,7 +27,7 @@ import { computeScenarioResults, computeSeatDeltas } from './lib/scenario';
 import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest';
 import { canPassThresholdWithoutMandate, hasMandate } from './lib/calc';
 import { selectViewData, viewUsesScenario } from './lib/view-mode';
-import type { AppViewMode, PartyResult, ResultsMap, VoteData } from './types';
+import type { AppViewMode, ElectionResultsPayload, PartyResult, ResultsMap, VoteData } from './types';
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
@@ -79,6 +81,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     error,
     refreshError,
     electionConfig: officialConfig,
+    countingTotalVotes,
     electionManifest: officialManifest,
     blocs: defaultBlocs,
     partyNames,
@@ -91,7 +94,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
   const isDemo = shared ? shared.demo : canPreviewElectionDemo(currentElection, officialManifest?.phase, isLatestElection)
     && viewMode !== 'summary';
   const sharedResults = useMemo(() => shared ? computeScenarioResults(shared.base.voteData, shared.base.config) : null, [shared]);
-  const results = sharedResults ?? (isDemo ? electionDemo.current : officialResults);
+  const results: ElectionResultsPayload | null = sharedResults ?? (isDemo ? electionDemo.current : officialResults);
   const previousResults = isDemo ? electionDemo.previous : previousOfficialResults;
   const electionConfig = shared?.base.config ?? (isDemo ? electionDemoConfig : officialConfig);
   const electionManifest = isDemo && officialManifest
@@ -252,8 +255,11 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
   const blockThreshold = Math.ceil(totalVotes * displayedConfig.blockPercentage);
   const baseSumVotes = sumVotes(baseVoteData);
   // Election statistics describe the original results, even in the simulator.
-  const configTotalVotes = electionConfig.totalVotes ?? baseSumVotes;
-  const invalidVotesDerived = Math.max(0, configTotalVotes - baseSumVotes);
+  const totalVotesEstimate = isDemo || shared ? electionConfig.totalVotes : countingTotalVotes;
+  const isCounting = electionManifest.phase === 'counting';
+  const invalidVotesDerived = isCounting
+    ? getCountingProgress(results, totalVotesEstimate).invalidVotes
+    : Math.max(0, (electionConfig.totalVotes ?? baseSumVotes) - baseSumVotes);
 
   const allParties = filterRealParties(voteData)
     .filter(([, { votes }]) => votes > 0)
@@ -332,8 +338,10 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     <div className="election-summary">
       <ElectionStatsSection
         turnoutPercentage={electionConfig.turnoutPercentage}
-        totalVotes={electionConfig.totalVotes}
+        totalVotes={isCounting ? totalVotesEstimate : electionConfig.totalVotes}
         invalidVotes={invalidVotesDerived}
+        countedVotes={isCounting ? results.countedVotes : undefined}
+        isCounting={isCounting}
         validVotes={baseSumVotes}
         isSimulator={isSimulator}
         isDemo={isDemo}
@@ -402,6 +410,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
           {isDemo && <aside className="demo-banner" aria-label="מידע דמה בלבד">
             <div><strong>מידע דמה בלבד</strong><span>המספרים מומצאים להמחשה — אינם תוצאות אמת או סקר.</span></div>
           </aside>}
+          {isCounting && !isSimulator && <CountingProgress results={results} totalVotes={totalVotesEstimate} isDemo={isDemo} />}
           <BlocsOverview key={currentElection} blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas}
             parties={filterRealParties(voteData).map(([party]) => party)} results={realResults}
             partyToBloc={partyToBloc} getPartyName={getPartyName}

@@ -5,6 +5,8 @@ interface ElectionStatsSectionProps {
   turnoutPercentage?: number;
   totalVotes?: number;
   invalidVotes?: number;
+  countedVotes?: number;
+  isCounting?: boolean;
   validVotes: number;
   isSimulator: boolean;
   isDemo?: boolean;
@@ -14,13 +16,15 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
   turnoutPercentage,
   totalVotes,
   invalidVotes,
+  countedVotes,
+  isCounting,
   validVotes,
   isSimulator,
   isDemo,
 }) => {
   const invalidVotePercent =
-    invalidVotes != null && totalVotes
-      ? (invalidVotes / totalVotes) * 100
+    invalidVotes != null && (isCounting ? countedVotes : totalVotes)
+      ? (invalidVotes / (isCounting ? countedVotes! : totalVotes!)) * 100
       : null;
 
   return (
@@ -33,15 +37,15 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
         <span>אחוז הצבעה</span>
       </div>
       <div className="summary-caption">
-        <bdi>{totalVotes != null ? numberFormat.format(totalVotes) : '—'}</bdi> מצביעים
+        <bdi>{totalVotes != null ? numberFormat.format(totalVotes) : '—'}</bdi> {isCounting ? 'מצביעים לפי האומדן' : 'מצביעים'}
       </div>
       <dl className="summary-breakdown">
         <div className="summary-detail">
-          <dt>קולות כשרים</dt>
+          <dt>{isCounting ? 'קולות כשרים שנספרו' : 'קולות כשרים'}</dt>
           <dd><bdi>{numberFormat.format(validVotes)}</bdi></dd>
         </div>
         <div className="summary-detail">
-          <dt>קולות פסולים</dt>
+          <dt>{isCounting ? 'קולות פסולים שנספרו' : 'קולות פסולים'}</dt>
           <dd>
             <bdi>{invalidVotes != null ? numberFormat.format(invalidVotes) : '—'}</bdi>
             {invalidVotePercent != null && (

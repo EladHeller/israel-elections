@@ -35,6 +35,8 @@ export const electionDemoConfig: ElectionConfig = {
 };
 
 export const electionDemo = {
-  current: calcVotesResults(voteData, electionDemoConfig.blockPercentage, electionDemoConfig.agreements, 'baderOffer'),
-  previous: calcVotesResults(previousVoteData, electionDemoConfig.blockPercentage, electionDemoConfig.agreements, 'baderOffer'),
+  current: { ...calcVotesResults(voteData, electionDemoConfig.blockPercentage, electionDemoConfig.agreements, 'baderOffer'),
+    countedVotes: Object.values(voteData).reduce((sum, party) => sum + party.votes, 0) + 23000 },
+  previous: { ...calcVotesResults(previousVoteData, electionDemoConfig.blockPercentage, electionDemoConfig.agreements, 'baderOffer'),
+    countedVotes: Object.values(previousVoteData).reduce((sum, party) => sum + party.votes, 0) + 22000 },
 };

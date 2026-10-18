@@ -6,6 +6,7 @@ import electionsManifestsAll from '../data/elections-manifests.json';
 import partyNamesAll from '../data/party-names.json';
 import { detectAvailableElections, fetchElectionResults, LATEST_ELECTION_ID } from '../lib/data';
 import { getDefaultElectionId, phaseHasResults } from '../lib/election-manifest';
+import { fetchCountingEstimate } from '../lib/counting-progress';
 import {
   LIVE_RESULTS_REFRESH_INTERVAL_MS,
   resultSnapshotsDiffer,
@@ -68,6 +69,7 @@ export interface UseElectionDataResult {
   error: string | null;
   refreshError: string | null;
   electionConfig: ElectionConfig;
+  countingTotalVotes?: number;
   blocs: BlocsConfig;
   partyNames: PartyNames;
   electionManifest: ElectionManifest | null;
@@ -84,6 +86,7 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
     useState<ElectionResultsPayload | null>(null);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [countingEstimate, setCountingEstimate] = useState<{ election: string; totalVotes?: number } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -117,8 +120,17 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
       if (requestInFlight) return;
       requestInFlight = true;
       try {
-        const data = await fetchElectionResults<ElectionResultsPayload>(currentElection);
+        const [data, estimate] = await Promise.all([
+          fetchElectionResults<ElectionResultsPayload>(currentElection),
+          manifest?.phase === 'counting'
+            ? fetchCountingEstimate(currentElection).catch(() => null)
+            : Promise.resolve(undefined),
+        ]);
         if (cancelled) return;
+        if (estimate) {
+          setCountingEstimate(previous => previous?.election === currentElection && previous.totalVotes === estimate.totalVotes
+            ? previous : { election: currentElection, ...estimate });
+        }
         const snapshotChanged =
           !lastSuccessfulResults || resultSnapshotsDiffer(lastSuccessfulResults, data);
         if (lastSuccessfulResults && snapshotChanged) {
@@ -130,7 +142,7 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
           setResults(data);
         }
         setError(null);
-        setRefreshError(null);
+        setRefreshError(estimate === null ? 'עדכון אומדן המצביעים נכשל. ננסה שוב אוטומטית.' : null);
       } catch (e) {
         if (!cancelled && !hasLoadedResults) {
           setError((e as Error).message);
@@ -193,6 +205,7 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
     error,
     refreshError,
     electionConfig,
+    countingTotalVotes: countingEstimate?.election === currentElection ? countingEstimate.totalVotes : electionConfig.totalVotes,
     blocs,
     partyNames,
     electionManifest,

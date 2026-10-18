@@ -75,5 +75,7 @@ describe('live result refresh', () => {
     const withNewSeats = snapshot();
     withNewSeats.realResults.a.mandats = 2;
     assert.equal(resultSnapshotsDiffer(snapshot(), withNewSeats), true);
+    assert.equal(resultSnapshotsDiffer(snapshot(), { ...snapshot(), countedVotes: 110 }), true);
+    assert.equal(resultSnapshotsDiffer({ ...snapshot(), countedVotes: 110 }, { ...snapshot(), countedVotes: 110 }), false);
   });
 });

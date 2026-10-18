@@ -1,4 +1,4 @@
-import { getCsvData, fetchResultsCsv } from './csv-data';
+import { getCsvResults, fetchResultsCsv } from './csv-data';
 import { calcVotesResults } from './calc-elections';
 import { upload, isFileAlreadyExists } from './s3';
 import config from './config';
@@ -29,8 +29,8 @@ export async function csvMonitor() {
   const { csv: csvData, time } = await fetchResultsCsv(csvUrl);
   const exists = (await isFileAlreadyExists(`data/${currElections}/elections.csv`, Buffer.from(csvData)));
   if (!exists) {
-    const electionsData = await getCsvData(csvData, notPartiesKeys);
-    const results = calcVotesResults(electionsData, blockPercentage, agreements);
+    const { voteData, countedVotes } = getCsvResults(csvData, notPartiesKeys);
+    const results = { ...calcVotesResults(voteData, blockPercentage, agreements), countedVotes };
     await uploadResults(results, currElections, time);
     await uploadCsv(csvData, currElections, time);
   }

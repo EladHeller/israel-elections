@@ -54,6 +54,8 @@ export interface ElectionManifest {
 
 export interface ElectionResultsPayload {
   time?: string;
+  /** Counted valid and invalid ballots from the same source snapshot. */
+  countedVotes?: number;
   voteData: VoteData;
   realResults: ResultsMap;
   withoutAgreements?: ResultsMap;
