@@ -12,6 +12,7 @@ import ElectionSettingsSection from './components/ElectionSettingsSection';
 import VoteDistributionSection from './components/VoteDistributionSection';
 import ElectionStatsSection from './components/ElectionStatsSection';
 import CountingProgress from './components/CountingProgress';
+import { getCountingParties } from './lib/counting-parties';
 import { getCountingProgress } from './lib/counting-progress';
 import { BottomPanels, PartyPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
@@ -180,7 +181,8 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
   }
 
   const showResults = !!shared || phaseHasResults(electionManifest.phase);
-  const statusText = shared ? (isDemo ? 'תרחיש משותף · מידע דמה בלבד' : 'תרחיש משותף') : isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : getElectionPhaseLabel(electionManifest);
+  const awaitingResults = electionManifest.phase === 'counting' && !!results && getCountingProgress(results).countedVotes === 0;
+  const statusText = shared ? (isDemo ? 'תרחיש משותף · מידע דמה בלבד' : 'תרחיש משותף') : isDemo ? 'תוצאות מתעדכנות · מידע דמה בלבד' : awaitingResults ? 'ממתינים לתוצאות הראשונות' : getElectionPhaseLabel(electionManifest);
 
   if (!showResults && viewMode === 'simulator') {
     return <Navigate to={`/results/${currentElection}`} replace />;
@@ -249,7 +251,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
   );
 
   const getPartyName = (party: string): string =>
-    shared?.base.voteData[party]?.name || partyNames[party] || partyNameOverrides[party] || party;
+    shared?.base.voteData[party]?.name || partyNames[party] || partyNameOverrides[party] || electionManifest.lists.find(list => list.ballotLetter === party)?.name || party;
 
   const totalVotes = sumVotes(voteData);
   const blockThreshold = Math.ceil(totalVotes * displayedConfig.blockPercentage);
@@ -261,7 +263,8 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     ? getCountingProgress(results, totalVotesEstimate).invalidVotes
     : Math.max(0, (electionConfig.totalVotes ?? baseSumVotes) - baseSumVotes);
 
-  const allParties = filterRealParties(voteData)
+  const showCountingParties = isCounting && !isSimulator;
+  const allParties = showCountingParties ? getCountingParties(voteData, realResults, electionManifest.lists) : filterRealParties(voteData)
     .filter(([, { votes }]) => votes > 0)
     .map(([party, { votes }]) => ({
       party,
@@ -271,7 +274,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     .sort((a, b) => b.mandats - a.mandats || b.votes - a.votes);
 
   const mandateParties = allParties.filter(hasMandate);
-  const parties = showAllParties ? allParties : mandateParties;
+  const parties = showCountingParties || showAllParties ? allParties : mandateParties;
 
   const baseBlockThreshold = Math.ceil(baseSumVotes * baseConfig.blockPercentage);
 
@@ -325,7 +328,8 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         partySeatDeltas={displayedPartySeatDeltas}
         normalizedScenario={{ voteData: displayedVoteData }}
         onVoteChange={onVoteChange}
-        showAllParties={showAllParties}
+        showAllParties={showCountingParties || showAllParties}
+        hidePartyFilter={showCountingParties}
         setShowAllParties={setShowAllParties}
         showZeroSeatLabel={canPassThresholdWithoutMandate(
           displayedConfig.blockPercentage,
@@ -412,10 +416,10 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
           </aside>}
           {isCounting && !isSimulator && <CountingProgress results={results} totalVotes={totalVotesEstimate} isDemo={isDemo} />}
           <BlocsOverview key={currentElection} blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas}
-            parties={filterRealParties(voteData).map(([party]) => party)} results={realResults}
+            parties={showCountingParties ? allParties.map(({ party }) => party) : filterRealParties(voteData).map(([party]) => party)} results={realResults}
             partyToBloc={partyToBloc} getPartyName={getPartyName}
             onAssign={assignParty} onRename={renameBloc} onReset={resetBlocs}
-            customized={customized} saveFailed={saveFailed} hasResults
+            customized={customized} saveFailed={saveFailed} hasResults={!awaitingResults || isSimulator}
             isCounting={electionManifest.phase === 'counting'} isSimulator={isSimulator} isDemo={isDemo} />
           {partyPanel}
           {!isSimulator && electionManifest.phase === 'counting' && (<>

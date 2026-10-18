@@ -215,6 +215,7 @@ interface PartyPanelProps {
   normalizedScenario: { voteData: Record<string, { votes: number }> };
   onVoteChange: (party: string, value: string) => void;
   showAllParties: boolean;
+  hidePartyFilter?: boolean;
   setShowAllParties: (show: boolean) => void;
   showZeroSeatLabel: boolean;
   resetScenario: () => void;
@@ -234,6 +235,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
   normalizedScenario,
   onVoteChange,
   showAllParties,
+  hidePartyFilter,
   setShowAllParties,
   showZeroSeatLabel,
   resetScenario,
@@ -260,7 +262,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
       editableVoteData={normalizedScenario.voteData}
       onVoteChange={onVoteChange}
     />
-    <label className="toggle">
+    {!hidePartyFilter && <label className="toggle">
       <input
         type="checkbox"
         checked={showAllParties}
@@ -271,7 +273,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
           ? 'הראה מפלגות ללא מנדטים'
           : 'הראה מפלגות שלא עברו את אחוז החסימה'}
       </span>
-    </label>
+    </label>}
   </div>
 );
 
