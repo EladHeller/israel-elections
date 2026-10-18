@@ -30,8 +30,17 @@ jobs:
       - name: Install modules
         run: npm ci
 
+      - name: Install client modules
+        run: npm ci --prefix elections-client
+
       - name: Type check
         run: npm run type-check
+
+      - name: Type check client
+        run: npx --prefix elections-client tsc --noEmit -p elections-client/tsconfig.json
+
+      - name: Build client
+        run: npm run build --prefix elections-client
 
       - name: Unit tests
         run: npm run test:coverage

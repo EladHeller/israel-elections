@@ -148,6 +148,7 @@ async function main() {
     { ParameterKey: 'ClientCodeName', ParameterValue: clientCodeName },
     { ParameterKey: 'SubDomain', ParameterValue: subDomain },
     { ParameterKey: 'Environment', ParameterValue: environment },
+    { ParameterKey: 'CurrentElections', ParameterValue: currElections },
     { ParameterKey: 'LatestElectionId', ParameterValue: String(Math.max(LATEST_ELECTION_ID, ...Object.keys(electionManifests).map(Number))) },
   ];
 

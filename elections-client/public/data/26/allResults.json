@@ -1,0 +1,618 @@
+{
+  "realResults": {
+    "רק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "דרך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צדק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "י": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ב": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "די": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "אמת": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "עם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "שס": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "פה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נקי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "יק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ז": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בקר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "מחל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ט": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ודם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "רץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ג": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ני": {
+      "votes": 0,
+      "mandats": 0
+    }
+  },
+  "withoutAgreements": {
+    "רק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "דרך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צדק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "י": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ב": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "די": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "אמת": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "עם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "שס": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "פה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נקי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "יק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ז": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בקר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "מחל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ט": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ודם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "רץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ג": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ני": {
+      "votes": 0,
+      "mandats": 0
+    }
+  },
+  "beforeBaderOffer": {
+    "רק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "דרך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צדק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "י": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ב": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "די": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "אמת": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "עם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "שס": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "פה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נקי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "יק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ז": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בקר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "מחל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ט": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ודם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "רץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ג": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ני": {
+      "votes": 0,
+      "mandats": 0
+    }
+  },
+  "voteData": {
+    "רק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "דרך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צדק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "י": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בד": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נף": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ב": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "קך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "די": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "אמת": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "עם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "שס": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זך": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "פה": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "זץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נקי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "יק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ז": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בקר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "נר": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "מחל": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ט": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "בי": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ק": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ודם": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "רץ": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ג": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "ני": {
+      "votes": 0,
+      "mandats": 0
+    }
+  }
+}

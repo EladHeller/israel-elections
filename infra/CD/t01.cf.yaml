@@ -73,7 +73,7 @@ Resources:
     Properties:
       Name: Israel-elections-scheduler
       State: DISABLED
-      ScheduleExpression: rate(1 hour)
+      ScheduleExpression: rate(1 minute)
       Targets:
         - Id: Israel-elections-function
           Arn: !GetAtt IsraelElectionsLambda.Arn

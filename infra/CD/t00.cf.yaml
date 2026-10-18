@@ -22,6 +22,11 @@ Parameters:
     Type: AWS::Route53::HostedZone::Id
     Description: The ID of the existing Route53 hosted zone
 
+  CurrentElections:
+    Type: Number
+    MinValue: 1
+    Description: Election whose mutable results require a short cache lifetime
+
   LatestElectionId:
     Type: Number
     MinValue: 1
@@ -111,6 +116,51 @@ Resources:
         DefaultRootObject: index.html
         Enabled: true
         Aliases: !If [ IsProd, [ !Sub '${SubDomain}.${DomainName}' ], !Ref "AWS::NoValue" ]
+        CacheBehaviors:
+          - PathPattern: /election-config.json
+            TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            MinTTL: 0
+            DefaultTTL: 15
+            MaxTTL: 30
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+          - PathPattern: !Sub '/data/${CurrentElections}/allResults.json'
+            TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            MinTTL: 0
+            DefaultTTL: 15
+            MaxTTL: 30
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+          - PathPattern: !Sub '/data/${CurrentElections}/elections.csv'
+            TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            MinTTL: 0
+            DefaultTTL: 15
+            MaxTTL: 30
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+          - PathPattern: /data/*
+            TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            MinTTL: 86400
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
         DefaultCacheBehavior:
           TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
           ViewerProtocolPolicy: redirect-to-https
