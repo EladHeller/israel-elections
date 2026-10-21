@@ -131,7 +131,6 @@
 <text x="1130" y="95" text-anchor="start" direction="rtl" font-size="24" fill="#f6aa1c" font-weight="700">בחירות לכנסת</text>
 <text x="1130" y="195" text-anchor="start" direction="rtl" font-size="66" font-weight="700">איך תיראה</text>
 <text x="1130" y="280" text-anchor="start" direction="rtl" font-size="66" font-weight="700">הכנסת הבאה?</text>
-<text x="1130" y="351" text-anchor="start" direction="rtl" font-size="30" fill="#c8d7e9">כל קול יכול לשנות את התמונה.</text>
 <path d="M70 440H1130" stroke="#40506b"/>
 <text x="1130" y="498" direction="rtl" text-anchor="start" font-size="27" font-weight="700">תוצאות מתעדכנות</text>
 <circle cx="835" cy="488" r="4" fill="#f6aa1c"/>
