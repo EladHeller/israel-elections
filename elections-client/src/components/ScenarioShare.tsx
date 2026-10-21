@@ -29,7 +29,7 @@ export default function ScenarioShare({ snapshot, disabled }: { snapshot: Shared
     setLink('');
     try {
       const id = await createSharedScenario(snapshot);
-      const url = `${window.location.origin}/s/${id}`;
+      const url = `${window.location.origin}/simulator/${snapshot.election}#scenario=s-${id}`;
       try {
         await navigator.clipboard.writeText(url);
         setMessage('הקישור הועתק');
