@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" lang="he">
+<title>איך תיראה הכנסת הבאה?</title>
+<desc>איור של 120 מושבים, לצד תוצאות, גושים וסימולטור מנדטים.</desc>
+<defs><radialGradient id="bg" cx="15%" cy="25%" r="100%"><stop stop-color="#213e64"/><stop offset="1" stop-color="#0b132b"/></radialGradient></defs>
+<rect width="1200" height="630" fill="url(#bg)"/>
+<path d="M0 0H1200" stroke="#f6aa1c" stroke-width="12"/>
+<g fill="none" stroke="#ffffff" stroke-opacity=".035"><circle cx="315" cy="374" r="270"/><circle cx="315" cy="374" r="310"/></g>
+<g font-family="DejaVu Sans, sans-serif" fill="#fff">
+<rect x="190.57" y="357.43" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="195.08" y="334.75" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="203.93" y="313.38" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="216.78" y="294.14" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="233.14" y="277.78" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="252.38" y="264.93" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="273.75" y="256.08" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="296.43" y="251.57" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="319.57" y="251.57" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="342.25" y="256.08" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="363.62" y="264.93" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="382.86" y="277.78" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="399.22" y="294.14" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="412.07" y="313.38" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="420.92" y="334.75" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="425.43" y="357.43" width="14" height="14" rx="4" fill="#91c7e8"/>
+<rect x="159.46" y="357.31" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="163.12" y="334.22" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="170.34" y="311.98" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="180.96" y="291.15" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="194.70" y="272.23" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="211.23" y="255.70" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="230.15" y="241.96" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="250.98" y="231.34" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="273.22" y="224.12" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="296.31" y="220.46" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="319.69" y="220.46" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="342.78" y="224.12" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="365.02" y="231.34" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="385.85" y="241.96" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="404.77" y="255.70" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="421.30" y="272.23" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="435.04" y="291.15" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="445.66" y="311.98" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="452.88" y="334.22" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="456.54" y="357.31" width="14" height="14" rx="4" fill="#80b8dd"/>
+<rect x="128.39" y="357.23" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="131.46" y="333.88" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="137.55" y="311.14" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="146.56" y="289.39" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="158.34" y="269.00" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="172.67" y="250.32" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="189.32" y="233.67" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="208.00" y="219.34" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="228.39" y="207.56" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="250.14" y="198.55" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="272.88" y="192.46" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="296.23" y="189.39" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="319.77" y="189.39" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="343.12" y="192.46" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="365.86" y="198.55" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="387.61" y="207.56" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="408.00" y="219.34" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="426.68" y="233.67" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="443.33" y="250.32" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="457.66" y="269.00" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="469.44" y="289.39" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="478.45" y="311.14" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="484.54" y="333.88" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="487.61" y="357.23" width="14" height="14" rx="4" fill="#6fa7d2"/>
+<rect x="97.33" y="357.17" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="99.98" y="333.66" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="105.25" y="310.59" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="113.06" y="288.25" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="123.33" y="266.94" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="135.92" y="246.90" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="150.67" y="228.40" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="167.40" y="211.67" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="185.90" y="196.92" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="205.94" y="184.33" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="227.25" y="174.06" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="249.59" y="166.25" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="272.66" y="160.98" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="296.17" y="158.33" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="319.83" y="158.33" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="343.34" y="160.98" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="366.41" y="166.25" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="388.75" y="174.06" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="410.06" y="184.33" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="430.10" y="196.92" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="448.60" y="211.67" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="465.33" y="228.40" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="480.08" y="246.90" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="492.67" y="266.94" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="502.94" y="288.25" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="510.75" y="310.59" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="516.02" y="333.66" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="518.67" y="357.17" width="14" height="14" rx="4" fill="#5d96c5"/>
+<rect x="66.29" y="357.13" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="68.62" y="333.49" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="73.25" y="310.20" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="80.15" y="287.47" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="89.23" y="265.53" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="100.43" y="244.59" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="113.62" y="224.84" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="128.69" y="206.48" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="145.48" y="189.69" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="163.84" y="174.62" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="183.59" y="161.43" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="204.53" y="150.23" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="226.47" y="141.15" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="249.20" y="134.25" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="272.49" y="129.62" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="296.13" y="127.29" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="319.87" y="127.29" width="14" height="14" rx="4" fill="#f6aa1c"/>
+<rect x="343.51" y="129.62" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="366.80" y="134.25" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="389.53" y="141.15" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="411.47" y="150.23" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="432.41" y="161.43" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="452.16" y="174.62" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="470.52" y="189.69" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="487.31" y="206.48" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="502.38" y="224.84" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="515.57" y="244.59" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="526.77" y="265.53" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="535.85" y="287.47" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="542.75" y="310.20" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="547.38" y="333.49" width="14" height="14" rx="4" fill="#5085b5"/>
+<rect x="549.71" y="357.13" width="14" height="14" rx="4" fill="#5085b5"/>
+<text x="315" y="352" text-anchor="middle" font-size="64" font-weight="700">120</text>
+<text x="315" y="387" text-anchor="middle" font-size="22" fill="#b2c5db" direction="rtl">מושבים בכנסת</text>
+<text x="1130" y="95" text-anchor="start" direction="rtl" font-size="24" fill="#f6aa1c" font-weight="700">בחירות לכנסת</text>
+<text x="1130" y="195" text-anchor="start" direction="rtl" font-size="66" font-weight="700">איך תיראה</text>
+<text x="1130" y="280" text-anchor="start" direction="rtl" font-size="66" font-weight="700">הכנסת הבאה?</text>
+<path d="M70 440H1130" stroke="#40506b"/>
+<text x="1130" y="498" direction="rtl" text-anchor="start" font-size="27" font-weight="700">תוצאות מתעדכנות</text>
+<circle cx="835" cy="488" r="4" fill="#f6aa1c"/>
+<text x="795" y="498" direction="rtl" text-anchor="start" font-size="27" font-weight="700">תמונת הגושים</text>
+<circle cx="540" cy="488" r="4" fill="#f6aa1c"/>
+<text x="500" y="498" direction="rtl" text-anchor="start" font-size="27" font-weight="700">סימולטור מנדטים</text>
+<text x="70" y="581" font-size="22" fill="#b2c5db">elections.eladheller.com</text>
+</g></svg>
