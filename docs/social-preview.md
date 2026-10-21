@@ -19,7 +19,9 @@ since social services cache preview images independently of CloudFront.
 
 No fixed `og:url` is declared: shared simulator and historical-election links
 should keep their own destination rather than being identified as the homepage.
-The absolute image URL points to production so it remains publicly accessible.
+The build uses `VITE_SITE_URL` for absolute image URLs. Deployment obtains this
+from the CloudFormation `SiteUrl` output: the custom domain in production and
+the distribution domain in development. Local builds default to production.
 
 After deploying to production, check a newly shared URL in WhatsApp and in
 Facebook Sharing Debugger / LinkedIn Post Inspector. Existing previews can stay

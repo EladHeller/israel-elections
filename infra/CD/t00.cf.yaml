@@ -257,3 +257,8 @@ Resources:
 Outputs:
   DistributionId:
     Value: !Ref CDN
+  SiteUrl:
+    Value: !If
+      - IsProd
+      - !Sub 'https://${SubDomain}.${DomainName}'
+      - !Sub 'https://${CDN.DomainName}'
