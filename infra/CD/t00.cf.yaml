@@ -148,6 +148,26 @@ Resources:
                 Cookies:
                   Forward: none
             - !Ref "AWS::NoValue"
+          - !If
+            - HasScenarioApi
+            - PathPattern: /s/*
+              TargetOriginId: scenario-api
+              ViewerProtocolPolicy: redirect-to-https
+              Compress: true
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              MinTTL: 0
+              DefaultTTL: 0
+              MaxTTL: 31536000
+              ForwardedValues:
+                QueryString: false
+                Cookies:
+                  Forward: none
+            - !Ref "AWS::NoValue"
           - PathPattern: /election-config.json
             TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
             ViewerProtocolPolicy: redirect-to-https
