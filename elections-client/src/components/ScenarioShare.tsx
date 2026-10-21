@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { encodeSharedScenario, type SharedScenario } from '../lib/shared-scenario';
+import { createSharedScenario } from '../lib/scenario-share-api';
+import type { SharedScenario } from '../lib/shared-scenario';
 
 export default function ScenarioShare({ snapshot, disabled }: { snapshot: SharedScenario; disabled: boolean }) {
   const container = useRef<HTMLDivElement>(null);
@@ -27,8 +28,8 @@ export default function ScenarioShare({ snapshot, disabled }: { snapshot: Shared
     setMessage('');
     setLink('');
     try {
-      const token = await encodeSharedScenario(snapshot);
-      const url = `${window.location.origin}/simulator/${snapshot.election}#scenario=${token}`;
+      const id = await createSharedScenario(snapshot);
+      const url = `${window.location.origin}/s/${id}`;
       try {
         await navigator.clipboard.writeText(url);
         setMessage('הקישור הועתק');

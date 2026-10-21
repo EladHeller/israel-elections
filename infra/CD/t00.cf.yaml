@@ -39,8 +39,14 @@ Parameters:
       - production
       - develop
 
+  ScenarioApiDomain:
+    Type: String
+    Default: ""
+    Description: API Gateway domain for shared scenarios, without protocol
+
 Conditions:
   IsProd: !Equals [ !Ref Environment, "production" ]
+  HasScenarioApi: !Not [ !Equals [ !Ref ScenarioApiDomain, "" ] ]
 
 Resources:
   ElectionsLambdaCode:
@@ -117,6 +123,51 @@ Resources:
         Enabled: true
         Aliases: !If [ IsProd, [ !Sub '${SubDomain}.${DomainName}' ], !Ref "AWS::NoValue" ]
         CacheBehaviors:
+          - !If
+            - HasScenarioApi
+            - PathPattern: /api/scenarios*
+              TargetOriginId: scenario-api
+              ViewerProtocolPolicy: redirect-to-https
+              Compress: true
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+                - PUT
+                - PATCH
+                - POST
+                - DELETE
+              CachedMethods:
+                - GET
+                - HEAD
+              MinTTL: 0
+              DefaultTTL: 0
+              MaxTTL: 31536000
+              ForwardedValues:
+                QueryString: false
+                Cookies:
+                  Forward: none
+            - !Ref "AWS::NoValue"
+          - !If
+            - HasScenarioApi
+            - PathPattern: /s/*
+              TargetOriginId: scenario-api
+              ViewerProtocolPolicy: redirect-to-https
+              Compress: true
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              MinTTL: 0
+              DefaultTTL: 0
+              MaxTTL: 31536000
+              ForwardedValues:
+                QueryString: false
+                Cookies:
+                  Forward: none
+            - !Ref "AWS::NoValue"
           - PathPattern: /election-config.json
             TargetOriginId: !Sub origin-bucket-${ElectionsClientCode}
             ViewerProtocolPolicy: redirect-to-https
@@ -176,6 +227,15 @@ Resources:
             DomainName: !Sub ${ElectionsClientCode}.s3.amazonaws.com
             S3OriginConfig:
               OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+          - !If
+            - HasScenarioApi
+            - Id: scenario-api
+              DomainName: !Ref ScenarioApiDomain
+              CustomOriginConfig:
+                OriginProtocolPolicy: https-only
+                OriginSSLProtocols:
+                  - TLSv1.2
+            - !Ref "AWS::NoValue"
         ViewerCertificate: !If
           - IsProd
           - AcmCertificateArn: !Ref Certificate
@@ -197,4 +257,3 @@ Resources:
 Outputs:
   DistributionId:
     Value: !Ref CDN
-

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { loadSharedScenario } from '../lib/scenario-share-api';
 import { decodeSharedScenario, type SharedScenario } from '../lib/shared-scenario';
 
 export default function SharedScenarioRoute({ token, election, children }: {
@@ -9,7 +10,13 @@ export default function SharedScenarioRoute({ token, election, children }: {
   const [error, setError] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    decodeSharedScenario(token, election).then(value => {
+    const load = token.startsWith('s-')
+      ? loadSharedScenario(token.slice(2)).then(value => {
+        if (value.election !== election) throw new Error('Election mismatch');
+        return value;
+      })
+      : decodeSharedScenario(token, election);
+    load.then(value => {
       if (!cancelled) setSnapshot(value);
     }).catch(() => { if (!cancelled) setError(true); });
     return () => { cancelled = true; };
