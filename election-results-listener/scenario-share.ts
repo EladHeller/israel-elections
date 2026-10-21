@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import electionsConfig from './config-elections.json';
 
 type VoteData = Record<string, { votes: number; mandats: number; name?: string }>;
 type ElectionConfig = {
@@ -20,6 +21,7 @@ type SharedScenario = {
 const MAX_BYTES = 100_000;
 const ID_LENGTHS = [10, 12, 16, 24, 43];
 const tableName = process.env.SCENARIO_TABLE_NAME;
+const supportedElections = new Set(Object.keys(electionsConfig));
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 const count = (value: unknown): value is number =>
@@ -80,7 +82,8 @@ function readState(value: unknown): ScenarioState {
 
 export function validateSharedScenario(value: unknown): SharedScenario {
   if (!record(value) || value.version !== 1 || typeof value.election !== 'string'
-    || !/^[1-9][0-9]*$/.test(value.election) || typeof value.demo !== 'boolean') throw invalid();
+    || !/^[1-9][0-9]*$/.test(value.election) || !supportedElections.has(value.election)
+    || typeof value.demo !== 'boolean') throw invalid();
   const base = readState(value.base);
   const scenario = readState(value.scenario);
   if (Object.keys(base.voteData).sort().join('\0') !== Object.keys(scenario.voteData).sort().join('\0')) throw invalid();
