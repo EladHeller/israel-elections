@@ -7,6 +7,7 @@ import {
   waitUntilStackUpdateComplete,
   Parameter,
   Capability,
+  Output,
 } from '@aws-sdk/client-cloudformation';
 import {
   CloudFrontClient,
@@ -33,6 +34,11 @@ const environment = rawEnv === 'prod' || rawEnv === 'production' ? 'production' 
 
 const cf = new CloudFormationClient({ region });
 const cfClient = new CloudFrontClient({ region });
+
+async function getStackOutputs(name: string): Promise<Output[] | undefined> {
+  const stack = await cf.send(new DescribeStacksCommand({ StackName: name })).catch(() => ({ Stacks: [] }));
+  return stack.Stacks?.[0]?.Outputs;
+}
 
 async function runTemplate(
   templatePath: string,
@@ -136,14 +142,16 @@ async function uploadFiles(distributionId: string) {
   }
 }
 
-async function main() {
-  if (!bucketCodeName || !clientCodeName || !currElections) {
-    throw new Error('Missing required environment variables');
-  }
+function scenarioApiDomain(endpoint?: string): string | undefined {
+  return endpoint?.replace(/^https:\/\//, '').replace(/\/$/, '');
+}
 
-  await buildAndZip();
+function getOutput(outputs: Output[] | undefined, key: string): string | undefined {
+  return outputs?.find(output => output.OutputKey === key)?.OutputValue;
+}
 
-  const t00Params: Parameter[] = [
+function t00Parameters(apiEndpoint?: string): Parameter[] {
+  const parameters: Parameter[] = [
     { ParameterKey: 'BucketCodeName', ParameterValue: bucketCodeName },
     { ParameterKey: 'ClientCodeName', ParameterValue: clientCodeName },
     { ParameterKey: 'SubDomain', ParameterValue: subDomain },
@@ -151,18 +159,36 @@ async function main() {
     { ParameterKey: 'CurrentElections', ParameterValue: currElections },
     { ParameterKey: 'LatestElectionId', ParameterValue: String(Math.max(LATEST_ELECTION_ID, ...Object.keys(electionManifests).map(Number))) },
   ];
+  if (domainName) parameters.push({ ParameterKey: 'DomainName', ParameterValue: domainName });
+  if (hostedZoneId) parameters.push({ ParameterKey: 'HostedZoneId', ParameterValue: hostedZoneId });
+  const apiDomain = scenarioApiDomain(apiEndpoint);
+  if (apiDomain) parameters.push({ ParameterKey: 'ScenarioApiDomain', ParameterValue: apiDomain });
+  return parameters;
+}
 
-  if (domainName) t00Params.push({ ParameterKey: 'DomainName', ParameterValue: domainName });
-  if (hostedZoneId) t00Params.push({ ParameterKey: 'HostedZoneId', ParameterValue: hostedZoneId });
+async function main() {
+  if (!bucketCodeName || !clientCodeName || !currElections) {
+    throw new Error('Missing required environment variables');
+  }
 
-  const t00Outputs = await runTemplate('./infra/CD/t00.cf.yaml', 'Israel-elections-code-bucket', t00Params);
-  const distributionId = t00Outputs?.find(o => o.OutputKey === 'DistributionId')?.OutputValue;
+  await buildAndZip();
+
+  // Keep the existing API origin on routine deploys. On the first deployment the API does not exist yet,
+  // so t00 creates the buckets/CDN first and is updated again after t01 creates the API.
+  const existingBackendOutputs = await getStackOutputs('Israel-elections');
+  const existingScenarioApiEndpoint = getOutput(existingBackendOutputs, 'ScenarioApiEndpoint');
+  const t00Outputs = await runTemplate(
+    './infra/CD/t00.cf.yaml',
+    'Israel-elections-code-bucket',
+    t00Parameters(existingScenarioApiEndpoint),
+  );
+  const distributionId = getOutput(t00Outputs, 'DistributionId');
 
   if (!distributionId) throw new Error('Missing DistributionId output');
 
   await uploadFiles(distributionId);
 
-  await runTemplate(
+  const backendOutputs = await runTemplate(
     './infra/CD/t01.cf.yaml',
     'Israel-elections',
     [
@@ -173,6 +199,15 @@ async function main() {
       { ParameterKey: 'DistributionId', ParameterValue: distributionId },
     ],
     ['CAPABILITY_NAMED_IAM'],
+  );
+
+  const newScenarioApiEndpoint = getOutput(backendOutputs, 'ScenarioApiEndpoint');
+  if (!newScenarioApiEndpoint) throw new Error('Missing ScenarioApiEndpoint output');
+
+  await runTemplate(
+    './infra/CD/t00.cf.yaml',
+    'Israel-elections-code-bucket',
+    t00Parameters(newScenarioApiEndpoint),
   );
 
   console.log('Deployment completed successfully!');

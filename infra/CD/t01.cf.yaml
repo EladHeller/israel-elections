@@ -88,3 +88,118 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt IsraelElectionsEventRule.Arn
       FunctionName: Israel-elections-function
+
+  SharedScenariosTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ScenarioShareLambdaIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: Scenario-share-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                Resource: !GetAtt SharedScenariosTable.Arn
+
+  ScenarioShareLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt ScenarioShareLambdaIamRole.Arn
+      FunctionName: Israel-elections-scenario-share
+      Runtime: nodejs24.x
+      Handler: dist/scenario-share.handler
+      Timeout: 5
+      MemorySize: 128
+      Environment:
+        Variables:
+          SCENARIO_TABLE_NAME: !Ref SharedScenariosTable
+      Code:
+        S3Bucket: !Ref BucketCodeName
+        S3Key: dist.zip
+
+  ScenarioApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: Israel-elections-scenario-api
+      ProtocolType: HTTP
+
+  ScenarioApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ScenarioApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ScenarioShareLambda.Arn
+      PayloadFormatVersion: "2.0"
+
+  ScenarioCreateRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "POST /api/scenarios"
+      Target: !Join [/, [integrations, !Ref ScenarioApiIntegration]]
+
+  ScenarioGetRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "GET /api/scenarios/{id}"
+      Target: !Join [/, [integrations, !Ref ScenarioApiIntegration]]
+
+  ScenarioShortRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "GET /s/{id}"
+      Target: !Join [/, [integrations, !Ref ScenarioApiIntegration]]
+
+  ScenarioApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ScenarioApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 5
+
+  ScenarioShareLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ScenarioShareLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ScenarioApi}/*/*/*"
+
+Outputs:
+  ScenarioApiEndpoint:
+    Value: !GetAtt ScenarioApi.ApiEndpoint
