@@ -40,21 +40,29 @@ test('CloudFront leaves static resources and non-read requests unchanged', () =>
   assert.equal(request.uri, '/summary');
 });
 
-test('only current mutable result files have a short CDN lifetime', () => {
+test('scenario API and election data use the intended CDN lifetimes', () => {
   const behaviors = template.split('        CacheBehaviors:\n')[1]
     .split('        DefaultCacheBehavior:')[0]
     .split('          - PathPattern: ').slice(1);
-  assert.equal(behaviors.length, 4);
-  assert.ok(behaviors[0].startsWith('/election-config.json'));
-  assert.ok(behaviors[1].startsWith("!Sub '/data/${CurrentElections}/allResults.json'"));
-  assert.ok(behaviors[2].startsWith("!Sub '/data/${CurrentElections}/elections.csv'"));
-  for (const behavior of behaviors.slice(0, 3)) {
+  assert.equal(behaviors.length, 5);
+
+  assert.ok(behaviors[0].startsWith('/api/scenarios*'));
+  assert.match(behaviors[0], /AllowedMethods:\n[\s\S]*- POST\n/);
+  assert.match(behaviors[0], /CachedMethods:\n\s+- GET\n\s+- HEAD\n/);
+  assert.match(behaviors[0], /MinTTL: 0\n/);
+  assert.match(behaviors[0], /DefaultTTL: 0\n/);
+  assert.match(behaviors[0], /MaxTTL: 31536000\n/);
+
+  assert.ok(behaviors[1].startsWith('/election-config.json'));
+  assert.ok(behaviors[2].startsWith("!Sub '/data/${CurrentElections}/allResults.json'"));
+  assert.ok(behaviors[3].startsWith("!Sub '/data/${CurrentElections}/elections.csv'"));
+  for (const behavior of behaviors.slice(1, 4)) {
     assert.match(behavior, /MinTTL: 0\n/);
     assert.match(behavior, /DefaultTTL: 15\n/);
     assert.match(behavior, /MaxTTL: 30\n/);
   }
-  assert.ok(behaviors[3].startsWith('/data/*'));
-  assert.match(behaviors[3], /MinTTL: 86400\n/);
-  assert.match(behaviors[3], /DefaultTTL: 86400\n/);
-  assert.match(behaviors[3], /MaxTTL: 31536000\n/);
+  assert.ok(behaviors[4].startsWith('/data/*'));
+  assert.match(behaviors[4], /MinTTL: 86400\n/);
+  assert.match(behaviors[4], /DefaultTTL: 86400\n/);
+  assert.match(behaviors[4], /MaxTTL: 31536000\n/);
 });
