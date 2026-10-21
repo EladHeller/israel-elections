@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" lang="he">
 <title>איך תיראה הכנסת הבאה?</title>
-<desc>איור של 120 מושבים להמחשה בלבד, לצד תוצאות, גושים וסימולטור מנדטים.</desc>
+<desc>איור של 120 מושבים, לצד תוצאות, גושים וסימולטור מנדטים.</desc>
 <defs><radialGradient id="bg" cx="15%" cy="25%" r="100%"><stop stop-color="#213e64"/><stop offset="1" stop-color="#0b132b"/></radialGradient></defs>
 <rect width="1200" height="630" fill="url(#bg)"/>
 <path d="M0 0H1200" stroke="#f6aa1c" stroke-width="12"/>
@@ -138,5 +138,4 @@
 <circle cx="540" cy="488" r="4" fill="#f6aa1c"/>
 <text x="500" y="498" direction="rtl" text-anchor="start" font-size="27" font-weight="700">סימולטור מנדטים</text>
 <text x="70" y="581" font-size="22" fill="#b2c5db">elections.eladheller.com</text>
-<text x="1130" y="581" direction="rtl" text-anchor="start" font-size="19" fill="#b2c5db">איור להמחשה בלבד</text>
 </g></svg>
