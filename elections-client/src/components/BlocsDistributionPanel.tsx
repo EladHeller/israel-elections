@@ -1,5 +1,6 @@
 import React from 'react';
 import BlocEditor from './BlocEditor';
+import UnassignedParties from './UnassignedParties';
 import type { BlocsConfig } from '../types';
 
 interface DeltaChipProps {
@@ -136,6 +137,8 @@ export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
         <BlocLegend blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas} />
       </div>
     </div>
+    <UnassignedParties parties={mandateParties.filter(({ party }) => !partyToBloc[party])}
+      getPartyName={getPartyName} />
     {editable && (
       <BlocEditor
         blocs={blocs}

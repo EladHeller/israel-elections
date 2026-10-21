@@ -1,19 +1,192 @@
 {
-  "25": {
+  "21": {
     "order": [
       "gushA",
-      "gushB"
+      "gushB",
+      "gushC"
     ],
     "blocks": {
       "gushA": {
-        "label": "גוש א",
+        "label": "גוש הימין",
         "color": "#2563eb",
-        "parties": []
+        "parties": [
+          "מחל",
+          "שס",
+          "ג",
+          "טב",
+          "כ",
+          "ל"
+        ]
       },
       "gushB": {
-        "label": "גוש ב",
+        "label": "גוש השמאל־מרכז",
         "color": "#dc2626",
-        "parties": []
+        "parties": [
+          "פה",
+          "אמת",
+          "מרצ"
+        ]
+      },
+      "gushC": {
+        "label": "המפלגות הערביות",
+        "color": "#e87583",
+        "parties": [
+          "ום",
+          "דעם"
+        ],
+        "complementaryTo": "gushB"
+      }
+    }
+  },
+  "22": {
+    "order": [
+      "gushA",
+      "gushB",
+      "gushC"
+    ],
+    "blocks": {
+      "gushA": {
+        "label": "גוש הימין",
+        "color": "#2563eb",
+        "parties": [
+          "מחל",
+          "שס",
+          "ג",
+          "טב"
+        ]
+      },
+      "gushB": {
+        "label": "גוש השמאל־מרכז",
+        "color": "#dc2626",
+        "parties": [
+          "פה",
+          "ל",
+          "אמת",
+          "מרצ"
+        ]
+      },
+      "gushC": {
+        "label": "המפלגות הערביות",
+        "color": "#e87583",
+        "parties": [
+          "ודעם"
+        ],
+        "complementaryTo": "gushB"
+      }
+    }
+  },
+  "23": {
+    "order": [
+      "gushA",
+      "gushB",
+      "gushC"
+    ],
+    "blocks": {
+      "gushA": {
+        "label": "גוש הימין",
+        "color": "#2563eb",
+        "parties": [
+          "מחל",
+          "שס",
+          "ג",
+          "טב"
+        ]
+      },
+      "gushB": {
+        "label": "גוש השמאל־מרכז",
+        "color": "#dc2626",
+        "parties": [
+          "פה",
+          "ל",
+          "אמת"
+        ]
+      },
+      "gushC": {
+        "label": "המפלגות הערביות",
+        "color": "#e87583",
+        "parties": [
+          "ודעם"
+        ],
+        "complementaryTo": "gushB"
+      }
+    }
+  },
+  "24": {
+    "order": [
+      "gushA",
+      "gushB",
+      "gushC"
+    ],
+    "blocks": {
+      "gushA": {
+        "label": "גוש הימין",
+        "color": "#2563eb",
+        "parties": [
+          "מחל",
+          "שס",
+          "ג",
+          "ט"
+        ]
+      },
+      "gushB": {
+        "label": "גוש השמאל־מרכז",
+        "color": "#dc2626",
+        "parties": [
+          "פה",
+          "כן",
+          "ל",
+          "אמת",
+          "מרצ",
+          "ת",
+          "ב"
+        ]
+      },
+      "gushC": {
+        "label": "המפלגות הערביות",
+        "color": "#e87583",
+        "parties": [
+          "ודעם",
+          "עם"
+        ],
+        "complementaryTo": "gushB"
+      }
+    }
+  },
+  "25": {
+    "order": [
+      "gushA",
+      "gushB",
+      "gushC"
+    ],
+    "blocks": {
+      "gushA": {
+        "label": "גוש הימין",
+        "color": "#2563eb",
+        "parties": [
+          "מחל",
+          "שס",
+          "ג",
+          "ט"
+        ]
+      },
+      "gushB": {
+        "label": "גוש השמאל־מרכז",
+        "color": "#dc2626",
+        "parties": [
+          "פה",
+          "כן",
+          "ל",
+          "אמת"
+        ]
+      },
+      "gushC": {
+        "label": "המפלגות הערביות",
+        "color": "#e87583",
+        "parties": [
+          "ום",
+          "עם"
+        ],
+        "complementaryTo": "gushB"
       }
     }
   },
