@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { computeBlocOverview } from './bloc-overview';
 import { computeBlocMap, computeBlocTotals } from './analytics';
 import configs from '../data/blocs.json';
+import { getElectionBlocs } from './bloc-preferences';
 
 describe('complementary bloc overview', () => {
   const blocs = configs['26'];
@@ -37,8 +38,8 @@ describe('complementary bloc overview', () => {
     assert.equal(unassigned.majorityText, 'עוד 11 לרוב חוסם');
   });
 
-  it('keeps historical blocs independent and uses custom labels in majority messages', () => {
-    const historical = computeBlocOverview({ blocks: configs['25'].blocks }, {});
+  it('keeps unconfigured elections independent and uses custom labels in majority messages', () => {
+    const historical = computeBlocOverview(getElectionBlocs(configs, '20'), {});
     assert.equal(historical.length, 2);
     assert.ok(historical.every((row) => row.complementaryKeys.length === 0));
     const renamed = { ...blocs, blocks: { ...blocs.blocks, gushB: { ...blocs.blocks.gushB, label: 'מחנה א' } } };

@@ -1,5 +1,6 @@
 import React from 'react';
 import BlocEditor from './BlocEditor';
+import UnassignedParties from './UnassignedParties';
 import type { BlocsConfig, ResultsMap } from '../types';
 import { computeBlocOverview } from '../lib/bloc-overview';
 
@@ -29,7 +30,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
   const overview = computeBlocOverview(blocs, totals);
   const assigned = parties.some((party) => partyToBloc[party]);
   const unassigned = parties.filter((party) => !partyToBloc[party]);
-  const unassignedSeats = unassigned.reduce((sum, party) => sum + (results[party]?.mandats || 0), 0);
+  const visibleUnassigned = unassigned.filter((party) => !hasResults || results[party]?.mandats > 0);
 
   return (
     <section className="panel blocs-overview" aria-label="תמונת הגושים">
@@ -92,12 +93,11 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
               );
             })}
           </div>
-          {unassigned.length > 0 && (!hasResults || unassignedSeats > 0) && <div className="unassigned-summary">
-            <strong>ללא שיוך{hasResults ? ` · ${unassignedSeats} מנדטים` : ''}</strong>
-            <span>{unassigned.filter((party) => !hasResults || results[party]?.mandats > 0).map(getPartyName).join(' · ')}</span>
-          </div>}
         </>
       ) : <p className="bloc-empty">טרם הוגדרה חלוקה לגושים. אפשר לבחור את המפלגות בכל גוש.</p>}
+
+      <UnassignedParties parties={visibleUnassigned.map((party) => ({ party, mandats: results[party]?.mandats || 0 }))}
+        getPartyName={getPartyName} hasResults={hasResults} />
 
       <details className="bloc-settings">
         <summary>{assigned ? 'עריכת הגושים' : 'הגדרת הגושים'}</summary>

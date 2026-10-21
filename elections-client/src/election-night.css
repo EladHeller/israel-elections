@@ -28,8 +28,6 @@
 .election-night .bloc-members-label { color: var(--ink-90); }
 .election-night .bloc-members-label .bloc-color { display: inline-block; margin-inline-end: 5px; }
 .election-night .bloc-members { font-size: 14px; line-height: 1.7; color: var(--ink-50); margin: 14px 0 0; overflow-wrap: anywhere; }
-.election-night .unassigned-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 22px; font-size: 14px; }
-.election-night .unassigned-summary > span { color: var(--ink-50); }
 .election-night .bloc-settings { margin-top: 20px; }
 .election-night .bloc-settings > summary { cursor: pointer; font-weight: 700; padding: 12px 0; }
 .election-night .bloc-settings-body { padding-top: 16px; }
@@ -145,7 +143,7 @@
 .election-night .current-results-overview .majority-caption { margin-top: 7px; font-size: 12px; }
 .election-night .current-results-overview .majority-status { margin-top: 3px; font-size: 14px; }
 .election-night .bloc-members-summary { margin-bottom: 16px; }
-.election-night .current-results-overview .unassigned-summary { font-size: 12px; margin: 8px 0; gap: 6px 12px; }
+.election-night .current-results-overview .unassigned-summary { margin: 12px 0; }
 .election-night .current-results-overview .bloc-settings { margin-top: 8px; border-top: 1px solid var(--ink-20); }
 .election-night .current-results-overview .bloc-settings > summary { font-size: 13px; font-weight: 600; }
 .election-night .current-results-overview .bloc-settings-body { padding-bottom: 18px; }

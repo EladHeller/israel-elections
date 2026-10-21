@@ -36,7 +36,7 @@ export default function BlocEditor({ blocs, parties, partyToBloc, onPartyBlocCha
         const members = parties.filter((party) => target
           ? partyToBloc[party] === target
           : !partyToBloc[party] || !order.includes(partyToBloc[party]!));
-        return <div key={target || '__unassigned__'} className={`bloc-editor-column ${selected ? 'is-drop-target' : ''}`}
+        return <div key={target || '__unassigned__'} className={`bloc-editor-column ${selected ? 'is-drop-target' : ''} ${!target && members.length ? 'has-unassigned' : ''}`}
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
             event.preventDefault();
@@ -45,7 +45,7 @@ export default function BlocEditor({ blocs, parties, partyToBloc, onPartyBlocCha
           onClick={() => { if (selected) assign(selected, target); }}>
           <button type="button" className="bloc-editor-target" disabled={!selected}
             aria-label={`העברה אל ${label}`}>
-            <span style={{ color: target ? blocs.blocks[target].color : undefined }}>●</span> {label}
+            <span style={{ color: target ? blocs.blocks[target].color : undefined }}>●</span> {label}{!target && members.length > 0 && <span className="bloc-unassigned-count">{members.length}</span>}
           </button>
           <div className="bloc-editor-chips">
             {members.map((party) => <button key={party} type="button" draggable
