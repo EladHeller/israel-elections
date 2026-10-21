@@ -87,12 +87,12 @@ async function runTemplate(
   return updatedStack.Stacks?.[0]?.Outputs;
 }
 
-async function buildAndZip() {
+async function buildAndZip(siteUrl: string) {
   console.log('Building backend...');
   await exec('npm run build');
 
   console.log('Building frontend...');
-  await exec('npm run build:client');
+  await exec('npm run build:client', { env: { ...process.env, VITE_SITE_URL: siteUrl } });
 
   console.log('Creating zips...');
   // Backend zip
@@ -171,8 +171,6 @@ async function main() {
     throw new Error('Missing required environment variables');
   }
 
-  await buildAndZip();
-
   // Keep the existing API origin on routine deploys. On the first deployment the API does not exist yet,
   // so t00 creates the buckets/CDN first and is updated again after t01 creates the API.
   const existingBackendOutputs = await getStackOutputs('Israel-elections');
@@ -186,6 +184,9 @@ async function main() {
 
   if (!distributionId) throw new Error('Missing DistributionId output');
 
+  const siteUrl = getOutput(t00Outputs, 'SiteUrl');
+  if (!siteUrl) throw new Error('Missing SiteUrl output');
+  await buildAndZip(siteUrl);
   await uploadFiles(distributionId);
 
   const backendOutputs = await runTemplate(
