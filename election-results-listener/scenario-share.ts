@@ -174,9 +174,9 @@ export async function handler(event: any) {
       return json(201, { id });
     }
     if (method === 'GET') {
-      const match = /^\/api\/scenarios\/([A-Za-z0-9_-]{10,43})$/.exec(path || '');
-      if (match) {
-        const payload = await loadScenario(match[1]);
+      const apiMatch = /^\/api\/scenarios\/([A-Za-z0-9_-]{10,43})$/.exec(path || '');
+      if (apiMatch) {
+        const payload = await loadScenario(apiMatch[1]);
         if (!payload) return json(404, { error: 'Scenario not found' });
         return {
           statusCode: 200,
@@ -185,6 +185,20 @@ export async function handler(event: any) {
             'cache-control': 'public, max-age=31536000, immutable',
           },
           body: payload,
+        };
+      }
+      const shortMatch = /^\/s\/([A-Za-z0-9_-]{10,43})$/.exec(path || '');
+      if (shortMatch) {
+        const payload = await loadScenario(shortMatch[1]);
+        if (!payload) return json(404, { error: 'Scenario not found' });
+        const scenario = JSON.parse(payload) as SharedScenario;
+        return {
+          statusCode: 302,
+          headers: {
+            location: `/simulator/${scenario.election}#scenario=s-${shortMatch[1]}`,
+            'cache-control': 'public, max-age=31536000, immutable',
+          },
+          body: '',
         };
       }
     }
