@@ -175,6 +175,13 @@ Resources:
       RouteKey: "GET /api/scenarios/{id}"
       Target: !Join [/, [integrations, !Ref ScenarioApiIntegration]]
 
+  ScenarioShortRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "GET /s/{id}"
+      Target: !Join [/, [integrations, !Ref ScenarioApiIntegration]]
+
   ScenarioApiStage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
