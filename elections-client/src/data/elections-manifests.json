@@ -1,6 +1,6 @@
 {
   "26": {
-    "phase": "listsFinal",
+    "phase": "counting",
     "lists": [
       {
         "ballotLetter": "רק",
@@ -157,3 +157,4 @@
     ]
   }
 }
+

@@ -1,5 +1,6 @@
 {
   "26": {
+    "csvUrl": "https://raw.githubusercontent.com/EladHeller/israel-elections/refs/heads/develop/test-data/live-results.csv",
     "algorithm": "baderOffer",
     "blockPercentage": 0.0325,
     "agreements": [["רק", "ל"], ["דרך", "אמת"], ["עם", "ודם"], ["מחל", "ט"], ["שס", "ג"]]
@@ -470,3 +471,4 @@
     }
   }
 }
+
