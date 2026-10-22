@@ -14,7 +14,8 @@ export async function resultsMatch(key: string, expected: unknown): Promise<bool
   }
   try {
     const { time: _time, ...results } = JSON.parse(await response.Body!.transformToString());
-    return isDeepStrictEqual(results, expected);
+    // Compare the persisted JSON shape, which omits undefined optional fields.
+    return isDeepStrictEqual(results, JSON.parse(JSON.stringify(expected)));
   } catch {
     return false;
   }

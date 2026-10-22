@@ -15,6 +15,8 @@ test('stored result comparison ignores timestamps and object key order but detec
   for (stored of ['{"countedVotes":0}', '{}', 'null', 'invalid json']) {
     assert.equal(await resultsMatch('data/26/allResults.json', expected), false);
   }
+  stored = '{"voteData":{"a":{"votes":150}}}';
+  assert.equal(await resultsMatch('data/26/allResults.json', { voteData: expected.voteData, countedVotes: undefined }), true);
 });
 
 test('missing results can be repaired but S3 access and network failures propagate', async context => {
