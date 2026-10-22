@@ -12,7 +12,7 @@ import ElectionSettingsSection from './components/ElectionSettingsSection';
 import VoteDistributionSection from './components/VoteDistributionSection';
 import ElectionStatsSection from './components/ElectionStatsSection';
 import CountingProgress from './components/CountingProgress';
-import { getCountingParties } from './lib/counting-parties';
+import { getCountingParties, getPartyFilterState } from './lib/counting-parties';
 import { getCountingProgress } from './lib/counting-progress';
 import { BottomPanels, PartyPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
@@ -274,7 +274,8 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     .sort((a, b) => b.mandats - a.mandats || b.votes - a.votes);
 
   const mandateParties = allParties.filter(hasMandate);
-  const parties = showCountingParties || showAllParties ? allParties : mandateParties;
+  const partyFilter = getPartyFilterState(showAllParties, showCountingParties && totalVotes === 0);
+  const parties = partyFilter.showAllParties ? allParties : mandateParties;
 
   const baseBlockThreshold = Math.ceil(baseSumVotes * baseConfig.blockPercentage);
 
@@ -328,8 +329,8 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         partySeatDeltas={displayedPartySeatDeltas}
         normalizedScenario={{ voteData: displayedVoteData }}
         onVoteChange={onVoteChange}
-        showAllParties={showCountingParties || showAllParties}
-        hidePartyFilter={showCountingParties}
+        showAllParties={partyFilter.showAllParties}
+        hidePartyFilter={partyFilter.hidePartyFilter}
         setShowAllParties={setShowAllParties}
         showZeroSeatLabel={canPassThresholdWithoutMandate(
           displayedConfig.blockPercentage,
@@ -483,3 +484,4 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     </div>
   );
 }
+

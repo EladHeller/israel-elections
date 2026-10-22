@@ -12,7 +12,7 @@
     "type-check": "tsc --noEmit",
     "upload-client": "node uploadClient.js",
     "build": "rm -rf dist && tsc",
-    "build:test": "rm -rf dist && tsc --sourceMap",
+    "build:test": "rm -rf dist && tsc --sourceMap && tsc infra/s3.ts --outDir dist/infra --target ES2022 --module NodeNext --esModuleInterop --sourceMap --skipLibCheck",
     "deploy": "tsx ./infra/CD/deploy-all.ts",
     "test:ci": "npm run type-check && npm run test:coverage && npm run lint:test",
     "build:client": "cd elections-client && npm ci && npm run build"
@@ -48,3 +48,4 @@
     "rimraf": "^5.0.5"
   }
 }
+

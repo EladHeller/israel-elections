@@ -1,3 +1,4 @@
+import { LambdaClient, UpdateFunctionCodeCommand, waitUntilFunctionUpdatedV2 } from '@aws-sdk/client-lambda';
 import {
   CloudFormationClient,
   DescribeStacksCommand,
@@ -96,7 +97,7 @@ async function buildAndZip(siteUrl: string) {
 
   console.log('Creating zips...');
   // Backend zip
-  await exec('rm -f dist.zip && zip -rq9 dist.zip ./dist');
+  await exec('rm -f dist.zip && zip -rq9 dist.zip ./dist ./node_modules');
   // Client zip
   await exec('rm -f client.zip && zip -rq9 client.zip ./elections-client/dist');
 }
@@ -119,7 +120,10 @@ async function uploadFiles(distributionId: string) {
 
   await Promise.all(files.map(async ({ file }: FileData) => {
     const key = file.replace(`${basePath}/`, '');
-    const updated = await upload(clientCodeName, key, file);
+    // The listener owns live results; deployment may only seed missing objects.
+    const initialOnly = key === `data/${currElections}/allResults.json`
+      || key === `data/${currElections}/elections.csv`;
+    const updated = await upload(clientCodeName, key, file, undefined, initialOnly);
     if (updated) updatedFiles.push(`/${key}`);
   }));
 
@@ -202,6 +206,15 @@ async function main() {
     ['CAPABILITY_NAMED_IAM'],
   );
 
+  // S3Key stays dist.zip, so CloudFormation cannot detect a new code archive.
+  const lambda = new LambdaClient({ region });
+  for (const FunctionName of ['Israel-elections-function', 'Israel-elections-scenario-share']) {
+    await lambda.send(new UpdateFunctionCodeCommand({
+      FunctionName, S3Bucket: bucketCodeName, S3Key: 'dist.zip',
+    }));
+    await waitUntilFunctionUpdatedV2({ client: lambda, maxWaitTime: 300 }, { FunctionName });
+  }
+
   const newScenarioApiEndpoint = getOutput(backendOutputs, 'ScenarioApiEndpoint');
   if (!newScenarioApiEndpoint) throw new Error('Missing ScenarioApiEndpoint output');
 
@@ -218,3 +231,4 @@ main().catch(err => {
   console.error('Deployment failed:', err);
   process.exit(1);
 });
+
