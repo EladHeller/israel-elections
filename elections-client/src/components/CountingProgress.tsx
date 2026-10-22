@@ -31,7 +31,10 @@ export default function CountingProgress({ results, totalVotes, isDemo }: {
     </p>
     <p role="status" className={isEarly && !awaitingResults ? 'counting-progress-warning' : 'counting-progress-note'}>
       {awaitingResults ? 'עדיין לא התקבלו תוצאות אמת. התוצאות יוצגו כאן אוטומטית עם הגעתן.' : isEarly ? 'הספירה בראשיתה. התוצאות החלקיות עלולות להיות שונות מאוד מהתוצאות הסופיות.'
+        : percentage !== null && percentage > 99 ? 'התוצאות אינן סופיות עדיין.'
+        : percentage !== null && percentage > 50 ? 'התוצאות חלקיות.'
         : 'התוצאות חלקיות. הקלפיות שנספרו אינן בהכרח מייצגות את כלל המצביעים.'}
     </p>
   </section>;
 }
+
