@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { S3Client, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import { getAllDirsFiles, upload } from '../s3';
+import { getAllDirsFiles, upload } from '../../dist/infra/s3.js';
 
 const md5 = (body: Buffer) => createHash('md5').update(body).digest('hex');
 

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { upload } from '../s3';
+import { upload } from '../../dist/infra/s3.js';
 
 test('deployment preserves published results and initializes missing live files atomically', async context => {
   const dir = await mkdtemp(join(tmpdir(), 'elections-deploy-'));
