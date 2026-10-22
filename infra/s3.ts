@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
 import path from 'path';
-import { S3Client, HeadObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3';
+import { S3Client, HeadObjectCommand, PutObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import mime from 'mime-types';
 
@@ -49,7 +49,27 @@ async function getEtagOfFile(stream: Buffer): Promise<string> {
   return `${md5(Buffer.from(md5Chunks.join(''), 'hex'))}-${chunksNumber}`;
 }
 
-export async function upload(bucket: string, key: string, filePath: string, acl?: ObjectCannedACL): Promise<boolean> {
+export async function upload(bucket: string, key: string, filePath: string, acl?: ObjectCannedACL, initialOnly = false): Promise<boolean> {
+  if (initialOnly) {
+    // A conditional write also protects results published while deployment is running.
+    const contentType = mime.contentType(path.extname(key));
+    try {
+      await s3.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: await fs.readFile(filePath),
+        ContentType: typeof contentType === 'string' ? contentType : 'application/octet-stream',
+        ACL: acl,
+        IfNoneMatch: '*',
+      }));
+      console.log(`${key} initialized`);
+      return true;
+    } catch (error) {
+      if (error?.$metadata?.httpStatusCode !== 412) throw error;
+      console.log(`${key} already exists; preserving live data`);
+      return false;
+    }
+  }
   const s3Object = await s3.send(new HeadObjectCommand({
     Bucket: bucket,
     Key: key,
@@ -79,3 +99,4 @@ export async function upload(bucket: string, key: string, filePath: string, acl?
   console.log(`${key} updated`);
   return true;
 }
+
