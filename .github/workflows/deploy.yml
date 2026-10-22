@@ -62,4 +62,3 @@ jobs:
           export DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
           export SUB_DOMAIN=${{ secrets.SUB_DOMAIN }}
           npm run deploy
-

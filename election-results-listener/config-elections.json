@@ -1,6 +1,5 @@
 {
   "26": {
-    "csvUrl": "https://dlse5y3mjhky6.cloudfront.net/test-data/live-results.csv",
     "algorithm": "baderOffer",
     "blockPercentage": 0.0325,
     "agreements": [["רק", "ל"], ["דרך", "אמת"], ["עם", "ודם"], ["מחל", "ט"], ["שס", "ג"]]
@@ -471,4 +470,3 @@
     }
   }
 }
-
