@@ -1760,3 +1760,36 @@ body {
 @media (max-width: 420px) {
   .bloc-editor-columns.bloc-editor-all-groups { grid-template-columns: 1fr; }
 }
+
+.bloc-editor-all-groups .bloc-editor-column.has-unassigned {
+  border: 2px solid var(--warning-text);
+  background: var(--selection-background);
+}
+.bloc-editor-column.has-unassigned .bloc-editor-target {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--warning-text); background: transparent;
+}
+.bloc-unassigned-count {
+  margin-inline-start: auto; padding: 2px 8px; border-radius: 999px;
+  background: var(--card); border: 1px solid currentColor;
+  font-variant-numeric: tabular-nums;
+}
+.bloc-editor-column.has-unassigned .bloc-chip {
+  background: var(--card); border-color: var(--control-border); font-weight: 700;
+}
+.bloc-editor-column.has-unassigned .bloc-chip.is-selected {
+  background: var(--selection-background); border-color: var(--warning-text);
+}
+
+/* Keep parties outside the blocs visible alongside the majority totals. */
+.unassigned-summary {
+  display: grid; gap: 12px; margin-top: 22px; padding: 16px;
+  border: 1px solid var(--warning-text); border-inline-start-width: 5px;
+  border-radius: 12px; background: var(--selection-background); color: var(--ink-90);
+}
+.unassigned-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; font-size: 16px; }
+.unassigned-seats { color: var(--warning-text); white-space: nowrap; }
+.unassigned-seats strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+.unassigned-parties { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.unassigned-parties li { display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); font-size: 14px; }
+.unassigned-parties strong { white-space: nowrap; font-variant-numeric: tabular-nums; }

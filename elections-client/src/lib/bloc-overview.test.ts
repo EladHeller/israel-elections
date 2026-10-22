@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { computeBlocOverview } from './bloc-overview';
 import { computeBlocMap, computeBlocTotals } from './analytics';
 import configs from '../data/blocs.json';
+import { getElectionBlocs } from './bloc-preferences';
 
 describe('complementary bloc overview', () => {
   const blocs = configs['26'];
@@ -37,8 +38,21 @@ describe('complementary bloc overview', () => {
     assert.equal(unassigned.majorityText, 'עוד 11 לרוב חוסם');
   });
 
-  it('keeps historical blocs independent and uses custom labels in majority messages', () => {
-    const historical = computeBlocOverview({ blocks: configs['25'].blocks }, {});
+  it('uses block insertion order when an explicit order is absent', () => {
+    const unordered = { blocks: {
+      second: { label: 'גוש שני', color: '#2563eb', parties: ['ב'] },
+      first: { label: 'גוש ראשון', color: '#dc2626', parties: ['א'] },
+    } };
+    const rows = computeBlocOverview(unordered, { first: 61 });
+    assert.deepEqual(rows.map((row) => row.key), ['second', 'first']);
+    assert.deepEqual(rows.map((row) => row.combinedSeats), [0, 61]);
+    assert.ok(rows.every((row) => row.complementaryKeys.length === 0));
+    assert.equal(rows[0].majorityText, 'עוד 61 לרוב');
+    assert.equal(rows[1].majorityText, 'יש רוב לגוש ראשון');
+  });
+
+  it('keeps unconfigured elections independent and uses custom labels in majority messages', () => {
+    const historical = computeBlocOverview(getElectionBlocs(configs, '20'), {});
     assert.equal(historical.length, 2);
     assert.ok(historical.every((row) => row.complementaryKeys.length === 0));
     const renamed = { ...blocs, blocks: { ...blocs.blocks, gushB: { ...blocs.blocks.gushB, label: 'מחנה א' } } };
