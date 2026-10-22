@@ -62,6 +62,24 @@ test('keeps the partial-results notice above the early threshold and labels demo
   assert.doesNotMatch(html, /הספירה בראשיתה|counting-progress-warning/);
 });
 
+test('removes the representativeness warning strictly above 50% and changes the notice strictly above 99%', () => {
+  for (const counted of [50000, 50001, 99000, 99001, 100000]) {
+    const html = render(counted, counted, 100000);
+    if (counted <= 50000) {
+      assert.match(html, /הקלפיות שנספרו אינן בהכרח מייצגות את כלל המצביעים/);
+    } else {
+      assert.doesNotMatch(html, /הקלפיות שנספרו אינן בהכרח מייצגות את כלל המצביעים/);
+    }
+    if (counted > 99000) {
+      assert.match(html, /התוצאות אינן סופיות עדיין/);
+      assert.doesNotMatch(html, /התוצאות חלקיות/);
+    } else {
+      assert.match(html, /התוצאות חלקיות/);
+      assert.doesNotMatch(html, /התוצאות אינן סופיות עדיין/);
+    }
+  }
+});
+
 test('explains unavailable estimates and legacy valid-only counts without a misleading progress bar', () => {
   const missing = render(20, undefined);
   assert.match(missing, /קולות כשרים נספרו/);
@@ -167,3 +185,4 @@ test('announces arriving results and subsequent changes after waiting ends', () 
   assert.match(crossed, /ירדה מתחת לאחוז החסימה/);
   assert.doesNotMatch(changed, /ממתינים לתוצאות|עדיין לא התקבלו/);
 });
+
