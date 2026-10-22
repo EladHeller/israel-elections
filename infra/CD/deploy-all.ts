@@ -120,7 +120,10 @@ async function uploadFiles(distributionId: string) {
 
   await Promise.all(files.map(async ({ file }: FileData) => {
     const key = file.replace(`${basePath}/`, '');
-    const updated = await upload(clientCodeName, key, file);
+    // The listener owns live results; deployment may only seed missing objects.
+    const initialOnly = key === `data/${currElections}/allResults.json`
+      || key === `data/${currElections}/elections.csv`;
+    const updated = await upload(clientCodeName, key, file, undefined, initialOnly);
     if (updated) updatedFiles.push(`/${key}`);
   }));
 
