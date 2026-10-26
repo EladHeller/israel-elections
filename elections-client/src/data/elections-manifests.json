@@ -1,6 +1,6 @@
 {
   "26": {
-    "phase": "listsFinal",
+    "phase": "counting",
     "lists": [
       {
         "ballotLetter": "רק",
@@ -119,16 +119,8 @@
         "name": "הליכוד"
       },
       {
-        "ballotLetter": "כן",
-        "name": "כחול לבן"
-      },
-      {
         "ballotLetter": "ט",
         "name": "הציונות הדתית וזהות"
-      },
-      {
-        "ballotLetter": "צבי",
-        "name": "אחי"
       },
       {
         "ballotLetter": "בי",
@@ -154,6 +146,10 @@
         "ballotLetter": "ני",
         "name": "נעם"
       }
+    ],
+    "withdrawnLists": [
+      "צבי",
+      "כן"
     ]
   }
 }

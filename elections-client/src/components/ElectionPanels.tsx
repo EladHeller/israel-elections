@@ -168,7 +168,7 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
     {editable && (
       <div className="add-agreement">
         <select value={addAgreementA} onChange={(e) => setAddAgreementA(e.target.value)}>
-          <option value="">מפלגה א׳</option>
+          <option value="">רשימה א׳</option>
           {agreementSelectableParties.map((party) => (
             <option key={party} value={party}>
               {getPartyName(party)}
@@ -176,7 +176,7 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
           ))}
         </select>
         <select value={addAgreementB} onChange={(e) => setAddAgreementB(e.target.value)}>
-          <option value="">מפלגה ב׳</option>
+          <option value="">רשימה ב׳</option>
           {agreementSelectableParties
             .filter((party) => party !== addAgreementA)
             .map((party) => (
@@ -242,7 +242,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
 }) => (
   <div className={`panel party-panel${isLatestElection ? ' dashboard-party-panel' : ''}`}>
     <div className="panel-head">
-      <h2>{isLatestElection ? 'מנדטים לפי מפלגה' : 'מפלגות'}{isDemo && <span className="demo-label"> · נתוני דמה</span>}</h2>
+      <h2>{isLatestElection ? 'מנדטים לפי רשימה' : 'רשימות'}{isDemo && <span className="demo-label"> · נתוני דמה</span>}</h2>
       {editable && isEdited && (
         <button type="button" className="ghost" onClick={resetScenario}>
           איפוס לתוצאות מקור
@@ -270,8 +270,8 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
       />
       <span>
         {showZeroSeatLabel
-          ? 'הראה מפלגות ללא מנדטים'
-          : 'הראה מפלגות שלא עברו את אחוז החסימה'}
+          ? 'הראה רשימות ללא מנדטים'
+          : 'הראה רשימות שלא עברו את אחוז החסימה'}
       </span>
     </label>}
   </div>

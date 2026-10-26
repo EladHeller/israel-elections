@@ -72,7 +72,7 @@ const Step1BlockFilter: React.FC<BlockFilterProps> = ({
     <table className="calc-table">
       <thead>
         <tr>
-          <th>מפלגה</th>
+          <th>רשימה</th>
           <th>קולות</th>
           <th>אחוז</th>
           <th>תוצאה</th>
@@ -117,7 +117,7 @@ const Step2ModedLeMandat: React.FC<Step2Props> = ({
 }) => (
   <div>
     <p className="calc-step-desc">
-      מחשבים: קולות כשרים של מפלגות שעברו ÷ {totalMandats} מנדטים
+      מחשבים: קולות כשרים של רשימות שעברו ÷ {totalMandats} מנדטים
     </p>
     <div className="calc-formula-row">
       <span className="calc-formula-num">
@@ -147,13 +147,13 @@ const Step3WholeMandates: React.FC<Step3Props> = ({
 }) => (
   <div>
     <p className="calc-step-desc">
-      לכל מפלגה: <code>קולות ÷ מודד = מנדטים שלמים (ללא שארית)</code>. סה״כ מנדטים שלמים:{' '}
+      לכל רשימה: <code>קולות ÷ מודד = מנדטים שלמים (ללא שארית)</code>. סה״כ מנדטים שלמים:{' '}
       <strong>{totalWhole}</strong>, נותרו לחלוקה: <strong>{remainingMandats}</strong>
     </p>
     <table className="calc-table">
       <thead>
         <tr>
-          <th>מפלגה</th>
+          <th>רשימה</th>
           <th>קולות</th>
           <th>מנדטים שלמים</th>
           <th>שארית קולות</th>
@@ -197,13 +197,13 @@ const Step4Agreements: React.FC<AgreementsProps> = ({
       {valid.length > 0 && (
         <>
           <p className="calc-step-desc">
-            קולות המפלגות בכל הסכם מצטרפים לחישוב המנדטים המשותף:
+            קולות הרשימות בכל הסכם מצטרפים לחישוב המנדטים המשותף:
           </p>
           <table className="calc-table">
             <thead>
               <tr>
-                <th>מפלגה א׳</th>
-                <th>מפלגה ב׳</th>
+                <th>רשימה א׳</th>
+                <th>רשימה ב׳</th>
                 <th>קולות משותפים</th>
                 <th>מנדטים שלמים משותפים</th>
               </tr>
@@ -225,13 +225,13 @@ const Step4Agreements: React.FC<AgreementsProps> = ({
       {invalid.length > 0 && (
         <>
           <p className="calc-step-desc" style={{ marginTop: valid.length > 0 ? 16 : 0 }}>
-            ❌ הסכמים שלא נכנסו לתוקף (מפלגה אחת או יותר לא עברה את אחוז החסימה):
+            ❌ הסכמים שלא נכנסו לתוקף (רשימה אחת או יותר לא עברה את אחוז החסימה):
           </p>
           <table className="calc-table">
             <thead>
               <tr>
-                <th>מפלגה א׳</th>
-                <th>מפלגה ב׳</th>
+                <th>רשימה א׳</th>
+                <th>רשימה ב׳</th>
                 <th>סיבת הביטול</th>
               </tr>
             </thead>
@@ -271,14 +271,14 @@ const Step5RemainderRounds: React.FC<Step5Props> = ({
     return (
       <div>
         <p className="calc-step-desc">
-          שיטת <strong>בדר–עופר</strong>: בכל סיבוב מחולק המנדט הנוסף למפלגה/הסכם עם
+          שיטת <strong>בדר–עופר</strong>: בכל סיבוב מחולק המנדט הנוסף לרשימה/הסכם עם
           היחס הגבוה ביותר (קולות ÷ (מנדטים+1)). חוזרים {remainingMandats} פעמים.
           בכל סיבוב מוצג היחס של כל המועמדים; הזוכה (היחס הגבוה ביותר) מודגש בטבלה.
         </p>
         <table className="calc-table">
           <thead>
             <tr>
-              <th>מפלגה</th>
+              <th>רשימה</th>
               <th>קולות</th>
               <th>מנדטים נוכחיים</th>
               <th>מכנה</th>
@@ -314,14 +314,14 @@ const Step5RemainderRounds: React.FC<Step5Props> = ({
   return (
     <div>
       <p className="calc-step-desc">
-        שיטת <strong>עיגול כלפי מעלה</strong>: המפלגות ממוינות לפי שארית הקולות .
+        שיטת <strong>עיגול כלפי מעלה</strong>: הרשימות ממוינות לפי שארית הקולות .
         {remainingMandats} הראשונות מקבלות מנדט עודף.
       </p>
       <table className="calc-table">
         <thead>
           <tr>
             <th>דירוג</th>
-            <th>מפלגה</th>
+            <th>רשימה</th>
             <th>קולות</th>
             <th>מנדטים שלמים</th>
             <th>שארית</th>
@@ -452,13 +452,13 @@ const AgreementSplitDetail: React.FC<AgreementSplitDetailProps> = ({
           <>
             <p className="calc-step-desc" style={{ marginTop: 8 }}>
               שיטת <strong>בדר–עופר</strong> לחלוקת {remainingAfterWhole}{' '}
-              {remainingAfterWhole === 1 ? 'מנדט' : 'מנדטים'} עודפים בין המפלגות
+              {remainingAfterWhole === 1 ? 'מנדט' : 'מנדטים'} עודפים בין הרשימות
               בהסכם.
             </p>
             <table className="calc-table">
               <thead>
                 <tr>
-                  <th>מפלגה</th>
+                  <th>רשימה</th>
                   <th>קולות</th>
                   <th>מנדטים נוכחיים</th>
                   <th>מכנה</th>
@@ -507,7 +507,7 @@ const AgreementSplitDetail: React.FC<AgreementSplitDetailProps> = ({
         <thead>
           <tr>
             <th>דירוג</th>
-            <th>מפלגה</th>
+            <th>רשימה</th>
             <th>קולות</th>
             <th>מנדטים שלמים</th>
             <th>שארית</th>
@@ -564,7 +564,7 @@ const Step6AgreementSplits: React.FC<Step6Props> = ({
   return (
     <div>
       <p className="calc-step-desc">
-        כל הסכם קיבל מכסת מנדטים — עכשיו מחלקים בין שתי המפלגות בהסכם:
+        כל הסכם קיבל מכסת מנדטים — עכשיו מחלקים בין שתי הרשימות בהסכם:
       </p>
       {agreementSplits.map((split) => (
         <AgreementSplitDetail
@@ -598,7 +598,7 @@ const Step7FinalResults: React.FC<Step7Props> = ({
       <table className="calc-table">
         <thead>
           <tr>
-            <th>מפלגה</th>
+            <th>רשימה</th>
             <th>שלמים</th>
             <th>עודפים</th>
             <th>סה״כ</th>

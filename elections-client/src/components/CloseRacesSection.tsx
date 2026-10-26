@@ -55,7 +55,7 @@ const SeatTable = ({ races, limit, getPartyName, onVoteDelta }: {
 }) => (
   <table className="close-seat-table" aria-label="מרחק בקולות מהשגת מנדט ומאיבוד מנדט">
     <thead>
-      <tr><th scope="col">מפלגה</th><th scope="col">מנדטים</th>
+      <tr><th scope="col">רשימה</th><th scope="col">מנדטים</th>
         <th scope="col">להשגת מנדט</th><th scope="col">לאיבוד מנדט</th></tr>
     </thead>
     <tbody>
@@ -91,7 +91,7 @@ export default function CloseRacesSection({
       {blockPercentage === 0 ? (
         <p className="close-races-empty">אין אחוז חסימה בתרחיש הזה.</p>
       ) : thresholdRaces.length === 0 ? (
-        <p className="close-races-empty">אין מפלגות קרובות לאחוז החסימה.</p>
+        <p className="close-races-empty">אין רשימות קרובות לאחוז החסימה.</p>
       ) : (
         <>
           <div className="close-threshold-axis" aria-hidden="true">
@@ -134,7 +134,7 @@ export default function CloseRacesSection({
           <p className="close-races-subtitle">מודגשים: עד 10% ממודד המנדט · עד {numberFormat.format(seatLimit)} קולות</p>
           <div>
             {seatRaces.length === 0 ? (
-              <p className="close-races-empty">אין מפלגות להצגה.</p>
+              <p className="close-races-empty">אין רשימות להצגה.</p>
             ) : (
               <SeatTable races={seatRaces} limit={seatLimit} getPartyName={getPartyName}
                 onVoteDelta={onVoteDelta} />

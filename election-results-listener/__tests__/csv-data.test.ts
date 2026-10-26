@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getCsvData, getCsvResults, fetchResultsCsv } from '../../dist/csv-data.js';
 import config from '../config';
+import { readFileSync } from 'node:fs';
 
 test('configured CSV import excludes committee codes with and without a BOM', () => {
   for (const header of ['סמל ועדה', '\uFEFFסמל ועדה']) {
@@ -44,10 +45,10 @@ test('ignores empty header columns without interpreting them as parties', () => 
 });
 
 test('rejects malformed source data before publication', () => {
-  for (const csv of ['', 'סמל ישוב,מחל\n', 'סמל ישוב,מחל,מחל\n1,2,3',
+  for (const csv of ['', 'סמל ישוב,מחל,מחל\n1,2,3',
     '<html>error</html>\nerror', 'סמל ישוב,כשרים\n1,10',
     'מחל,אמת\n2,3', 'סמל ישוב,מחל\n1,-1', 'סמל ישוב,מחל\n1,1.5',
-    'סמל ישוב,מחל\n1,nope', 'סמל ישוב,מחל\n1,', 'סמל ישוב,מחל\n1,0',
+    'סמל ישוב,מחל\n1,nope', 'סמל ישוב,מחל\n1,',
     'סמל ישוב,מחל\n1,9007199254740992',
     'סמל ישוב,מחל\n1,9007199254740991\n2,1', 'סמל ישוב,מחל\n1,2,3']) {
     assert.throws(() => getCsvData(csv, metadata), undefined, csv);
@@ -76,4 +77,21 @@ test('uses a valid current timestamp when Last-Modified is absent or invalid', a
     const result = await fetchResultsCsv('url');
     assert.ok(Date.parse(result.time) >= before && Date.parse(result.time) <= Date.now());
   }
+});
+
+test('accepts the official header-only preparation file with its trailing empty column', () => {
+  const csv = readFileSync(new URL('./fixtures/elections-26-header.csv', import.meta.url), 'utf8');
+  const results = getCsvResults(csv, config.notPartiesKeys);
+  assert.equal(Object.keys(results.voteData).length, 38);
+  assert.ok(Object.values(results.voteData).every(party => party.votes === 0));
+  assert.equal(results.countedVotes, 0);
+  assert.ok('צבי' in results.voteData && 'כן' in results.voteData);
+  assert.ok(!('' in results.voteData));
+});
+
+test('accepts zero-filled rows and header-only files without invalid-ballot columns', () => {
+  assert.deepEqual(getCsvResults('סמל ישוב,פסולים,מחל,אמת\n1,0,0,0', [...metadata, 'פסולים']), {
+    voteData: { מחל: { votes: 0 }, אמת: { votes: 0 } }, countedVotes: 0,
+  });
+  assert.deepEqual(getCsvResults('סמל ישוב,מחל\n', metadata), { voteData: { מחל: { votes: 0 } } });
 });

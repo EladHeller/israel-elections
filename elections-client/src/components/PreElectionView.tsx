@@ -26,7 +26,7 @@ const PreElectionView: React.FC<PreElectionViewProps> = ({ manifest, electionCon
     <section className="grid grid-single">
       <div className="panel">
         <div className="panel-head">
-          <h2>מפלגות</h2>
+          <h2>רשימות</h2>
           {manifest.electionDate && (
             <span className="election-date">
               יום הבחירות: {formatElectionDate(manifest.electionDate)}
