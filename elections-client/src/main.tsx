@@ -13,7 +13,14 @@ if (!container) {
 
 createRoot(container).render(
   <React.StrictMode>
-    <BrowserRouter><App /></BrowserRouter>
+    <BrowserRouter>
+      <App />
+      <footer className="site-footer" dir="rtl">
+        <a href="https://github.com/EladHeller/israel-elections" target="_blank" rel="noopener noreferrer">
+          קוד המקור ב־GitHub
+        </a>
+      </footer>
+    </BrowserRouter>
   </React.StrictMode>,
 );
 
