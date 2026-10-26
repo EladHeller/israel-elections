@@ -94,7 +94,7 @@ export default function BlocsOverview({ blocs, totals, deltas, parties, results,
             })}
           </div>
         </>
-      ) : <p className="bloc-empty">טרם הוגדרה חלוקה לגושים. אפשר לבחור את המפלגות בכל גוש.</p>}
+      ) : <p className="bloc-empty">טרם הוגדרה חלוקה לגושים. אפשר לבחור את הרשימות בכל גוש.</p>}
 
       <UnassignedParties parties={visibleUnassigned.map((party) => ({ party, mandats: results[party]?.mandats || 0 }))}
         getPartyName={getPartyName} hasResults={hasResults} />

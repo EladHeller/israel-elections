@@ -49,6 +49,15 @@ To publish the lists after registration closes, update the election's phase to `
 and populate its `lists` array. Move it to `counting` only after the corresponding
 `data/<election>/allResults.json` file is available.
 
+The listener accepts the official pre-election CSV with headers only, or rows of
+zero votes, and publishes a zero-result snapshot. It refuses to replace previously
+published nonzero counts with an empty snapshot. CSV/HTTP errors still fail without
+changing the published results. Stale test results must be reset explicitly.
+
+For withdrawn lists, remove them from the manifest's `lists` array and add their
+ballot letters to `withdrawnLists`. The client excludes these letters from loaded
+results, including old snapshots and CSV columns that the source still retains.
+
 ### Counting progress and turnout estimate
 
 Set `totalVotes` for the current election in

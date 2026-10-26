@@ -1,9 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import config from '../config';
+import config, { getProperties } from '../config';
 
 describe('config', () => {
   it('should have default properties', () => {
+    assert.equal(getProperties().currElections, config.currElections);
     assert.equal(typeof config.currElections, 'number');
     assert.equal(typeof config.bucket, 'string');
     assert.ok(Array.isArray(config.notPartiesKeys));

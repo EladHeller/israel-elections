@@ -3,7 +3,7 @@ import { calcVotesResults } from './calc-elections';
 import { upload, isFileAlreadyExists } from './s3';
 import config from './config';
 import { invalidCache } from './cloudfront';
-import { resultsMatch } from './result-state';
+import { resultsMatch, assertCanPublishEmptyResults } from './result-state';
 
 const {
   notPartiesKeys, currElections, electionsConfig, distributionID,
@@ -30,6 +30,9 @@ export async function csvMonitor() {
   const { csv: csvData, time } = await fetchResultsCsv(csvUrl);
   const exists = (await isFileAlreadyExists(`data/${currElections}/elections.csv`, Buffer.from(csvData)));
   const { voteData, countedVotes } = getCsvResults(csvData, notPartiesKeys);
+  if (!Object.values(voteData).some(({ votes }) => votes > 0) && !countedVotes) {
+    await assertCanPublishEmptyResults(`data/${currElections}/allResults.json`);
+  }
   const results = { ...calcVotesResults(voteData, blockPercentage, agreements), countedVotes };
   if (exists && await resultsMatch(`data/${currElections}/allResults.json`, results)) return;
   await uploadResults(results, currElections, time);

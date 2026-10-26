@@ -55,7 +55,7 @@ describe('validateAgreements', () => {
       { a: { votes: 100, mandats: 0 } } satisfies CalcVoteData,
     );
     assert.equal(result.isValid, false);
-    assert.ok(result.errors[0].includes('כולל מפלגה חסרה'));
+    assert.ok(result.errors[0].includes('כולל רשימה חסרה'));
   });
 
   it('rejects non-array agreements', () => {
@@ -67,19 +67,19 @@ describe('validateAgreements', () => {
   it('rejects invalid pair format', () => {
     const result = validateAgreements([['a']] as any, { a: { votes: 100, mandats: 0 } });
     assert.equal(result.isValid, false);
-    assert.ok(result.errors[0].includes('אינו זוג מפלגות תקין'));
+    assert.ok(result.errors[0].includes('אינו זוג רשימות תקין'));
   });
 
   it('rejects same party twice in agreement', () => {
     const result = validateAgreements([['a', 'a']], { a: { votes: 100, mandats: 0 } });
     assert.equal(result.isValid, false);
-    assert.ok(result.errors[0].includes('כולל את אותה מפלגה פעמיים'));
+    assert.ok(result.errors[0].includes('כולל את אותה רשימה פעמיים'));
   });
 
   it('rejects non-existent party', () => {
     const result = validateAgreements([['a', 'nonexistent']], { a: { votes: 100, mandats: 0 } });
     assert.equal(result.isValid, false);
-    assert.ok(result.errors[0].includes('מפלגה שלא קיימת'));
+    assert.ok(result.errors[0].includes('רשימה שלא קיימת'));
   });
 });
 
