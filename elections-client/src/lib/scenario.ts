@@ -70,20 +70,20 @@ export const validateAgreements = (
 
   agreements.forEach((pair, index) => {
     if (!Array.isArray(pair) || pair.length !== 2) {
-      errors.push(`הסכם #${index + 1} אינו זוג מפלגות תקין.`);
+      errors.push(`הסכם #${index + 1} אינו זוג רשימות תקין.`);
       return;
     }
     const [a, b] = pair;
     if (!a || !b) {
-      errors.push(`הסכם #${index + 1} כולל מפלגה חסרה.`);
+      errors.push(`הסכם #${index + 1} כולל רשימה חסרה.`);
       return;
     }
     if (a === b) {
-      errors.push(`הסכם #${index + 1} כולל את אותה מפלגה פעמיים (${a}).`);
+      errors.push(`הסכם #${index + 1} כולל את אותה רשימה פעמיים (${a}).`);
       return;
     }
     if (!existingParties.has(a) || !existingParties.has(b)) {
-      errors.push(`הסכם #${index + 1} כולל מפלגה שלא קיימת בבחירות הנוכחיות.`);
+      errors.push(`הסכם #${index + 1} כולל רשימה שלא קיימת בבחירות הנוכחיות.`);
       return;
     }
 
@@ -95,7 +95,7 @@ export const validateAgreements = (
     seenPairs.add(key);
 
     if (usedParties.has(a) || usedParties.has(b)) {
-      errors.push(`אי אפשר לשייך מפלגה ליותר מהסכם אחד (${a}, ${b}).`);
+      errors.push(`אי אפשר לשייך רשימה ליותר מהסכם אחד (${a}, ${b}).`);
       return;
     }
     usedParties.add(a);

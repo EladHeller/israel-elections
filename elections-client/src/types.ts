@@ -50,6 +50,7 @@ export interface ElectionManifest {
   phase: ElectionPhase;
   electionDate?: string;
   lists: ElectionList[];
+  withdrawnLists?: string[];
 }
 
 export interface ElectionResultsPayload {

@@ -4,7 +4,7 @@ import type { VoteData } from './types';
 export function getCsvResults(csv: string, notPartiesKeys: string[]): { voteData: VoteData; countedVotes?: number } {
   const rows: string[][] = parse(csv, { bom: true, skip_empty_lines: true });
   const keys = rows.shift();
-  if (!keys || rows.length === 0 || new Set(keys).size !== keys.length) {
+  if (!keys || new Set(keys).size !== keys.length) {
     throw new Error('Invalid results CSV: missing data or duplicate columns');
   }
   const parties = keys.map((key, index) => ({ key, index }))
@@ -32,9 +32,6 @@ export function getCsvResults(csv: string, notPartiesKeys: string[]): { voteData
       }
       data[key].votes += votes;
     }
-  }
-  if (!Object.values(data).some(({ votes }) => votes > 0)) {
-    throw new Error('Results CSV contains no votes');
   }
   const validVotes = Object.values(data).reduce((sum, { votes }) => sum + votes, 0);
   if (!Number.isSafeInteger(validVotes + invalidVotes)) {

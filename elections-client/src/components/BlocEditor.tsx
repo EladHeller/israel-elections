@@ -26,7 +26,7 @@ export default function BlocEditor({ blocs, parties, partyToBloc, onPartyBlocCha
   return <div className="bloc-editor">
     <div className="bloc-editor-head">
       <span className="bloc-editor-title" role="status">
-        {selected ? `${getPartyName(selected)} נבחרה — בחר גוש להעברה` : 'גרור מפלגה לגוש, או בחר מפלגה ואז גוש'}
+        {selected ? `${getPartyName(selected)} נבחרה — בחר גוש להעברה` : 'גרור רשימה לגוש, או בחר רשימה ואז גוש'}
       </span>
       {selected && <button type="button" className="ghost" onClick={() => setSelected(null)}>ביטול</button>}
     </div>
@@ -64,7 +64,7 @@ export default function BlocEditor({ blocs, parties, partyToBloc, onPartyBlocCha
               onDragEnd={() => { setDragged(null); setSelected(null); }}>
               {getPartyName(party)}
             </button>)}
-            {!members.length && <span className="bloc-editor-title">אין מפלגות משויכות</span>}
+            {!members.length && <span className="bloc-editor-title">אין רשימות משויכות</span>}
           </div>
         </div>;
       })}

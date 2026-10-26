@@ -6,7 +6,7 @@ import { computeScenarioResults } from './scenario';
 const snapshot: SharedScenario = {
   version: 1, election: '25', demo: true,
   base: {
-    voteData: { א: { votes: 1000, mandats: 0, name: 'מפלגה ראשונה' }, ב: { votes: 2000, mandats: 0 } },
+    voteData: { א: { votes: 1000, mandats: 0, name: 'רשימה ראשונה' }, ב: { votes: 2000, mandats: 0 } },
     config: { algorithm: 'baderOffer', blockPercentage: 0.0325, agreements: [['א', 'ב']], totalVotes: 3100, turnoutPercentage: 70 },
   },
   scenario: {
