@@ -1,6 +1,20 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getCsvData, getCsvResults, fetchResultsCsv } from '../../dist/csv-data.js';
+import config from '../config';
+
+test('configured CSV import excludes committee codes with and without a BOM', () => {
+  for (const header of ['סמל ועדה', '\uFEFFסמל ועדה']) {
+    for (const csv of [
+      `${header},פסולים,מחל,אמת\n11893,3,10,2`,
+      `סמל ישוב,${header},פסולים,מחל,אמת\n1,11893,3,10,2`,
+    ]) {
+      assert.deepEqual(getCsvResults(csv, config.notPartiesKeys), {
+        voteData: { מחל: { votes: 10 }, אמת: { votes: 2 } }, countedVotes: 15,
+      });
+    }
+  }
+});
 
 const metadata = ['סמל ישוב', 'כשרים'];
 test('counted ballots include invalid votes from the same CSV, including a zero-invalid count', () => {
