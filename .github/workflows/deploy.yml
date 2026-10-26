@@ -27,7 +27,7 @@ jobs:
       - env_detect
     environment:
       name: ${{ needs.env_detect.outputs.env_name }}
-      url: ${{ needs.env_detect.outputs.env_name == 'dev' && steps.site_url.outputs.url || '' }}
+      url: ${{ steps.site_url.outputs.url }}
 
     runs-on: ubuntu-latest
 
@@ -60,8 +60,8 @@ jobs:
           export CURR_ELECTIONS=${{ secrets.CURR_ELECTIONS }}
           export CLIENT_CODE_BUCKET=${{ secrets.CLIENT_CODE_BUCKET }}
           export HOSTED_ZONE_ID=${{ secrets.HOSTED_ZONE_ID }}
-          export DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
-          export SUB_DOMAIN=${{ secrets.SUB_DOMAIN }}
+          export DOMAIN_NAME=${{ vars.DOMAIN_NAME }}
+          export SUB_DOMAIN=${{ vars.SUB_DOMAIN }}
           npm run deploy
 
       - name: Read deployed site URL
@@ -72,31 +72,3 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='SiteUrl'].OutputValue | [0]" \
             --output text)
           echo "url=$site_url" >> "$GITHUB_OUTPUT"
-
-  publish_prod_url:
-    needs: [env_detect, deploy]
-    if: needs.env_detect.outputs.env_name == 'prod'
-    runs-on: ubuntu-latest
-    permissions:
-      deployments: write
-    steps:
-      # Publish after deploy completes so its automatic status cannot overwrite the URL.
-      # The public production hostname is also an AWS configuration secret, which
-      # makes the Actions runner reject it when used as environment.url.
-      - name: Publish production deployment URL
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          deployment_id=$(gh api \
-            "repos/$GITHUB_REPOSITORY/deployments?sha=$GITHUB_SHA&environment=prod&per_page=1" \
-            --jq '.[0].id // empty')
-          if [ -z "$deployment_id" ]; then
-            echo "No production deployment found for $GITHUB_SHA" >&2
-            exit 1
-          fi
-          gh api --method POST \
-            "repos/$GITHUB_REPOSITORY/deployments/$deployment_id/statuses" \
-            -f state=success \
-            -f environment_url=https://elections.eladheller.com \
-            -f log_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
-            --silent
