@@ -25,8 +25,9 @@ jobs:
   deploy:
     needs:
       - env_detect
-    environment: 
+    environment:
       name: ${{ needs.env_detect.outputs.env_name }}
+      url: ${{ steps.site_url.outputs.url }}
 
     runs-on: ubuntu-latest
 
@@ -62,3 +63,12 @@ jobs:
           export DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
           export SUB_DOMAIN=${{ secrets.SUB_DOMAIN }}
           npm run deploy
+
+      - name: Read deployed site URL
+        id: site_url
+        run: |
+          site_url=$(aws cloudformation describe-stacks \
+            --stack-name Israel-elections-code-bucket \
+            --query "Stacks[0].Outputs[?OutputKey=='SiteUrl'].OutputValue | [0]" \
+            --output text)
+          echo "url=$site_url" >> "$GITHUB_OUTPUT"
