@@ -7,17 +7,17 @@ interface Props {
 }
 
 export default function UnassignedParties({ parties, getPartyName, hasResults = true }: Props) {
-  if (!parties.length) return null;
+  if (!hasResults || !parties.length) return null;
   const seats = parties.reduce((sum, party) => sum + party.mandats, 0);
   return <div className="unassigned-summary">
     <div className="unassigned-heading">
       <strong>רשימות ללא שיוך לגוש</strong>
-      {hasResults && <span className="unassigned-seats"><strong>{seats}</strong> מנדטים</span>}
+      <span className="unassigned-seats"><strong>{seats}</strong> מנדטים</span>
     </div>
     <ul className="unassigned-parties" aria-label="רשימות ללא שיוך לגוש">
       {parties.map(({ party, mandats }) => <li key={party}>
         <span>{getPartyName(party)}</span>
-        {hasResults && <strong>{mandats} מנדטים</strong>}
+        <strong>{mandats} מנדטים</strong>
       </li>)}
     </ul>
   </div>;
