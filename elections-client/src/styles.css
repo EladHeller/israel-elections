@@ -5,8 +5,15 @@
 }
 
 .site-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--ink-50);
   text-underline-offset: 3px;
+}
+
+.site-footer .github-icon {
+  flex-shrink: 0;
 }
 
 :root {
