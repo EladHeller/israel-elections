@@ -5,6 +5,32 @@
 
 A comprehensive platform for collecting, analyzing, and visualizing Israeli election results. The system features a backend listener for data ingestion and a modern web dashboard for interactive simulation and analysis.
 
+## Local macOS monitors
+
+Install independent monitors for production and development (these examples poll every minute):
+
+```sh
+npm run monitor:local:install -- prod default 60000
+npm run monitor:local:install -- dev default 60000
+```
+
+Replace `default` with the AWS profile to use for each environment. Each environment
+has its own LaunchAgent (`com.eladheller.israel-elections-results.prod` or `.dev`)
+and logs under `~/Library/Logs/israel-elections/prod/` or `dev/`. Reinstalling one
+environment restarts only that monitor. During the first installation, an old
+unqualified monitor is replaced only if it targets the same environment; otherwise
+it keeps running until you reinstall its environment. Existing logs are retained.
+
+Stop and remove a specific monitor with:
+
+```sh
+npm run monitor:local:uninstall -- dev
+npm run monitor:local:uninstall -- prod
+```
+
+Use `-- legacy` to remove an old unqualified monitor explicitly. Uninstalling
+without an environment prints usage and leaves all monitors running.
+
 ## Repository Layout
 
 ```
