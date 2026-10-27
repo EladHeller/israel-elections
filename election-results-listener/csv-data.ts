@@ -50,6 +50,7 @@ export async function fetchResultsCsv(url: string): Promise<{ csv: string; time:
 } });
   if (!response.ok) throw new Error(`Results source returned HTTP ${response.status}`);
   const csv = await response.text();
+  console.log({csv})
   const modified = response.headers.get('last-modified');
   const date = modified ? new Date(modified) : new Date();
   return { csv, time: (Number.isNaN(date.getTime()) ? new Date() : date).toISOString() };
