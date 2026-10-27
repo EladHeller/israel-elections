@@ -1,9 +1,8 @@
 #!/bin/zsh
 set -euo pipefail
 
-LABEL="com.eladheller.israel-elections-results"
+BASE_LABEL="com.eladheller.israel-elections-results"
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG_DIR="$HOME/Library/Logs/israel-elections"
 MODE="${1:-}"
 AWS_PROFILE_NAME="${2:-${AWS_PROFILE:-default}}"
@@ -27,6 +26,11 @@ case "$MODE" in
     ;;
   *) usage ;;
 esac
+
+LABEL="$BASE_LABEL.$MODE"
+PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+LEGACY_PLIST="$HOME/Library/LaunchAgents/$BASE_LABEL.plist"
+LOG_DIR="$LOG_DIR/$MODE"
 
 if ! [[ "$POLL_INTERVAL_MS" =~ ^[0-9]+$ ]] || (( POLL_INTERVAL_MS < 5000 )); then
   echo "poll-interval-ms must be an integer >= 5000"
@@ -75,6 +79,19 @@ env \
   DISTRIBUTION_ID="$DISTRIBUTION_ID" \
   LOCAL_POLL_INTERVAL_MS="$POLL_INTERVAL_MS" \
   "$NODE_BIN" "$TSX_CLI" "$MONITOR" --once
+
+# Only migrate the legacy service when it targets the environment being installed.
+# Installing dev must leave an existing legacy prod monitor running (and vice versa).
+if [[ -f "$LEGACY_PLIST" ]]; then
+  LEGACY_BUCKET="$(plutil -extract EnvironmentVariables.BUCKET raw -o - "$LEGACY_PLIST" 2>/dev/null || true)"
+  if [[ "$LEGACY_BUCKET" == "$BUCKET" ]]; then
+    launchctl bootout "gui/$(id -u)" "$LEGACY_PLIST" >/dev/null 2>&1 || true
+    rm -f "$LEGACY_PLIST"
+    echo "Replaced the legacy $MODE monitor. Its old logs were kept."
+  else
+    echo "Kept the legacy monitor for the other environment. Reinstall that environment to migrate it too."
+  fi
+fi
 
 launchctl bootout "gui/$(id -u)" "$PLIST" >/dev/null 2>&1 || true
 
