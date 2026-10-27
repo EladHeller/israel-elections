@@ -145,11 +145,15 @@
       {
         "ballotLetter": "ני",
         "name": "נעם לישראל"
+      },
+      {
+        "ballotLetter": "כן",
+        "name": "כחול לבן"
+      },
+      {
+        "ballotLetter": "צבי",
+        "name": "אחי"
       }
-    ],
-    "withdrawnLists": [
-      "צבי",
-      "כן"
     ]
   }
 }
