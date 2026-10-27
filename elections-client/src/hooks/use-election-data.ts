@@ -7,7 +7,6 @@ import partyNamesAll from '../data/party-names.json';
 import { detectAvailableElections, fetchElectionResults, LATEST_ELECTION_ID } from '../lib/data';
 import { getDefaultElectionId, phaseHasResults } from '../lib/election-manifest';
 import { fetchCountingEstimate } from '../lib/counting-progress';
-import { excludeWithdrawnLists } from '../lib/withdrawn-lists';
 import {
   LIVE_RESULTS_REFRESH_INTERVAL_MS,
   resultSnapshotsDiffer,
@@ -122,8 +121,7 @@ export const useElectionData = (requestedElection?: string, loadResults = true):
       requestInFlight = true;
       try {
         const [data, estimate] = await Promise.all([
-          fetchElectionResults<ElectionResultsPayload>(currentElection)
-            .then(data => excludeWithdrawnLists(data, manifest?.withdrawnLists)),
+          fetchElectionResults<ElectionResultsPayload>(currentElection),
           manifest?.phase === 'counting'
             ? fetchCountingEstimate(currentElection).catch(() => null)
             : Promise.resolve(undefined),

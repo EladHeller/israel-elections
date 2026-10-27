@@ -143,6 +143,14 @@
     "ני": {
       "votes": 0,
       "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
+      "votes": 0,
+      "mandats": 0
     }
   },
   "withoutAgreements": {
@@ -287,6 +295,14 @@
       "mandats": 0
     },
     "ני": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
       "votes": 0,
       "mandats": 0
     }
@@ -435,6 +451,14 @@
     "ני": {
       "votes": 0,
       "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
+      "votes": 0,
+      "mandats": 0
     }
   },
   "voteData": {
@@ -579,6 +603,14 @@
       "mandats": 0
     },
     "ני": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "כן": {
+      "votes": 0,
+      "mandats": 0
+    },
+    "צבי": {
       "votes": 0,
       "mandats": 0
     }
