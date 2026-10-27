@@ -19,6 +19,20 @@ const chromiumLaunchOptions = {
 
 const csvUrl = 'https://media26.bechirot.gov.il/files/expc.csv';
 
+async function summarizeResponse(response: any) {
+  const body = await response.text();
+  const headers = response.headers();
+
+  return {
+    status: response.status(),
+    wafAction: headers['x-amzn-waf-action'] ?? null,
+    lastModified: headers['last-modified'] ?? null,
+    contentType: headers['content-type'] ?? null,
+    contentLength: body.length,
+    preview: body.slice(0, 200),
+  };
+}
+
 export async function handler() {
   const browser = await chromium.launch(chromiumLaunchOptions);
 
@@ -26,43 +40,58 @@ export async function handler() {
     const context = await browser.newContext({ acceptDownloads: true });
     const page = await context.newPage();
 
-    let navigationError: string | undefined;
+    let navigation: Record<string, unknown>;
     try {
-      await page.goto(csvUrl, {
+      const response = await page.goto(csvUrl, {
         waitUntil: 'domcontentloaded',
         timeout: 30_000,
       });
+
+      navigation = response
+        ? {
+            status: response.status(),
+            wafAction: response.headers()['x-amzn-waf-action'] ?? null,
+            contentType: response.headers()['content-type'] ?? null,
+            url: response.url(),
+          }
+        : { response: null };
     } catch (error) {
-      navigationError = error instanceof Error ? error.message : String(error);
+      navigation = {
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
 
-    // If the CSV request is challenged, Chromium gets a chance to execute the
-    // WAF challenge on the protected URL and persist its cookies in the context.
-    await page.waitForTimeout(5_000);
+    const [defaultResponse, nodeLikeResponse] = await Promise.all([
+      context.request.get(csvUrl, { timeout: 30_000 }),
+      context.request.get(csvUrl, {
+        timeout: 30_000,
+        headers: {
+          accept: '*/*',
+          'user-agent': 'node',
+        },
+      }),
+    ]);
 
-    // browserContext.request shares the browser context's cookie storage, so this
-    // second request reuses any token/cookies established by the browser challenge.
-    const response = await context.request.get(csvUrl, { timeout: 30_000 });
-    const body = await response.text();
-    const headers = response.headers();
-
-    const csv = {
-      status: response.status(),
-      wafAction: headers['x-amzn-waf-action'] ?? null,
-      lastModified: headers['last-modified'] ?? null,
-      contentType: headers['content-type'] ?? null,
-      contentLength: body.length,
-      preview: body.slice(0, 200),
-    };
+    const [defaultRequest, nodeLikeRequest] = await Promise.all([
+      summarizeResponse(defaultResponse),
+      summarizeResponse(nodeLikeResponse),
+    ]);
 
     return {
-      statusCode: csv.status === 200 && csv.contentLength > 0 ? 200 : 502,
+      statusCode: [defaultRequest, nodeLikeRequest].some(
+        ({ status, contentLength }) => status === 200 && contentLength > 0,
+      )
+        ? 200
+        : 502,
       body: JSON.stringify({
-        navigationError,
         finalUrl: page.url(),
         chromiumVersion: browser.version(),
         cookies: (await context.cookies()).map(({ name, domain, expires }) => ({ name, domain, expires })),
-        csv,
+        navigation,
+        requests: {
+          default: defaultRequest,
+          nodeLike: nodeLikeRequest,
+        },
       }),
     };
   } finally {
