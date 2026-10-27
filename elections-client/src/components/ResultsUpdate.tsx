@@ -2,7 +2,6 @@ import React from 'react';
 import type { ElectionResultsPayload } from '../types';
 import { getResultChanges } from '../lib/live-results';
 import { getCountingProgress } from '../lib/counting-progress';
-import { formatTime } from '../lib/ui-helpers';
 
 interface Props {
   isDemo?: boolean;
@@ -24,7 +23,6 @@ export default function ResultsUpdate({ isDemo, previous, current, blockPercenta
   return (
     <section className="panel results-update" aria-label="העדכון האחרון">
       <div className="update-label">{!isDemo && <span className="live-dot" />}{isDemo ? 'עדכון לדוגמה · מידע דמה' : awaitingResults ? 'ממתינים לתוצאות' : 'בספירה'}
-        {!isDemo && !awaitingResults && current.time && <time dateTime={current.time}>נתונים מ־{formatTime(current.time)}</time>}
       </div>
       <div role="status" aria-live="polite" aria-atomic="true">
         {awaitingResults ? <span>עדיין לא התקבלו תוצאות אמת. התוצאות יתעדכנו אוטומטית.</span> : previous ? <>

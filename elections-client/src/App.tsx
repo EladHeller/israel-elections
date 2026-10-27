@@ -6,6 +6,7 @@ import AppHeader from './components/AppHeader';
 import { BlocsDistributionPanel } from './components/BlocsDistributionPanel';
 import BlocsOverview from './components/BlocsOverview';
 import ResultsUpdate from './components/ResultsUpdate';
+import ResultsTimestamp from './components/ResultsTimestamp';
 import { useBlocPreferences } from './hooks/use-bloc-preferences';
 import AllElectionsSummary from './components/AllElectionsSummary';
 import ElectionSettingsSection from './components/ElectionSettingsSection';
@@ -435,7 +436,10 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         availableElections={availableElections}
         viewMode={viewMode}
         setViewMode={setViewMode}
-        statusAction={shared && <Link className="shared-scenario-return" to={`/simulator/${currentElection}`}>חזרה לנתונים העדכניים</Link>}
+        statusAction={<>
+          {!isDemo && !isSimulator && !awaitingResults && <ResultsTimestamp time={results.time} />}
+          {shared && <Link className="shared-scenario-return" to={`/simulator/${currentElection}`}>חזרה לנתונים העדכניים</Link>}
+        </>}
         actions={displayedIsEdited && <ScenarioShare disabled={!agreementValidation.isValid} snapshot={{
           version: 1, election: currentElection, demo: isDemo,
           base: { voteData: Object.fromEntries(Object.entries(baseVoteData).map(([party, data]) =>
