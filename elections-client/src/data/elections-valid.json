@@ -1,7 +1,7 @@
 {
   "1": {
-    "validVotes": 434677,
-    "belowThresholdVotes": 19417
+    "validVotes": 434684,
+    "belowThresholdVotes": 19424
   },
   "2": {
     "validVotes": 687492,
@@ -44,8 +44,8 @@
     "belowThresholdVotes": 58978
   },
   "12": {
-    "validVotes": 2283118,
-    "belowThresholdVotes": 55500
+    "validVotes": 2283123,
+    "belowThresholdVotes": 55505
   },
   "13": {
     "validVotes": 2616841,
@@ -80,7 +80,7 @@
     "belowThresholdVotes": 189517
   },
   "21": {
-    "validVotes": 4309054,
+    "validVotes": 4309270,
     "belowThresholdVotes": 366016
   },
   "22": {
