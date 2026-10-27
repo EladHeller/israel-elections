@@ -11,6 +11,9 @@ FROM mcr.microsoft.com/playwright:v1.62.0-jammy AS playwright-browsers
 FROM node:24
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    make \
+    g++ \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
