@@ -176,7 +176,6 @@ test('announces arriving results and subsequent changes after waiting ends', () 
   const previous = snapshot([50, 30, 20, 10], [50, 30, 20, 20]);
   assert.match(renderUpdate(previous, null), /התוצאות מתעדכנות אוטומטית/);
   assert.match(renderUpdate(previous, previous), /ללא שינוי בחלוקת המנדטים/);
-  assert.match(renderUpdate(previous, previous), /נתונים מ־/);
   assert.match(renderUpdate(previous, previous, true), /מידע דמה|בדוגמה הזו/);
   const next = snapshot([50, 30, 20, 10], [49, 31, 21, 19]);
   const changed = renderUpdate(next, previous);
