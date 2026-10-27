@@ -38,12 +38,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && \
-    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --omit=dev --no-save playwright@1.62.0 aws-lambda-ric@3.3.0
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --omit=dev --no-save playwright@1.62.0
+
+# Keep the Lambda RIC outside the application package context. The application
+# intentionally overrides rimraf to v5, while aws-lambda-ric@3.3.0's node-gyp
+# dependency requires the rimraf v3 API during its native build.
+RUN mkdir -p /lambda-ric && \
+    cd /lambda-ric && \
+    npm init -y >/dev/null 2>&1 && \
+    npm install --omit=dev aws-lambda-ric@3.3.0
 
 COPY --from=build /app/dist ./dist
 COPY --from=playwright-browsers /ms-playwright /ms-playwright
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-ENTRYPOINT ["/usr/local/bin/npx", "aws-lambda-ric"]
+ENTRYPOINT ["/lambda-ric/node_modules/.bin/aws-lambda-ric"]
 CMD ["dist/playwright-smoke.handler"]
