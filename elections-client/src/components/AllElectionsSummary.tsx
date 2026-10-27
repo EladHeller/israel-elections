@@ -15,9 +15,8 @@ const formatPercent = (value: number | null): string =>
 const formatNumber = (value: number | null): string =>
   Number.isFinite(value) ? numberFormat.format(value as number) : '—';
 
-const rows: SummaryRow[] = Object.keys(electionsConfigAll as Record<string, any>)
-  .map((id) => {
-    const election = (electionsConfigAll as Record<string, any>)[id] || {};
+const rows: SummaryRow[] = Object.entries(electionsConfigAll)
+  .map(([id, election]) => {
     const totalVotes = Number(election.totalVotes);
     const electionVotes = (electionsValid as Record<string, any>)[id] || {};
     const validVotes = electionVotes.validVotes ?? null;
