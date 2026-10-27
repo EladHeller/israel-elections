@@ -4,7 +4,7 @@ import type { ElectionsConfig } from './types';
 
 const configSchema = convict({
   currElections: {
-    default: '25',
+    default: '26',
     env: 'CURR_ELECTIONS',
     format: 'nat',
   },
