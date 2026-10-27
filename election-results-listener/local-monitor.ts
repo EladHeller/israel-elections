@@ -1,7 +1,7 @@
 import config from './config';
 import { csvMonitor } from './csv-monitor';
 
-const DEFAULT_POLL_INTERVAL_MS = 60_000;
+const DEFAULT_POLL_INTERVAL_MS = 15_000;
 const MIN_POLL_INTERVAL_MS = 5_000;
 const HEARTBEAT_INTERVAL_MS = 5 * 60_000;
 

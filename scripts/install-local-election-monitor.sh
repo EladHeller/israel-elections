@@ -7,7 +7,7 @@ PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG_DIR="$HOME/Library/Logs/israel-elections"
 MODE="${1:-}"
 AWS_PROFILE_NAME="${2:-${AWS_PROFILE:-default}}"
-POLL_INTERVAL_MS="${3:-60000}"
+POLL_INTERVAL_MS="${3:-15000}"
 
 usage() {
   echo "Usage: npm run monitor:local:install -- <dev|prod> [aws-profile] [poll-interval-ms]"
