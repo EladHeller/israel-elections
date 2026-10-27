@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+elections-client/node_modules
+elections-client/dist
+.git
+.github
+dist.zip
+client.zip
+.DS_Store
