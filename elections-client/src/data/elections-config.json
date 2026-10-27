@@ -585,7 +585,9 @@
         "זץ",
         "נקי"
       ]
-    ]
+    ],
+    "turnoutPercentage": 77.7,
+    "totalVotes": 5695682
   },
   "25": {
     "finalResults": true,
