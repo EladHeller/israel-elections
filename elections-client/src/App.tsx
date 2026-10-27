@@ -437,7 +437,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         viewMode={viewMode}
         setViewMode={setViewMode}
         statusAction={<>
-          {!isDemo && !isSimulator && !awaitingResults && <ResultsTimestamp time={results.time} />}
+          {isCounting && !isDemo && !isSimulator && !awaitingResults && <ResultsTimestamp time={results.time} />}
           {shared && <Link className="shared-scenario-return" to={`/simulator/${currentElection}`}>חזרה לנתונים העדכניים</Link>}
         </>}
         actions={displayedIsEdited && <ScenarioShare disabled={!agreementValidation.isValid} snapshot={{
