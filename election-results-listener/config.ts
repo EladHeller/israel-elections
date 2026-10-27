@@ -43,7 +43,7 @@ const config: ServiceConfig = {
   distributionID: properties.distributionID,
   region: properties.region,
   electionsConfig,
-  notPartiesKeys: ['ברזל', 'ריכוז', 'שופט', 'קלפי', 'סמל ועדה', 'סמל ישוב', 'שם ישוב', 'בזב', 'מצביעים', 'פסולים',
+  notPartiesKeys: ['חיצוניות', 'קלפי אחרת', 'ברזל', 'ריכוז', 'שופט', 'קלפי', 'סמל ועדה', 'סמל ישוב', 'שם ישוב', 'בזב', 'מצביעים', 'פסולים',
     'כשרים', ' שם ישוב', 'כתובת', 'מספר קלפי', 'ת. עדכון', 'סמל קלפי', 'בז\'\'ב', 'נפה', 'פיצול', 'בוחרים', '﻿סמל ועדה'],
 }
 export default config;

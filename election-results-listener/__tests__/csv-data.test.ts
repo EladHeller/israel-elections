@@ -95,3 +95,14 @@ test('accepts zero-filled rows and header-only files without invalid-ballot colu
   });
   assert.deepEqual(getCsvResults('סמל ישוב,מחל\n', metadata), { voteData: { מחל: { votes: 0 } } });
 });
+
+test('configured CSV import excludes external and other-ballot metadata from results and totals', () => {
+  for (const values of ['0,0', '100,200', ',']) {
+    assert.deepEqual(getCsvResults(`סמל ישוב,חיצוניות,קלפי אחרת,פסולים,מחל,אמת\n1,${values},3,10,2`, config.notPartiesKeys), {
+      voteData: { מחל: { votes: 10 }, אמת: { votes: 2 } }, countedVotes: 15,
+    });
+  }
+  assert.deepEqual(getCsvResults('סמל ישוב,חיצוניות,קלפי אחרת,פסולים,מחל\n', config.notPartiesKeys), {
+    voteData: { מחל: { votes: 0 } }, countedVotes: 0,
+  });
+});
