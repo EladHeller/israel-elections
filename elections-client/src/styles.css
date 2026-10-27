@@ -1245,6 +1245,30 @@ body {
   background: var(--surface-muted);
 }
 
+.summary-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.summary-sort-button:hover {
+  color: var(--ink-90);
+}
+
+.summary-sort-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
 .election-date,
 .election-pending-note {
   color: var(--ink-50);
