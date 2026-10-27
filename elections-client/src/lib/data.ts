@@ -1,3 +1,5 @@
+import type { ElectionResultsPayload } from '../types';
+
 export const LATEST_ELECTION_ID = 25;
 
 export const detectAvailableElections = async (
@@ -18,6 +20,16 @@ export const fetchElectionResults = async <TResult = unknown>(
   if (!res.ok) {
     throw new Error(`Failed to load data for election ${electionId}`);
   }
-  return (res.json() as Promise<TResult>);
+  const results: Partial<ElectionResultsPayload> = await res.json();
+  const metadataColumns = ['חיצוניות', 'קלפי אחרת'];
+  const metadataVotes = metadataColumns.reduce((sum, key) => sum + (results.voteData?.[key]?.votes ?? 0), 0);
+  for (const field of ['voteData', 'realResults', 'withoutAgreements', 'beforeBaderOffer', 'afterBaderOffer'] as const) {
+    const values = results[field];
+    if (values) {
+      results[field] = Object.fromEntries(Object.entries(values).filter(([key]) => !metadataColumns.includes(key)));
+    }
+  }
+  if (results.countedVotes !== undefined) results.countedVotes -= metadataVotes;
+  return results as TResult;
 };
 
