@@ -17,7 +17,7 @@ const chromiumLaunchOptions = {
   },
 };
 
-const csvUrl = 'https://media26.bechirot.gov.il/files/expc.csv';
+const csvUrl = 'https://media26.bechirot.gov.il/files/expb.csv';
 
 async function summarizeResponse(response: any) {
   const body = await response.text();
