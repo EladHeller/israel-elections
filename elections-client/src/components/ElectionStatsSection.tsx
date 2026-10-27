@@ -37,7 +37,7 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
         <span>אחוז הצבעה</span>
       </div>
       <div className="summary-caption">
-        <bdi>{totalVotes != null ? numberFormat.format(totalVotes) : '—'}</bdi> {isCounting ? 'מצביעים לפי האומדן' : 'מצביעים'}
+        <bdi>{totalVotes != null ? numberFormat.format(totalVotes) : '—'}</bdi> מצביעים
       </div>
       <dl className="summary-breakdown">
         <div className="summary-detail">

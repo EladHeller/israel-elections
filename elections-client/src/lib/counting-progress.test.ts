@@ -44,6 +44,8 @@ test('renders the prominent count, accessible progress and early warning', () =>
   assert.match(early, /value="3.2"/);
   assert.match(early, /160,000/);
   assert.match(early, /5,000,000/);
+  assert.match(early, /מתוך <bdi>5,000,000<\/bdi> מצביעים/);
+  assert.doesNotMatch(early, /אומדן|אמדן/);
   assert.match(early, /הספירה בראשיתה/);
   assert.match(early, /counting-progress-warning/);
   assert.match(render(0, 0, 1000), /value="0"/);
@@ -84,10 +86,10 @@ test('explains unavailable estimates and legacy valid-only counts without a misl
   const missing = render(20, undefined);
   assert.match(missing, /קולות כשרים נספרו/);
   assert.match(missing, /קולות פסולים אינם כלולים/);
-  assert.match(missing, /כשיהיה זמין אומדן/);
+  assert.match(missing, /כשיהיה זמין מספר המצביעים/);
   assert.doesNotMatch(missing, /<progress/);
   const exceeded = render(20, 21, 20);
-  assert.match(exceeded, /גבוה מאומדן/);
+  assert.match(exceeded, /גבוה ממספר המצביעים/);
   assert.doesNotMatch(exceeded, /<progress|כ־100%/);
   assert.match(render(20, undefined, 1000), /כ־2%/);
 });
@@ -129,7 +131,8 @@ test('statistics use counted ballots for invalid percentages and preserve histor
   }));
   const partial = renderStats({ isCounting: true, countedVotes: 50, totalVotes: 1000, invalidVotes: 1 });
   assert.match(partial, /2.00%/);
-  assert.match(partial, /מצביעים לפי האומדן/);
+  assert.match(partial, /1,000<\/bdi> מצביעים/);
+  assert.doesNotMatch(partial, /אומדן|אמדן/);
   assert.match(partial, /קולות פסולים שנספרו/);
   assert.doesNotMatch(renderStats({ isCounting: true, totalVotes: 1000 }), /95.10%/);
   assert.match(renderStats({ totalVotes: 50, invalidVotes: 1, turnoutPercentage: 65 }), /65.00%/);

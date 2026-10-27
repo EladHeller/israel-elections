@@ -19,14 +19,14 @@ export default function CountingProgress({ results, totalVotes, isDemo }: {
         <h2>{awaitingResults ? 'ממתינים לתוצאות הראשונות' : percentage === null ? 'הספירה בעיצומה' : <><bdi>{percentageLabel}</bdi> מהקולות נספרו</>}</h2>
       </div>
       <p><bdi>{numberFormat.format(countedVotes)}</bdi> קולות {includesInvalid ? 'נספרו' : 'כשרים נספרו'}
-        {percentage !== null && <> מתוך כ־<bdi>{numberFormat.format(totalVotes!)}</bdi> מצביעים</>}
+        {percentage !== null && <> מתוך <bdi>{numberFormat.format(totalVotes!)}</bdi> מצביעים</>}
       </p>
     </div>
     {percentage !== null && <progress max="100" value={percentage} aria-label="אחוז הקולות שנספרו" />}
     <p className="counting-progress-note">
-      {estimateExceeded ? 'מספר הקולות שנספרו גבוה מאומדן המצביעים. אחוז הספירה אינו זמין עד לעדכון האומדן.'
-        : percentage === null ? 'אחוז הספירה יוצג כשיהיה זמין אומדן של מספר המצביעים.'
-        : 'אחוז הספירה מבוסס על אומדן מספר המצביעים.'}
+      {estimateExceeded ? 'מספר הקולות שנספרו גבוה ממספר המצביעים. אחוז הספירה אינו זמין עד לעדכון הנתונים.'
+        : percentage === null ? 'אחוז הספירה יוצג כשיהיה זמין מספר המצביעים.'
+        : 'אחוז הספירה מחושב מתוך מספר המצביעים.'}
       {!includesInvalid && ' קולות פסולים אינם כלולים בנתון הספירה הזמין.'}
     </p>
     <p role="status" className={isEarly && !awaitingResults ? 'counting-progress-warning' : 'counting-progress-note'}>
