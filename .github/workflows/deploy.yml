@@ -63,7 +63,6 @@ jobs:
           export DOMAIN_NAME=${{ vars.DOMAIN_NAME }}
           export SUB_DOMAIN=${{ vars.SUB_DOMAIN }}
           npm run deploy
-          npm run deploy:playwright
 
       - name: Read deployed site URL
         id: site_url

@@ -48,9 +48,6 @@ jobs:
       - name: Run ESLint
         run: npm run lint:test
 
-      - name: Build Playwright Lambda image
-        run: docker buildx build --platform=linux/amd64 --provenance=false -f ./infra/playwright/Dockerfile .
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
