@@ -17,42 +17,51 @@ const chromiumLaunchOptions = {
   },
 };
 
-const originUrl = 'https://media26.bechirot.gov.il/';
 const csvUrl = 'https://media26.bechirot.gov.il/files/expc.csv';
 
 export async function handler() {
   const browser = await chromium.launch(chromiumLaunchOptions);
 
   try {
-    const page = await browser.newPage();
-    const initialResponse = await page.goto(originUrl, {
-      waitUntil: 'domcontentloaded',
-      timeout: 30_000,
-    });
+    const context = await browser.newContext({ acceptDownloads: true });
+    const page = await context.newPage();
 
-    // Give an AWS WAF browser challenge time to execute and establish its session token.
+    let navigationError: string | undefined;
+    try {
+      await page.goto(csvUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
+    } catch (error) {
+      navigationError = error instanceof Error ? error.message : String(error);
+    }
+
+    // If the CSV request is challenged, Chromium gets a chance to execute the
+    // WAF challenge on the protected URL and persist its cookies in the context.
     await page.waitForTimeout(5_000);
 
-    const csv = await page.evaluate(async (url: string) => {
-      const response = await fetch(url, { cache: 'no-store' });
-      const body = await response.text();
+    // browserContext.request shares the browser context's cookie storage, so this
+    // second request reuses any token/cookies established by the browser challenge.
+    const response = await context.request.get(csvUrl, { timeout: 30_000 });
+    const body = await response.text();
+    const headers = response.headers();
 
-      return {
-        status: response.status,
-        wafAction: response.headers.get('x-amzn-waf-action'),
-        lastModified: response.headers.get('last-modified'),
-        contentType: response.headers.get('content-type'),
-        contentLength: body.length,
-        preview: body.slice(0, 200),
-      };
-    }, csvUrl);
+    const csv = {
+      status: response.status(),
+      wafAction: headers['x-amzn-waf-action'] ?? null,
+      lastModified: headers['last-modified'] ?? null,
+      contentType: headers['content-type'] ?? null,
+      contentLength: body.length,
+      preview: body.slice(0, 200),
+    };
 
     return {
       statusCode: csv.status === 200 && csv.contentLength > 0 ? 200 : 502,
       body: JSON.stringify({
-        initialStatus: initialResponse?.status(),
+        navigationError,
         finalUrl: page.url(),
         chromiumVersion: browser.version(),
+        cookies: (await context.cookies()).map(({ name, domain, expires }) => ({ name, domain, expires })),
         csv,
       }),
     };
