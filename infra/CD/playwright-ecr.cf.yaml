@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  PlaywrightRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: israel-elections-playwright
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep 2 most recent images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 2
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+
+Outputs:
+  RepositoryUri:
+    Value: !GetAtt PlaywrightRepository.RepositoryUri

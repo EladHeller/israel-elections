@@ -14,6 +14,10 @@
     "build": "rm -rf dist && tsc",
     "build:test": "rm -rf dist && tsc --sourceMap && tsc infra/s3.ts --outDir dist/infra --target ES2022 --module NodeNext --esModuleInterop --sourceMap --skipLibCheck",
     "deploy": "tsx ./infra/CD/deploy-all.ts",
+    "deploy:playwright": "tsx ./infra/CD/deploy-playwright.ts",
+    "monitor:local": "tsx ./election-results-listener/local-monitor.ts",
+    "monitor:local:install": "zsh ./scripts/install-local-election-monitor.sh",
+    "monitor:local:uninstall": "zsh ./scripts/uninstall-local-election-monitor.sh",
     "test:ci": "npm run type-check && npm run test:coverage && npm run lint:test",
     "build:client": "cd elections-client && npm ci && npm run build"
   },
@@ -48,4 +52,3 @@
     "rimraf": "^5.0.5"
   }
 }
-
