@@ -12,8 +12,10 @@ Loader.add_constructor('!Equals', lambda loader, node: {'Fn::Equals': loader.con
 Loader.add_constructor('!Sub', lambda loader, node: {'Fn::Sub': loader.construct_scalar(node)})
 template=yaml.load(pathlib.Path('infra/ec2-crawler/stack.yaml').read_text(), Loader=Loader)
 bootstrap=pathlib.Path('infra/ec2-crawler/bootstrap.sh').read_text()
-crawler=base64.b64encode(pathlib.Path('infra/ec2-crawler/crawl.mjs').read_bytes()).decode()
-install="printf '%s' '"+crawler+"' | base64 -d > /opt/election-crawler/crawl.mjs\nchown crawler:crawler /opt/election-crawler/crawl.mjs\n"
+install=''
+for name in ['crawl.mjs','download.mjs']:
+    crawler=base64.b64encode(pathlib.Path('infra/ec2-crawler',name).read_bytes()).decode()
+    install+="printf '%s' '"+crawler+"' | base64 -d > /opt/election-crawler/"+name+"\nchown crawler:crawler /opt/election-crawler/"+name+"\n"
 template['Resources']['Instance']['Properties']['UserData']['Fn::Base64']=bootstrap.replace('touch /opt/election-crawler/bootstrap-ready', install+'touch /opt/election-crawler/bootstrap-ready')
 pathlib.Path('/tmp/election-ec2-template.json').write_text(json.dumps(template))
 PY

@@ -22,7 +22,7 @@ tar -xzf /tmp/election-source.tar.gz --strip-components=1 -C /opt/election-crawl
 chown -R crawler:crawler /opt/election-crawler/releases/{ref}
 sudo -u crawler bash -c 'cd /opt/election-crawler/releases/{ref} && npm ci && npm run build'
 ln -sfn /opt/election-crawler/releases/{ref} /opt/election-crawler/app
-cp /opt/election-crawler/app/infra/ec2-crawler/crawl.mjs /opt/election-crawler/crawl.mjs
+cp /opt/election-crawler/app/infra/ec2-crawler/*.mjs /opt/election-crawler/
 cp /opt/election-crawler/app/infra/ec2-crawler/publish.cjs /opt/election-crawler/publish.cjs
 cp /opt/election-crawler/app/infra/ec2-crawler/election-publisher.* /etc/systemd/system/
 printf '%s\\n' 'BUCKET={os.environ['BUCKET']}' 'DISTRIBUTION_ID={os.environ['DISTRIBUTION_ID']}' 'REGION={os.environ['REGION']}' 'CURR_ELECTIONS=26' > /etc/election-publisher.env

@@ -1,3 +1,4 @@
+import { downloadCities } from './download.mjs';
 import { chromium } from 'playwright';
 import { parse } from 'csv-parse/sync';
 import { readFile, stat, mkdir } from 'node:fs/promises';
@@ -7,7 +8,6 @@ import { createHash } from 'node:crypto';
 const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
 const context = browser.contexts()[0];
 const page = context.pages().find(p => p.url().startsWith('https://votes26.bechirot.gov.il/'));
-let timer;
 try {
   if (!page) throw new Error('Open the official results homepage in the desktop first');
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
@@ -16,17 +16,7 @@ try {
   await page.screenshot({ path: '/home/crawler/downloads/before.png' });
   const link = page.locator('#DownloadCSVCities');
   if (!await link.isVisible()) throw new Error(`Download link unavailable: ${await page.title()} | ${(await page.locator('body').innerText()).slice(0, 500)}`);
-  let watch;
-  const watched = new Set();
-  const downloadPromise = new Promise((resolve, reject) => {
-    watch = opened => { if (!watched.has(opened)) { watched.add(opened); opened.on('download', resolve); } };
-    context.on('page', watch);
-    watch(page);
-    timer = setTimeout(() => reject(new Error('No download within 90 seconds')), 90_000);
-  });
-  const [download] = await Promise.all([downloadPromise, link.click({ timeout: 15_000 })]);
-  clearTimeout(timer);
-  context.off('page', watch);
+  const download = await downloadCities(context, page);
   const path = `/home/crawler/downloads/cities-${Date.now()}.csv`;
   await download.saveAs(path);
   if ((await stat(path)).size > 30 * 1024 * 1024) throw new Error('CSV exceeds size limit');
@@ -44,6 +34,5 @@ try {
   console.error(JSON.stringify({ ok: false, error: String(error) }));
   process.exitCode = 1;
 } finally {
-  clearTimeout(timer);
   await browser.close(); // Disconnect CDP; the independently started Chrome stays open.
 }
