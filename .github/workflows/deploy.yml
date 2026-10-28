@@ -72,3 +72,20 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='SiteUrl'].OutputValue | [0]" \
             --output text)
           echo "url=$site_url" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy Israel EC2 results publisher
+        if: github.ref == 'refs/heads/master'
+        env:
+          REGION: ${{ secrets.AWS_REGION }}
+          BUCKET: ${{ secrets.CLIENT_CODE_BUCKET }}
+          SOURCE_REF: ${{ github.sha }}
+        run: |
+          pip install PyYAML
+          export DISTRIBUTION_ID=$(aws cloudformation describe-stacks --region "$REGION" \
+            --stack-name Israel-elections-code-bucket \
+            --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue | [0]" --output text)
+          bash scripts/deploy-ec2-crawler.sh
+          export INSTANCE_ID=$(aws cloudformation describe-stacks --region il-central-1 \
+            --stack-name Israel-elections-ec2-crawler \
+            --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue | [0]" --output text)
+          bash scripts/configure-ec2-publisher.sh

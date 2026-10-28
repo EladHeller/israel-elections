@@ -27,7 +27,11 @@ export async function csvMonitor() {
   if (csvUrl == null) {
     throw new Error('CSV url is missing');
   }
-  const { csv: csvData, time } = await fetchResultsCsv(csvUrl);
+  const { csv, time } = await fetchResultsCsv(csvUrl);
+  return publishResultsCsv(csv, time);
+}
+
+export async function publishResultsCsv(csvData: string, time: string) {
   const exists = (await isFileAlreadyExists(`data/${currElections}/elections.csv`, Buffer.from(csvData)));
   const { voteData, countedVotes } = getCsvResults(csvData, notPartiesKeys);
   if (!Object.values(voteData).some(({ votes }) => votes > 0) && !countedVotes) {

@@ -1,0 +1,11 @@
+[Unit]
+Description=Download and publish official election results
+After=election-desktop.service network-online.target
+Requires=election-desktop.service
+[Service]
+Type=oneshot
+User=crawler
+EnvironmentFile=/etc/election-publisher.env
+WorkingDirectory=/opt/election-crawler
+ExecStart=/usr/local/bin/node /opt/election-crawler/publish.cjs
+TimeoutStartSec=180

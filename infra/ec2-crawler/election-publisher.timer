@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh election results every minute
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=60s
+Unit=election-publisher.service
+[Install]
+WantedBy=timers.target

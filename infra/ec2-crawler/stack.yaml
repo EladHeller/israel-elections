@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Headed Chrome crawler in Israel; desktop and CDP accessible through SSM only.
+Parameters:
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/noble/stable/current/amd64/hvm/ebs-gp3/ami-id
+  PublishingBucket:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|[a-z0-9.-]+'
+  DistributionId:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|[A-Z0-9]+'
+Conditions:
+  PublishingEnabled: !And
+    - !Not [!Equals [!Ref PublishingBucket, '']]
+    - !Not [!Equals [!Ref DistributionId, '']]
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.91.0.0/24
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+  Gateway:
+    Type: AWS::EC2::InternetGateway
+  Attachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref Gateway
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.91.0.0/26
+      MapPublicIpOnLaunch: true
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+  Route:
+    Type: AWS::EC2::Route
+    DependsOn: Attachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Gateway
+  Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet
+      RouteTableId: !Ref RouteTable
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: No inbound traffic; outbound for websites and SSM
+      VpcId: !Ref Vpc
+      SecurityGroupIngress: []
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
+  PublisherPolicy:
+    Type: AWS::IAM::Policy
+    Condition: PublishingEnabled
+    Properties:
+      PolicyName: PublishCurrentElection
+      Roles: [!Ref Role]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: [s3:GetObject, s3:PutObject, s3:AbortMultipartUpload]
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${PublishingBucket}/data/26/*'
+          - Effect: Allow
+            Action: cloudfront:CreateInvalidation
+            Resource: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${DistributionId}'
+  Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref Role]
+  Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: [Route, Association]
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.medium
+      IamInstanceProfile: !Ref Profile
+      SubnetId: !Ref Subnet
+      SecurityGroupIds: [!Ref SecurityGroup]
+      MetadataOptions:
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      InstanceInitiatedShutdownBehavior: stop
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-chrome'
+      UserData:
+        Fn::Base64: BOOTSTRAP_SCRIPT
+Outputs:
+  InstanceId:
+    Description: SSM target for the desktop and download diagnostics.
+    Value: !Ref Instance
