@@ -9,7 +9,7 @@ for (const mode of ['existing', 'new', 'opener', 'timeout', 'click-error']) {
     const page = new EventEmitter() as any;
     const popup = new EventEmitter();
     const result = { source: 'csv' };
-    context.pages = () => mode === 'existing' ? [page, popup] : [page];
+    context.pages = () => mode === 'existing' ? [page, popup, page] : [page];
     page.locator = () => ({ click: async () => {
       if (mode === 'click-error') throw new Error('Click failed');
       if (mode === 'new') context.emit('page', popup);
@@ -17,7 +17,7 @@ for (const mode of ['existing', 'new', 'opener', 'timeout', 'click-error']) {
       if (mode === 'opener') page.emit('download', result);
     } });
     if (mode === 'timeout' || mode === 'click-error') await assert.rejects(downloadCities(context, page, 10));
-    else assert.equal(await downloadCities(context, page, 10), result);
+    else assert.equal(await downloadCities(context, page), result);
     assert.equal(context.listenerCount('page'), 0);
     assert.equal(page.listenerCount('download'), 0);
     assert.equal(popup.listenerCount('download'), 0);
