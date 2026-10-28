@@ -8,7 +8,9 @@ config=${CRAWLER_CONFIG:-/etc/election-publisher.env}
 mkdir -p "$root/releases"
 exec 9>"$root/deploy.lock"
 flock -w 30 9
-identity="$SOURCE_REF|$BUCKET|$DISTRIBUTION_ID|$REGION"
+status_bucket=${CRAWLER_STATUS_BUCKET:-}
+[[ -z "$status_bucket" || "$status_bucket" =~ ^[a-z0-9.-]+$ ]]
+identity="$SOURCE_REF|$BUCKET|$DISTRIBUTION_ID|$REGION|$status_bucket"
 release="$root/releases/$SOURCE_REF-v2"
 if [[ -f "$root/deployed" && "$(cat "$root/deployed")" = "$identity" && "$(readlink "$root/app")" = "$release" ]] \
   && systemctl is-active --quiet election-publisher.timer; then
@@ -83,7 +85,7 @@ ln -sfn "$release" "$root/app.next"
 mv -Tf "$root/app.next" "$root/app"
 for file in crawl.mjs download.mjs publish.cjs; do cp "$release/infra/ec2-crawler/$file" "$root/$file"; done
 cp "$release/infra/ec2-crawler/"election-publisher.* "$units/"
-printf '%s\n' "BUCKET=$BUCKET" "DISTRIBUTION_ID=$DISTRIBUTION_ID" "REGION=$REGION" 'CURR_ELECTIONS=26' > "$config"
+printf '%s\n' "BUCKET=$BUCKET" "DISTRIBUTION_ID=$DISTRIBUTION_ID" "REGION=$REGION" 'CURR_ELECTIONS=26' "CRAWLER_STATUS_BUCKET=$status_bucket" > "$config"
 chmod 600 "$config"
 systemctl daemon-reload
 systemctl start election-publisher.service

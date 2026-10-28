@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Independent crawler heartbeat checks and state-transition email alerts.
+Parameters:
+  CrawlerRole:
+    Type: String
+  AlertEmail:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|[^\s@]+@[^\s@]+\.[^\s@]+'
+Conditions:
+  HasEmail: !Not [!Equals [!Ref AlertEmail, '']]
+Resources:
+  StatusBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StatusBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: [!GetAtt StatusBucket.Arn, !Sub '${StatusBucket.Arn}/*']
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+  PublisherPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CrawlerHeartbeat
+      Roles: [!Ref CrawlerRole]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: s3:PutObject
+            Resource: [!Sub '${StatusBucket.Arn}/last-attempt.json', !Sub '${StatusBucket.Arn}/last-success.json']
+  Topic:
+    Type: AWS::SNS::Topic
+  TopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics: [!Ref Topic]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudwatch.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref Topic
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub 'arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:israel-elections-crawler-health'
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasEmail
+    Properties:
+      TopicArn: !Ref Topic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+  MonitorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: MonitorHeartbeat
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: [!Sub '${StatusBucket.Arn}/last-attempt.json', !Sub '${StatusBucket.Arn}/last-success.json', !Sub '${StatusBucket.Arn}/monitor-state.json']
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt StatusBucket.Arn
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub '${StatusBucket.Arn}/monitor-state.json'
+              - Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: IsraelElections/Crawler
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/israel-elections-crawler-monitor:*'
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/israel-elections-crawler-monitor
+      RetentionInDays: 30
+  Monitor:
+    Type: AWS::Lambda::Function
+    DependsOn: LogGroup
+    Properties:
+      FunctionName: israel-elections-crawler-monitor
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt MonitorRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          STATUS_BUCKET: !Ref StatusBucket
+      Code:
+        ZipFile: GENERATED
+  Schedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: rate(1 minute)
+      State: ENABLED
+      Targets:
+        - Id: Monitor
+          Arn: !GetAtt Monitor.Arn
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 60
+            MaximumRetryAttempts: 0
+  Permission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Monitor
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt Schedule.Arn
+  HealthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: israel-elections-crawler-health
+      AlarmDescription: 'Crawler has no recent successful run, or its independent monitor stopped. Inspect crawler-monitor logs and private status objects; see docs/crawler-monitor.md.'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0.5
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      TreatMissingData: breaching
+      Metrics:
+        - Id: raw
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: IsraelElections/Crawler
+              MetricName: Unhealthy
+            Period: 60
+            Stat: Maximum
+        - Id: health
+          Expression: FILL(raw, 1)
+          Label: Crawler or monitor unhealthy
+          ReturnData: true
+      AlarmActions: [!Ref Topic]
+      OKActions: [!Ref Topic]
+Outputs:
+  StatusBucket:
+    Value: !Ref StatusBucket
+  AlertTopicArn:
+    Value: !Ref Topic
+  MonitorFunction:
+    Value: !Ref Monitor
+  AlarmName:
+    Value: !Ref HealthAlarm

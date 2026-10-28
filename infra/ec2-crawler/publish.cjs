@@ -1,6 +1,7 @@
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const { readFile, unlink } = require('node:fs/promises');
+const { runWithHeartbeat, statusWriter } = require('./app/infra/ec2-crawler/heartbeat.cjs');
 const { publishResultsCsv } = require('./app/dist/csv-monitor.js');
 
 async function main() {
@@ -17,9 +18,11 @@ async function main() {
     try { csv = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
     catch { csv = new TextDecoder('windows-1255').decode(bytes); }
     await publishResultsCsv(csv, new Date().toISOString());
-    console.log(JSON.stringify({ ok: true, sha256: downloaded.sha256, rows: downloaded.rows, at: new Date().toISOString() }));
+    return { sha256: downloaded.sha256, rows: downloaded.rows };
   } finally {
     await unlink(downloaded.path);
   }
 }
-main().catch(error => { console.error(error); process.exitCode = 1; });
+runWithHeartbeat(main, statusWriter()).then(result => {
+  console.log(JSON.stringify({ ok: true, ...result }));
+}).catch(error => { console.error(error); process.exitCode = 1; });

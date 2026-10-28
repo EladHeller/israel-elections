@@ -218,3 +218,14 @@ test('rollback preserves a deliberately disabled and inactive timer', t => {
   assert.equal(existsSync(join(f.root, 'active')), false);
   assert.equal(existsSync(join(f.root, 'enabled')), false);
 });
+
+test('status bucket changes reach the publisher environment and invalidate the deployment identity', t => {
+  const f = fixture(t);
+  assert.equal(f.run({ CRAWLER_STATUS_BUCKET: 'status-one' }).status, 0);
+  assert.match(readFileSync(f.config, 'utf8'), /CRAWLER_STATUS_BUCKET=status-one/);
+  f.clear();
+  assert.equal(f.run({ CRAWLER_STATUS_BUCKET: 'status-two' }).status, 0);
+  assert.match(readFileSync(f.config, 'utf8'), /CRAWLER_STATUS_BUCKET=status-two/);
+  assert.doesNotMatch(f.calls(), /curl|npm/, 'same prepared source can be reused');
+  assert.match(f.calls(), /systemctl start election-publisher.service/);
+});
