@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { downloadCities } from './download.mjs';
 
 for (const mode of ['existing', 'new', 'opener', 'timeout', 'click-error']) {
   test(`captures and cleans up ${mode} download flow`, async () => {
+    const { downloadCities } = await import('./download.mjs');
     const context = new EventEmitter() as any;
     const page = new EventEmitter() as any;
     const popup = new EventEmitter();
