@@ -10,6 +10,8 @@ const page = context.pages().find(p => p.url().startsWith('https://votes26.bechi
 let timer;
 try {
   if (!page) throw new Error('Open the official results homepage in the desktop first');
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await page.locator('#DownloadCSVCities').waitFor({ state: 'visible', timeout: 30_000 });
   await mkdir('/home/crawler/downloads', { recursive: true });
   await page.screenshot({ path: '/home/crawler/downloads/before.png' });
   const link = page.locator('#DownloadCSVCities');

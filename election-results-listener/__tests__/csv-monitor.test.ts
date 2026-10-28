@@ -123,3 +123,17 @@ test('invalid-only first counts are published rather than mistaken for an empty 
   assert.equal(state.emptyChecks, 0);
   assert.equal(JSON.parse(state.uploads[0][1] as string).countedVotes, 4);
 });
+
+test('browser CSV uses the same validated publisher without fetching the HTTP source', async () => {
+  const state = listener(null);
+  await state.api.publishResultsCsv(csv, '2026-10-28T00:00:00.000Z');
+  assert.equal(state.uploads.length, 4);
+  assert.equal(JSON.parse(state.uploads[0][1] as string).countedVotes, 154);
+  assert.equal(state.uploads[2][1], csv);
+});
+
+test('invalid browser CSV fails before publishing anything', async () => {
+  const state = listener(null);
+  await assert.rejects(state.api.publishResultsCsv('<html>Error</html>', '2026-10-28T00:00:00.000Z'));
+  assert.equal(state.uploads.length, 0);
+});

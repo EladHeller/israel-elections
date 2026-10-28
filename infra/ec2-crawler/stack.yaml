@@ -4,6 +4,18 @@ Parameters:
   LatestAmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/canonical/ubuntu/server/noble/stable/current/amd64/hvm/ebs-gp3/ami-id
+  PublishingBucket:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|[a-z0-9.-]+'
+  DistributionId:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|[A-Z0-9]+'
+Conditions:
+  PublishingEnabled: !And
+    - !Not [!Equals [!Ref PublishingBucket, '']]
+    - !Not [!Equals [!Ref DistributionId, '']]
 Resources:
   Vpc:
     Type: AWS::EC2::VPC
@@ -61,6 +73,21 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
+  PublisherPolicy:
+    Type: AWS::IAM::Policy
+    Condition: PublishingEnabled
+    Properties:
+      PolicyName: PublishCurrentElection
+      Roles: [!Ref Role]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: [s3:GetObject, s3:PutObject, s3:AbortMultipartUpload]
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${PublishingBucket}/data/26/*'
+          - Effect: Allow
+            Action: cloudfront:CreateInvalidation
+            Resource: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${DistributionId}'
   Profile:
     Type: AWS::IAM::InstanceProfile
     Properties:

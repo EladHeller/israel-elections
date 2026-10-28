@@ -62,3 +62,13 @@ The stack reached CREATE_COMPLETE and the instance registered online with SSM. T
 This establishes real browser download capability on EC2 in Israel. It does not isolate whether the successful difference from Lambda was geography, network address, browser mode or configuration. No results were published.
 
 The downloaded file also passed the existing `getCsvResults` parser: **38 parties**, **4,854,102 valid votes**, and **4,875,751 counted votes including invalid votes**. Validation SSM command: `13adc30d-fdd6-406b-b17b-2a9dcf611af3`.
+
+## Continuous production publishing
+
+The publisher reuses `publishResultsCsv` from the existing listener, including full CSV validation, empty-result protection, unchanged-data suppression, S3 archives and cache invalidation. `election-publisher.timer` starts a new cycle 60 seconds after the previous cycle finishes. systemd prevents overlapping executions. Successful and failed cycles are visible in `journalctl -u election-publisher.service`; failures preserve the last published data. Temporary downloaded CSVs are removed after publishing attempts.
+
+`PublishingBucket` and `DistributionId` enable a scoped CloudFormation policy: object read/write and multipart abort only under the selected bucket's `data/26/`, and invalidation only on the selected distribution. Empty parameters keep diagnostic-only access.
+
+On master deployment, GitHub CD deploys the EC2 stack, installs the exact deployed source commit, starts a validated publishing cycle, cancels the diagnostic shutdown and enables the persistent timer. `scripts/configure-ec2-publisher.sh` can perform the same deployment with INSTANCE_ID, SOURCE_REF, BUCKET, DISTRIBUTION_ID and REGION set. SOURCE_REF must be a public commit SHA. The timer remains disabled if the first publishing cycle fails.
+
+To stop updates: `sudo systemctl disable --now election-publisher.timer`. To stop compute: stop the EC2 instance. Production operation cancels the initial two-hour shutdown and therefore incurs continuous EC2/public IPv4/EBS costs.
