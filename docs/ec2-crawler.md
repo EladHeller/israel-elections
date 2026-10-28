@@ -36,7 +36,7 @@ Open `http://localhost:6080/vnc.html`. Chrome starts at the official results hom
 
 ## Automation check
 
-Copy `infra/ec2-crawler/crawl.mjs` to `/opt/election-crawler/crawl.mjs` using SSM Run Command (base64 encoding the file avoids shell interpolation). Run:
+The deployment script installs `crawl.mjs` into `/opt/election-crawler`. Run through an SSM shell:
 
 ```bash
 sudo -u crawler bash -c 'cd /opt/election-crawler && node crawl.mjs'
@@ -54,3 +54,11 @@ aws cloudformation wait stack-delete-complete --region il-central-1 --stack-name
 ```
 
 Deleting the stack removes its instance, root disk (including profile, CSVs and screenshots), networking and SSM role. Export required evidence first. Closing the old Lambda experiment PR does not delete its separate AWS stacks.
+
+## Verified result — 28 October 2026
+
+The stack reached CREATE_COMPLETE and the instance registered online with SSM. The headed Chrome desktop started successfully. The one-shot crawler clicked the homepage city-download link and downloaded `expc.csv?` with **1,181 data rows**. SHA-256: `b5fd6b141a8854f767806994d6d0e9c024562280b4c67eedcb3ec8429a975665`. SSM command: `f7b6f2ac-c876-46b2-82a5-02d521623e7f`.
+
+This establishes real browser download capability on EC2 in Israel. It does not isolate whether the successful difference from Lambda was geography, network address, browser mode or configuration. No results were published.
+
+The downloaded file also passed the existing `getCsvResults` parser: **38 parties**, **4,854,102 valid votes**, and **4,875,751 counted votes including invalid votes**. Validation SSM command: `13adc30d-fdd6-406b-b17b-2a9dcf611af3`.
