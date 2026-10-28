@@ -42,6 +42,9 @@ jobs:
       - name: Build client
         run: npm run build --prefix elections-client
 
+      - name: Install deployment test dependencies
+        run: python3 -m pip install PyYAML
+
       - name: Unit tests
         run: npm run test:coverage
 

@@ -1,27 +1,58 @@
 #!/usr/bin/env bash
 set -euo pipefail
 export AWS_REGION=il-central-1 AWS_DEFAULT_REGION=il-central-1 AWS_PAGER=''
+stack=Israel-elections-ec2-crawler
 aws sts get-caller-identity --query Account --output text
-python3 - <<'PY'
-import base64, json, pathlib, yaml
-class Loader(yaml.SafeLoader): pass
-Loader.add_constructor('!Ref', lambda loader, node: {'Ref': loader.construct_scalar(node)})
-Loader.add_constructor('!And', lambda loader, node: {'Fn::And': loader.construct_sequence(node, deep=True)})
-Loader.add_constructor('!Not', lambda loader, node: {'Fn::Not': loader.construct_sequence(node, deep=True)})
-Loader.add_constructor('!Equals', lambda loader, node: {'Fn::Equals': loader.construct_sequence(node, deep=True)})
-Loader.add_constructor('!Sub', lambda loader, node: {'Fn::Sub': loader.construct_scalar(node)})
-template=yaml.load(pathlib.Path('infra/ec2-crawler/stack.yaml').read_text(), Loader=Loader)
-bootstrap=pathlib.Path('infra/ec2-crawler/bootstrap.sh').read_text()
-install=''
-for name in ['crawl.mjs','download.mjs']:
-    crawler=base64.b64encode(pathlib.Path('infra/ec2-crawler',name).read_bytes()).decode()
-    install+="printf '%s' '"+crawler+"' | base64 -d > /opt/election-crawler/"+name+"\nchown crawler:crawler /opt/election-crawler/"+name+"\n"
-template['Resources']['Instance']['Properties']['UserData']['Fn::Base64']=bootstrap.replace('touch /opt/election-crawler/bootstrap-ready', install+'touch /opt/election-crawler/bootstrap-ready')
-pathlib.Path('/tmp/election-ec2-template.json').write_text(json.dumps(template))
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+# A failed DescribeStacks is not evidence that the stack does not exist.
+if aws cloudformation describe-stacks --stack-name "$stack" > "$work/stack.json" 2>"$work/error"; then
+  change_type=UPDATE
+  instance_id=$(aws cloudformation describe-stack-resource --stack-name "$stack" --logical-resource-id Instance --query StackResourceDetail.PhysicalResourceId --output text)
+  image_id=$(aws ec2 describe-instances --instance-ids "$instance_id" --query 'Reservations[0].Instances[0].ImageId' --output text)
+  [[ -z "${AMI_ID:-}" || "$AMI_ID" = "$image_id" ]] || { echo 'Changing the running instance AMI requires a separate infrastructure migration' >&2; exit 1; }
+  aws cloudformation get-template --stack-name "$stack" > "$work/existing.json"
+  python3 infra/ec2-crawler/build-template.py --image-id "$image_id" --existing-template "$work/existing.json" > "$work/template.json"
+else
+  if ! grep -q "Stack with id $stack does not exist" "$work/error"; then cat "$work/error" >&2; exit 1; fi
+  change_type=CREATE
+  image_id=${AMI_ID:-$(aws ssm get-parameter --name /aws/service/canonical/ubuntu/server/noble/stable/current/amd64/hvm/ebs-gp3/ami-id --query Parameter.Value --output text)}
+  python3 infra/ec2-crawler/build-template.py --image-id "$image_id" > "$work/template.json"
+fi
+aws cloudformation validate-template --template-body "file://$work/template.json" >/dev/null
+change_id=$(aws cloudformation create-change-set --stack-name "$stack" --change-set-name "crawler-$(date +%s)-$$" \
+  --change-set-type "$change_type" --template-body "file://$work/template.json" --capabilities CAPABILITY_IAM \
+  --parameters "ParameterKey=LatestAmiId,ParameterValue=$image_id" "ParameterKey=PublishingBucket,ParameterValue=${BUCKET:-}" "ParameterKey=DistributionId,ParameterValue=${DISTRIBUTION_ID:-}" \
+  --query Id --output text)
+if ! aws cloudformation wait change-set-create-complete --change-set-name "$change_id"; then
+  aws cloudformation describe-change-set --change-set-name "$change_id" > "$work/changes.json"
+  if ! python3 - "$work/changes.json" <<'PY'
+import json, sys
+result=json.load(open(sys.argv[1]))
+reason=result.get('StatusReason','')
+if result['Status'] != 'FAILED' or not any(text in reason for text in ["didn't contain changes", 'No updates are to be performed']):
+    raise SystemExit(reason)
 PY
-aws cloudformation validate-template --template-body file:///tmp/election-ec2-template.json >/dev/null
-aws cloudformation deploy --stack-name Israel-elections-ec2-crawler \
-  --template-file /tmp/election-ec2-template.json --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
-  --parameter-overrides "PublishingBucket=${BUCKET:-}" "DistributionId=${DISTRIBUTION_ID:-}"
-aws cloudformation describe-stacks --stack-name Israel-elections-ec2-crawler \
+  then exit 1; fi
+  aws cloudformation delete-change-set --change-set-name "$change_id"
+else
+  aws cloudformation describe-change-set --change-set-name "$change_id" > "$work/changes.json"
+  # Reject even conditional instance replacement; fail before changing resources.
+  if ! python3 - "$work/changes.json" <<'PY'
+import json, sys
+changes=json.load(open(sys.argv[1]))['Changes']
+for change in changes:
+    resource=change['ResourceChange']
+    if resource['LogicalResourceId'] == 'Instance' and (resource['Action'] == 'Remove' or resource.get('Replacement','False') != 'False'):
+        raise SystemExit('Refusing a change set that may replace the crawler instance')
+PY
+  then
+    aws cloudformation delete-change-set --change-set-name "$change_id"
+    exit 1
+  fi
+  aws cloudformation execute-change-set --change-set-name "$change_id"
+  if [[ "$change_type" = CREATE ]]; then waiter=stack-create-complete; else waiter=stack-update-complete; fi
+  aws cloudformation wait "$waiter" --stack-name "$stack"
+fi
+aws cloudformation describe-stacks --stack-name "$stack" \
   --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue | [0]" --output text
