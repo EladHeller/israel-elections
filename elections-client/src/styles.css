@@ -1838,7 +1838,6 @@ body {
 
 .results-timestamp {
   display: block;
-  margin-top: 6px;
   color: var(--ink-50);
   font-size: 14px;
 }
