@@ -141,3 +141,60 @@ test('Lambda entrypoint returns and logs the diagnostic result', async (t) => {
   assert.equal(result.statusCode, 200);
   assert.equal(log.mock.calls[0].arguments[0], result.body);
 });
+
+test('handles a failed download and unavailable popup diagnostics', async () => {
+  const f = fixture();
+  f.page.title = async () => { throw new Error('Page closed'); };
+  const originalLocator = f.page.locator;
+  f.page.locator = (selector: string) => selector === 'body'
+    ? { innerText: async () => { throw new Error('Page closed'); } }
+    : originalLocator(selector);
+  f.download.saveAs = async () => { throw 'Download canceled'; };
+  const result = await runBrowserDownload(f.chromium);
+  const body = JSON.parse(result.body);
+  assert.equal(result.statusCode, 502);
+  assert.equal(body.error, 'Download canceled');
+  assert.equal(body.pages[0].title, '');
+  assert.equal(body.pages[0].text, '');
+  assert.equal(f.closed(), true);
+});
+
+test('ignores duplicate page notifications and bounds navigation diagnostics', async () => {
+  const f = fixture();
+  const originalGoto = f.page.goto;
+  f.page.goto = async (url: string) => {
+    await originalGoto(url);
+    const response = (navigation: boolean) => ({ request: () => ({ isNavigationRequest: () => navigation }),
+      url: () => url, status: () => 200, headers: () => ({}) });
+    f.context.emit('response', response(false));
+    for (let i = 0; i < 25; i++) f.context.emit('response', response(true));
+  };
+  const originalLocator = f.page.locator;
+  f.page.locator = (selector: string) => {
+    const locator = originalLocator(selector);
+    const originalClick = locator.click;
+    locator.click = async () => {
+      f.context.emit('page', f.page);
+      assert.equal(f.page.listenerCount('download'), 1);
+      await originalClick();
+    };
+    return locator;
+  };
+  const result = await runBrowserDownload(f.chromium);
+  assert.equal(result.statusCode, 200);
+  assert.equal(JSON.parse(result.body).responses.length, 20);
+});
+
+test('rejects oversized completed downloads before reading them', async () => {
+  const f = fixture();
+  f.download.saveAs = async (path: string) => {
+    const { open } = await import('node:fs/promises');
+    const file = await open(path, 'w');
+    await file.truncate(30 * 1024 * 1024 + 1);
+    await file.close();
+  };
+  const result = await runBrowserDownload(f.chromium);
+  assert.equal(result.statusCode, 502);
+  assert.match(JSON.parse(result.body).error, /size limit/);
+  assert.equal(f.closed(), true);
+});

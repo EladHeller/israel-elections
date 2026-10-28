@@ -2,6 +2,7 @@ name: Browser CSV diagnostic
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened]
     branches: [develop]
     paths:
       - 'election-results-listener/browser-download.ts'
