@@ -35,7 +35,7 @@ export async function csvMonitor() {
   }
   const results = { ...calcVotesResults(voteData, blockPercentage, agreements), countedVotes };
   if (exists && await resultsMatch(`data/${currElections}/allResults.json`, results)) return;
-  await uploadResults(results, currElections, time);
+  await uploadResults(results, currElections);
   if (!exists) await uploadCsv(csvData, time);
 }
 
