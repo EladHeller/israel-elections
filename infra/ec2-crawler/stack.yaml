@@ -2,8 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Headed Chrome crawler in Israel; desktop and CDP accessible through SSM only.
 Parameters:
   LatestAmiId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/canonical/ubuntu/server/noble/stable/current/amd64/hvm/ebs-gp3/ami-id
+    Type: AWS::EC2::Image::Id
+    Description: Pinned image ID; changing it requires an explicit instance replacement.
   PublishingBucket:
     Type: String
     Default: ''
