@@ -71,6 +71,24 @@ test('unchanged CSV repairs reset or missing results without rewriting the proce
   assert.ok(Number.isFinite(Date.parse(JSON.parse(state.uploads[2][1] as string).time)));
 });
 
+test('published results use the actual update time instead of the source file time', async (t) => {
+  const updatedAt = new Date('2026-10-22T00:10:00.000Z');
+  t.mock.timers.enable({ apis: ['Date'], now: updatedAt });
+  for (const csvExists of [false, true]) {
+    const state = listener();
+    state.setState(csvExists, false);
+    await state.api.csvMonitor();
+    const current = JSON.parse(state.uploads[0][1] as string);
+    const archived = JSON.parse(state.uploads[1][1] as string);
+    assert.equal(current.time, updatedAt.toISOString());
+    assert.equal(archived.time, current.time);
+    assert.equal(state.uploads[1][0], `data/26/${current.time}_allResults.json`);
+    if (!csvExists) {
+      assert.equal(state.uploads[3][0], 'data/26/2026-10-22T00:00:00.000Z_elections.csv');
+    }
+  }
+});
+
 test('no configured source fails explicitly before publishing any results', async () => {
   // The production pre-election configuration omits the URL entirely.
   const missing = listener(null);
