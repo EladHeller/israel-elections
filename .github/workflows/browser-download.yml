@@ -1,0 +1,57 @@
+name: Browser CSV diagnostic
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'election-results-listener/browser-download.ts'
+      - 'election-results-listener/__tests__/browser-download.test.ts'
+      - 'infra/playwright/**'
+      - 'scripts/test-browser-download.sh'
+      - '.github/workflows/browser-download.yml'
+permissions:
+  contents: read
+concurrency:
+  group: city-download-diagnostic-dev
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    # This experimental branch is explicitly allowed to deploy the isolated dev
+    # diagnostic. Forks and other pull requests never receive AWS credentials.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.head_ref == 'test/lambda-city-download')
+    environment: dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run type-check
+      - run: node --import tsx --test election-results-listener/__tests__/browser-download.test.ts
+      - name: Validate CloudFormation schemas
+        run: |
+          pip install cfn-lint
+          cfn-lint infra/playwright/*.cf.yaml
+      - name: Configure dev AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Build, deploy and invoke isolated diagnostic
+        run: bash scripts/test-browser-download.sh
+      - name: Save diagnostic response
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: city-download-result
+          path: |
+            /tmp/city-download-result.json
+            /tmp/city-download-invoke.json
+          if-no-files-found: ignore
+          retention-days: 3

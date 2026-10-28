@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Isolated browser CSV download diagnostic (logs only, manual invocation).
+Parameters:
+  ImageUri:
+    Type: String
+    Description: Immutable ECR image URI for this diagnostic.
+    AllowedPattern: '.+\.dkr\.ecr\..+\.amazonaws\.com/.+:.+'
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${AWS::StackName}'
+      RetentionInDays: 3
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DiagnosticLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt LogGroup.Arn
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref AWS::StackName
+      PackageType: Image
+      Architectures: [x86_64]
+      Role: !GetAtt ExecutionRole.Arn
+      Code:
+        ImageUri: !Ref ImageUri
+      Timeout: 300
+      MemorySize: 2048
+      EphemeralStorage:
+        Size: 2048
+      ReservedConcurrentExecutions: 1
+Outputs:
+  FunctionName:
+    Description: Function to invoke synchronously for one diagnostic.
+    Value: !Ref Function
