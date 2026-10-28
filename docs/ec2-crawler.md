@@ -22,7 +22,7 @@ The scripts do not prevent every possible interruption caused by deliberate infr
 
 ## Application deployment
 
-Production CD invokes `scripts/configure-ec2-publisher.sh` with `INSTANCE_ID`, `SOURCE_REF` (public commit SHA), `BUCKET`, `DISTRIBUTION_ID` and `REGION`. Its SSM command executes `infra/ec2-crawler/install-release.sh` on the instance.
+Production CD invokes `scripts/configure-ec2-publisher.sh` with `INSTANCE_ID`, `SOURCE_REF` (public commit SHA), `BUCKET`, `DISTRIBUTION_ID` , `REGION` and `CRAWLER_STATUS_BUCKET` (from the monitoring stack output). Its SSM command executes `infra/ec2-crawler/install-release.sh` on the instance.
 
 The installer:
 
@@ -64,3 +64,5 @@ The original headed Chrome download yielded 1,181 data rows; the existing parser
 Tests execute the real deployment/installer shell scripts with fake AWS/system services in isolated temporary filesystems. They cover repeated deployments, preparation failure, activation rollback, first-install failure, legacy release migration, configuration changes, pinned image/bootstrap preservation, empty change sets, access/validation errors and replacement rejection. They do not restart a real instance or publish test election results.
 
 To remove the crawler, export required evidence/profile first and delete `Israel-elections-ec2-crawler` in `il-central-1`. The stack owns its instance and root disk; deleting it removes those contents. Closing a PR does not delete AWS resources.
+
+Crawler health records and alerts are described in [crawler-monitor.md](crawler-monitor.md).

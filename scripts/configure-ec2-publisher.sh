@@ -4,6 +4,7 @@ set -euo pipefail
 : "${SOURCE_REF:?Set SOURCE_REF to a published commit}"
 : "${BUCKET:?Set BUCKET}"
 : "${DISTRIBUTION_ID:?Set DISTRIBUTION_ID}"
+export CRAWLER_STATUS_BUCKET=${CRAWLER_STATUS_BUCKET:-}
 export INSTANCE_ID SOURCE_REF BUCKET DISTRIBUTION_ID
 export REGION=${REGION:-us-east-1}
 params=$(mktemp)
@@ -12,8 +13,9 @@ python3 - "$params" <<'PY'
 import json, os, pathlib, re, shlex, sys
 for name, pattern in [('INSTANCE_ID',r'i-[a-f0-9]+'),('SOURCE_REF',r'[a-f0-9]{40}'),('BUCKET',r'[a-z0-9.-]+'),('DISTRIBUTION_ID',r'[A-Z0-9]+'),('REGION',r'[a-z0-9-]+')]:
     if not re.fullmatch(pattern,os.environ[name]): raise ValueError('Invalid '+name)
+if not re.fullmatch(r'[a-z0-9.-]*',os.environ['CRAWLER_STATUS_BUCKET']): raise ValueError('Invalid status bucket')
 installer=pathlib.Path('infra/ec2-crawler/install-release.sh').read_text()
-settings=' '.join(name+'='+shlex.quote(os.environ[name]) for name in ['SOURCE_REF','BUCKET','DISTRIBUTION_ID','REGION'])
+settings=' '.join(name+'='+shlex.quote(os.environ[name]) for name in ['SOURCE_REF','BUCKET','DISTRIBUTION_ID','REGION','CRAWLER_STATUS_BUCKET'])
 script="env "+settings+" bash <<'ELECTION_INSTALLER'\n"+installer+"\nELECTION_INSTALLER\n"
 json.dump({'commands':[script],'executionTimeout':['900']},open(sys.argv[1],'w'))
 PY

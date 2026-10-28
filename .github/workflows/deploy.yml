@@ -79,6 +79,7 @@ jobs:
           REGION: ${{ secrets.AWS_REGION }}
           BUCKET: ${{ secrets.CLIENT_CODE_BUCKET }}
           SOURCE_REF: ${{ github.sha }}
+          CRAWLER_ALERT_EMAIL: ${{ vars.CRAWLER_ALERT_EMAIL }}
         run: |
           pip install PyYAML
           export DISTRIBUTION_ID=$(aws cloudformation describe-stacks --region "$REGION" \
@@ -88,4 +89,8 @@ jobs:
           export INSTANCE_ID=$(aws cloudformation describe-stacks --region il-central-1 \
             --stack-name Israel-elections-ec2-crawler \
             --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue | [0]" --output text)
+          bash scripts/deploy-crawler-monitor.sh
+          export CRAWLER_STATUS_BUCKET=$(aws cloudformation describe-stacks --region il-central-1 \
+            --stack-name Israel-elections-crawler-monitor \
+            --query "Stacks[0].Outputs[?OutputKey=='StatusBucket'].OutputValue | [0]" --output text)
           bash scripts/configure-ec2-publisher.sh
