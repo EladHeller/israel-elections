@@ -48,11 +48,9 @@ jobs:
       - name: Unit tests
         run: npm run test:coverage
 
+      - name: Check coverage
+        run: npm run check-coverage
+
       - name: Run ESLint
         run: npm run lint:test
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
 

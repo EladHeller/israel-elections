@@ -6,7 +6,7 @@
   "scripts": {
     "lint:test": "eslint . --max-warnings 0",
     "test": "npm run build:test && tsx --test ./election-results-listener/**/*.test.ts ./elections-client/src/**/*.test.ts ./infra/**/*.test.ts",
-    "test:coverage": "c8 -r=lcov -r=json-summary npm test",
+    "test:coverage": "c8 -r=text-summary -r=lcov -r=json-summary npm test",
     "check-coverage": "tsx ./infra/CI/check-coverage.ts",
     "upload-coverage": "tsx ./infra/CI/upload-coverage-s3.ts",
     "type-check": "tsc --noEmit",
@@ -17,7 +17,7 @@
     "monitor:local": "tsx ./election-results-listener/local-monitor.ts",
     "monitor:local:install": "zsh ./scripts/install-local-election-monitor.sh",
     "monitor:local:uninstall": "zsh ./scripts/uninstall-local-election-monitor.sh",
-    "test:ci": "npm run type-check && npm run test:coverage && npm run lint:test",
+    "test:ci": "npm run type-check && npm run test:coverage && npm run check-coverage && npm run lint:test",
     "build:client": "cd elections-client && npm ci && npm run build"
   },
   "author": "",
