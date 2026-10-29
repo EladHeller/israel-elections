@@ -9,4 +9,4 @@ User=crawler
 EnvironmentFile=/etc/election-publisher.env
 WorkingDirectory=/opt/election-crawler
 ExecStart=/usr/local/bin/node /opt/election-crawler/publish.cjs
-TimeoutStartSec=180
+TimeoutStartSec=330

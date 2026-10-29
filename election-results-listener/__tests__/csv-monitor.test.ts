@@ -14,7 +14,7 @@ function listener(url: string | null = 'https://source.example/results.csv', sou
   let matches = false;
   let matchChecks = 0;
   let emptyChecks = 0;
-  const config = { currElections: 26, notPartiesKeys: ['סמל ישוב', 'פסולים'], distributionID: 'cdn',
+  const config = { currElections: 26, notPartiesKeys: ['שם ישוב', 'סמל ישוב', 'מספר קלפי', 'כשרים', 'פסולים'], distributionID: 'cdn',
     electionsConfig: { 26: { csvUrl: url, agreements: [], blockPercentage: 0.0325 } } };
   const load = Module._load;
   const stub = mock.method(Module, '_load', function (request, parent, isMain) {
@@ -136,4 +136,30 @@ test('invalid browser CSV fails before publishing anything', async () => {
   const state = listener(null);
   await assert.rejects(state.api.publishResultsCsv('<html>Error</html>', '2026-10-28T00:00:00.000Z'));
   assert.equal(state.uploads.length, 0);
+});
+
+const stationsCsv = 'שם ישוב,סמל ישוב,מספר קלפי,כשרים,פסולים,מחל,דרך\nירושלים,3000,1,150,4,100,50\n';
+
+test('station source is archived independently of unchanged city results without publishing seat totals', async () => {
+  const state = listener();
+  await state.api.publishPollingStationsCsv(stationsCsv, '2026-10-29T10:00:00.000Z');
+  assert.deepEqual(state.uploads, [
+    ['data/26/polling-stations.csv', stationsCsv, true],
+    ['data/26/2026-10-29T10:00:00.000Z_polling-stations.csv', stationsCsv],
+  ]);
+  assert.deepEqual(state.invalidations, [[['data/26/polling-stations.csv'], 'cdn']]);
+  assert.equal(state.matchChecks, 0);
+  state.setState(true, true);
+  await state.api.publishResultsCsv(csv, '2026-10-29T10:01:00.000Z');
+  await state.api.publishPollingStationsCsv(stationsCsv, '2026-10-29T10:01:00.000Z');
+  assert.equal(state.uploads.length, 2);
+});
+
+test('invalid and empty station downloads cannot overwrite published research data', async () => {
+  for (const source of ['', csv, '<html>Denied</html>', stationsCsv.replace('100,50', '-1,50'), stationsCsv.split('\n')[0], stationsCsv.replace('150,4,100,50', '0,0,0,0')]) {
+    const state = listener();
+    await assert.rejects(state.api.publishPollingStationsCsv(source, '2026-10-29T10:00:00.000Z'));
+    assert.equal(state.uploads.length, 0);
+    assert.equal(state.invalidations.length, 0);
+  }
 });

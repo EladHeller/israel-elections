@@ -122,7 +122,8 @@ async function uploadFiles(distributionId: string) {
     const key = file.replace(`${basePath}/`, '');
     // The listener owns live results; deployment may only seed missing objects.
     const initialOnly = key === `data/${currElections}/allResults.json`
-      || key === `data/${currElections}/elections.csv`;
+      || key === `data/${currElections}/elections.csv`
+      || key === `data/${currElections}/polling-stations.csv`;
     const updated = await upload(clientCodeName, key, file, undefined, initialOnly);
     if (updated) updatedFiles.push(`/${key}`);
   }));

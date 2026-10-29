@@ -47,7 +47,7 @@ test('deployment protects only the current live output and still updates its sou
   const source = await readFile('infra/CD/deploy-all.ts', 'utf8');
   const uploadSource = source.slice(source.indexOf('async function uploadFiles('), source.indexOf('\nfunction scenarioApiDomain('));
   const js = ts.transpileModule(uploadSource, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-  const keys = ['data/26/allResults.json', 'data/26/elections.csv', 'data/25/allResults.json', 'data/25/elections.csv', 'test-data/live-results.csv', 'election-config.json', 'index.html'];
+  const keys = ['data/26/allResults.json', 'data/26/elections.csv', 'data/26/polling-stations.csv', 'data/25/allResults.json', 'data/25/elections.csv', 'test-data/live-results.csv', 'election-config.json', 'index.html'];
   const calls: unknown[][] = [];
   const invalidations: unknown[] = [];
   const run = runInNewContext(`${js}\nuploadFiles`, {
@@ -61,7 +61,7 @@ test('deployment protects only the current live output and still updates its sou
   for (const key of keys) {
     const call = calls.find(args => args[1] === key)!;
     assert.ok(call, key);
-    assert.equal(call[4], key === 'data/26/allResults.json' || key === 'data/26/elections.csv', key);
+    assert.equal(call[4], key === 'data/26/allResults.json' || key === 'data/26/elections.csv' || key === 'data/26/polling-stations.csv', key);
   }
   const paths = (invalidations[0] as { input: { InvalidationBatch: { Paths: { Items: string[] } } } }).input.InvalidationBatch.Paths.Items;
   assert.ok(paths.includes('/test-data/live-results.csv'));
