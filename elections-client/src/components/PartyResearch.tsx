@@ -137,7 +137,7 @@ export default function PartyResearch() {
                 onClick={() => setLimits(previous => ({ ...previous, [order]: previous[order] + 50 }))}>הצגת {plural} נוספ{byStation ? 'ות' : 'ים'}</button>}
             </section>)}
           </div>
-          {!byVotes.length && <p>אין {plural} התואמ{byStation ? 'ות' : 'ים'} לסינון.</p>}
+          {!byStation && !byVotes.length && <p>אין יישובים התואמים לסינון.</p>}
         </>}
       </>}
     </main>
