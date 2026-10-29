@@ -1869,3 +1869,8 @@ body {
   .view-switcher.view-switcher-four-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .research-controls label { max-width: 100%; }
 }
+
+.research-level-switcher { display: flex; gap: .5rem; flex-wrap: wrap; margin-block: 1rem; }
+.research-level-switcher button { font: inherit; min-height: 44px; padding: .6rem 1rem; }
+.research-level-switcher button[aria-pressed="true"] { background: var(--ink-90); color: var(--bg); }
+.research-level-switcher button:focus-visible { outline: 2px solid var(--ink-70); outline-offset: 3px; }

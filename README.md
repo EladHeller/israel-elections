@@ -140,3 +140,14 @@ The latest version is deployed at:
 Research reads the existing same-origin `/data/:electionId/elections.csv` only when opened. Elections 15–19 contain polling-station rows, which are aggregated by locality code (by name for election 17, whose source has no locality-code column). Later files contain locality totals. Double envelopes, unnamed/non-locality rows and CSV metadata are excluded. Percentages use valid ballots as the denominator. The optional minimum-valid-ballots filter defaults to zero; no small locality is silently excluded. Rankings paginate in the UI and retain all matching localities.
 
 During counting, the CSV is refreshed every 30 seconds while the page is visible. Failed refreshes preserve the last successfully loaded rankings and display a retry control. This feature uses the existing crawler/S3/CloudFront data pipeline and requires no additional AWS resources.
+
+Party research also supports `?party=<ballotLetter>&level=stations` to rank polling
+stations by votes or percentage, with the same minimum-valid-ballots filter and
+independent pagination. The view retains locality, station number and split in
+each station's identity, and excludes double envelopes and non-locality rows.
+Elections 15–19 use the station rows already in `elections.csv`. For elections
+20–26, the station option appears only when the same-origin
+`/data/<election>/polling-stations.csv` archive is available as a CSV. During
+counting, availability is checked every 30 seconds so the option can appear when
+the first station file is published. Refresh failures preserve the last loaded
+rankings. Missing station files leave locality research available.
