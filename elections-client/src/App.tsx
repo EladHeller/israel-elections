@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { computeBlocTotals, computeBlocMap } from './lib/analytics';
 import { canPreviewElectionDemo, electionDemo, electionDemoConfig } from './lib/election-demo';
@@ -30,6 +30,9 @@ import { getElectionPhaseLabel, phaseHasResults } from './lib/election-manifest'
 import { canPassThresholdWithoutMandate, hasMandate } from './lib/calc';
 import { selectViewData, viewUsesScenario } from './lib/view-mode';
 import type { AppViewMode, ElectionResultsPayload, PartyResult, ResultsMap, VoteData } from './types';
+import { hasLocalityData } from './lib/locality-availability';
+
+const PartyResearch = lazy(() => import('./components/PartyResearch'));
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
@@ -66,6 +69,7 @@ export default function App() {
     <Route caseSensitive path="/" element={<ElectionRoute viewMode="results" />} />
     <Route caseSensitive path="/results/:electionId" element={<ElectionRoute viewMode="results" />} />
     <Route caseSensitive path="/simulator/:electionId" element={<ElectionRoute viewMode="simulator" />} />
+    <Route caseSensitive path="/research/:electionId" element={<Suspense fallback={<p role="status">טוען...</p>}><PartyResearch /></Suspense>} />
     <Route caseSensitive path="/summary" element={<ElectionRoute viewMode="summary" />} />
     <Route caseSensitive path="*" element={<NotFound />} />
   </Routes>;
@@ -318,6 +322,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
   const partyPanel = (
     <section className="grid grid-single">
       <PartyPanel
+        researchElection={!isDemo && !isSimulator && hasLocalityData(currentElection) ? currentElection! : undefined}
         editable={isSimulator}
         isLatestElection={isLatestElection}
         isDemo={isDemo}
