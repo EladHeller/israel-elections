@@ -13,10 +13,10 @@ const page = context.pages().find(p => p.url().startsWith('https://votes26.bechi
 try {
   if (!page) throw new Error('Open the official results homepage in the desktop first');
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
-  await page.locator('#DownloadCSVCities').waitFor({ state: 'visible', timeout: 30_000 });
+  const selector = pollingStations ? '#DownloadCSVBallots' : '#DownloadCSVCities';
+  await page.locator(selector).waitFor({ state: 'visible', timeout: 30_000 });
   await mkdir('/home/crawler/downloads', { recursive: true });
-  await page.screenshot({ path: '/home/crawler/downloads/before.png' });
-  const link = page.locator('#DownloadCSVCities');
+  const link = page.locator(selector);
   if (!await link.isVisible()) throw new Error(`Download link unavailable: ${await page.title()} | ${(await page.locator('body').innerText()).slice(0, 500)}`);
   const download = await (pollingStations ? downloadPollingStations : downloadCities)(context, page);
   const path = `/home/crawler/downloads/${pollingStations ? 'polling-stations' : 'cities'}-${Date.now()}.csv`;

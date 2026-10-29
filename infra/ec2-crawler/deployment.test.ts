@@ -27,7 +27,7 @@ function fixture(t: TestContext, previous = true) {
   stub('chown', 'true');
   stub('sudo', 'shift 2; exec "$@"');
   stub('npm', 'echo "npm $*" >> "$CALLS"; if [[ "$1" = ci && "${FAIL_BUILD:-0}" = 1 ]]; then exit 7; fi; if [[ "$1" = run ]]; then mkdir -p dist; echo module > dist/csv-monitor.js; fi');
-  stub('journalctl', 'echo journal >> "$CALLS"');
+  stub('journalctl', 'echo journal >> "$CALLS"; echo publisher-diagnostic');
   stub('shutdown', 'echo shutdown >> "$CALLS"');
   stub('systemctl', `echo "systemctl $*" >> "$CALLS"
 case "$1" in
@@ -86,6 +86,7 @@ test('failed activation restores release, files, environment, marker and timer',
   const result = f.run({ FAIL_HEALTH: '1' });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /restoring the previous release/);
+  assert.match(result.stderr, /publisher-diagnostic/);
   assert.equal(readlinkSync(join(f.root, 'app')), f.old);
   assert.equal(readFileSync(f.config, 'utf8'), 'old-config');
   assert.equal(readFileSync(join(f.root, 'deployed'), 'utf8'), 'old-marker');

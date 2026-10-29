@@ -1,22 +1,24 @@
 export async function downloadCities(context, page, timeoutMs = 90_000) {
-  return downloadCsv(context, () => page.locator('#DownloadCSVCities').click({ timeout: 15_000 }), timeoutMs);
+  return downloadCsv(context, () => page.locator('#DownloadCSVCities').click({ timeout: 15_000 }), timeoutMs, 'https://media26.bechirot.gov.il/files/expc.csv');
 }
 
-// Use the same authenticated Chrome session and popup download flow as the city link.
+// Trigger the official control, preserving its URL, popup name and user gesture.
 export async function downloadPollingStations(context, page, timeoutMs = 90_000) {
-  return downloadCsv(context, () => page.evaluate(() => {
-    window.open('https://media26.bechirot.gov.il/files/expb.csv', 'polling-stations-csv');
-  }), timeoutMs);
+  return downloadCsv(context, () => page.locator('#DownloadCSVBallots').click({ timeout: 15_000 }), timeoutMs, 'https://media26.bechirot.gov.il/files/expb.csv');
 }
 
-async function downloadCsv(context, start, timeoutMs) {
+async function downloadCsv(context, start, timeoutMs, expectedUrl) {
   const watched = new Set();
   let timer;
   let resolveDownload;
+  const onDownload = download => {
+    // Reused popups can emit stale city downloads when requesting stations (and vice versa).
+    if (download.url().split('?')[0] === expectedUrl) resolveDownload(download);
+  };
   const onPage = opened => {
     if (watched.has(opened)) return;
     watched.add(opened);
-    opened.on('download', resolveDownload);
+    opened.on('download', onDownload);
   };
   const pending = new Promise((resolve, reject) => {
     resolveDownload = resolve;
@@ -31,6 +33,6 @@ async function downloadCsv(context, start, timeoutMs) {
   } finally {
     clearTimeout(timer);
     context.off('page', onPage);
-    for (const opened of watched) opened.off('download', resolveDownload);
+    for (const opened of watched) opened.off('download', onDownload);
   }
 }
