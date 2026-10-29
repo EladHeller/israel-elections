@@ -44,6 +44,7 @@ test('research route loads official CSV, selects a party, filters and refreshes 
     await render('26');
     assert.equal(requestedUrl, '/data/26/elections.csv');
     assert.match(text(renderer), /הספירה נמשכת/);
+    assert.match(text(renderer), /קובץ נתוני היישובים עודכן/);
     assert.equal(renderer.root.findAllByType('table').length, 2);
     assert.equal(renderer.root.findAllByType('select')[0].props.value, 'אמת');
     await act(async () => { renderer.root.findAllByType('select')[0].props.onChange({ target: { value: 'מחל' } }); });
@@ -60,6 +61,7 @@ test('research route loads official CSV, selects a party, filters and refreshes 
     await act(async () => { renderer.root.findByType(AppHeader).props.setViewMode('research'); });
     await act(async () => { renderer.root.findByType(AppHeader).props.setCurrentElection('25'); await tick(); });
     assert.equal(requestedUrl, '/data/25/elections.csv');
+    assert.doesNotMatch(text(renderer), /קובץ נתוני היישובים עודכן/);
     await act(async () => renderer.unmount());
     fail = true;
     await render('25');

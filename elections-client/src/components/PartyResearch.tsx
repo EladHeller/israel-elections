@@ -111,7 +111,7 @@ export default function PartyResearch() {
         <p>בחרו רשימה כדי לגלות באילו {plural} קיבלה את התמיכה הגבוהה ביותר.</p>
         {counting && <p className="research-notice">הספירה נמשכת: הדירוג מבוסס על הקולות שפורסמו עד כה, ועשוי להשתנות. הנתונים מתרעננים אוטומטית.</p>}
         <p>האחוז מחושב מתוך הקולות הכשרים בכל {singular}. מעטפות כפולות וקולות שאינם משויכים ליישוב אינם נכללים.</p>
-        {updated && <p>קובץ נתוני ה{plural} עודכן: {new Date(updated).toLocaleString('he-IL')}</p>}
+        {electionManifest && electionManifest.phase !== 'final' && updated && <p>קובץ נתוני ה{plural} עודכן: {new Date(updated).toLocaleString('he-IL')}</p>}
         {error && <p role="alert">טעינת נתוני ה{plural} נכשלה.{data ? ' מוצגים הנתונים האחרונים שהתקבלו.' : ''} <button type="button" className="ghost" onClick={() => setAttempt(value => value + 1)}>ניסיון נוסף</button></p>}
         {!data && !error && <p role="status">טוען נתוני {plural}...</p>}
         {data && !parties.length && <p>טרם פורסמו תוצאות לפי {singular}.</p>}

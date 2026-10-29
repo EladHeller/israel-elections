@@ -58,6 +58,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   assert.equal(renderer.root.findAllByType('thead')[0].findAllByType('th').length, 5);
   assert.match(content(renderer), /פיצול 1/);
   assert.match(content(renderer), /בכל קלפי/);
+  assert.equal(content(renderer).includes('קובץ נתוני הקלפיות עודכן'), election === '26');
   assert.equal(renderer.root.findByType('select').props.value, 'אמת');
   if (election === '26') assert.ok(requests.includes('GET /data/26/polling-stations.csv'));
   else assert.ok(requests.every(request => request === 'GET /data/19/elections.csv'));
