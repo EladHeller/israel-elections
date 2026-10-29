@@ -67,9 +67,18 @@ test('recalculates final seats rather than dividing the existing gain margin by 
       assert.ok(seatsAt(required) > (current[race.party]?.mandats ?? 0));
       if (required > 0) assert.ok(seatsAt(required - 1) <= (current[race.party]?.mandats ?? 0));
     }
-    assert.deepEqual(races.map(race => race.requiredShare),
-      races.map(race => race.requiredShare).sort((a, b) => a! - b!));
+    const ratios = races.map(race => race.requiredShare! / race.currentShare);
+    assert.deepEqual(ratios, [...ratios].sort((a, b) => a - b));
   }
+});
+
+test('ranks relative gains ahead of smaller absolute required shares', () => {
+  const data = votes({ a: 40000, b: 20000, c: 20000, d: 16690, e: 3310, zero: 0 });
+  const races = computeRemainingSeatRaces(calculate(data), data, settings, 15000);
+  assert.deepEqual(races.map(race => race.party), ['a', 'b', 'c', 'd', 'e']);
+  assert.ok(races[0].requiredShare! > races[4].requiredShare!);
+  assert.ok(races[0].requiredShare! / races[0].currentShare
+    < races[4].requiredShare! / races[4].currentShare);
 });
 
 test('handles insufficient remaining votes, crossing threshold and an already complete majority', () => {
@@ -77,7 +86,10 @@ test('handles insufficient remaining votes, crossing threshold and an already co
   const current = calculate(data);
   const impossible = computeRemainingSeatRaces(current, data, settings, 10);
   assert.ok(impossible.every(race => race.requiredVotes === null && race.requiredShare === null));
-  const race = computeRemainingSeatRaces(current, data, settings, 1000).find(race => race.party === 'b')!;
+  const ordered = computeRemainingSeatRaces(current, data, settings, 1000);
+  assert.deepEqual(ordered.map(race => race.party), ['b', 'a']);
+  assert.equal(ordered.at(-1)!.requiredShare, null);
+  const race = ordered[0];
   assert.equal(race.requiredVotes, 283);
   assert.ok(calculate(projectRemainingVotes(data, 'b', race.requiredVotes!, 1000)).b.mandats > 0);
   const single = votes({ a: 10000 });
