@@ -1,4 +1,5 @@
 [Unit]
+OnFailure=election-browser-recovery.service
 Description=Download and publish official election results
 After=election-desktop.service network-online.target
 Requires=election-desktop.service

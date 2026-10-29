@@ -66,3 +66,9 @@ Tests execute the real deployment/installer shell scripts with fake AWS/system s
 To remove the crawler, export required evidence/profile first and delete `Israel-elections-ec2-crawler` in `il-central-1`. The stack owns its instance and root disk; deleting it removes those contents. Closing a PR does not delete AWS resources.
 
 Crawler health records and alerts are described in [crawler-monitor.md](crawler-monitor.md).
+
+### Browser connection recovery
+
+A failed publisher invocation triggers `election-browser-recovery.service`. The recovery script examines only that invocation's journal and restarts the desktop only for `browserType.connectOverCDP` failures. It waits for Chrome's local debugging endpoint to respond before returning. Systemd permits at most two recovery attempts in five minutes; source/download/publishing failures remain visible without restarting Chrome.
+
+Deployment joins the recovery job and retries its publisher health check once before rolling back. Both the recovery script and unit are installed and restored with the rest of the release.

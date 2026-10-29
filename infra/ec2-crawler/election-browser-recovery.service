@@ -1,0 +1,8 @@
+[Unit]
+Description=Recover a failed election crawler browser connection
+StartLimitIntervalSec=300
+StartLimitBurst=2
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/libexec/election-crawler/recover-browser.sh
+TimeoutStartSec=75
