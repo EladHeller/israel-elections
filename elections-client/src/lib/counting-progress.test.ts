@@ -35,7 +35,7 @@ test('handles missing totals and older snapshots without treating uncounted ball
     assert.equal(progress.invalidVotes, undefined);
   }
   assert.equal(getCountingProgress(results(20, 21), 20).estimateExceeded, true);
-  assert.equal(getCountingProgress(results(20, 21), 20).percentage, null);
+  assert.equal(getCountingProgress(results(20, 21), 20).percentage, 100);
 });
 
 test('renders the prominent count, accessible progress and early warning', () => {
@@ -88,10 +88,18 @@ test('explains unavailable estimates and legacy valid-only counts without a misl
   assert.match(missing, /קולות פסולים אינם כלולים/);
   assert.match(missing, /כשיהיה זמין מספר המצביעים/);
   assert.doesNotMatch(missing, /<progress/);
-  const exceeded = render(20, 21, 20);
-  assert.match(exceeded, /גבוה ממספר המצביעים/);
-  assert.doesNotMatch(exceeded, /<progress|כ־100%/);
   assert.match(render(20, undefined, 1000), /כ־2%/);
+});
+
+test('caps counts above the reported turnout at 100% while keeping results provisional', () => {
+  for (const counted of [21, undefined]) {
+    const exceeded = render(21, counted, 20);
+    assert.match(exceeded, /כ־100%/);
+    assert.match(exceeded, /<progress max="100" value="100"/);
+    assert.match(exceeded, /21<\/bdi> קולות/);
+    assert.match(exceeded, /התוצאות אינן סופיות עדיין/);
+    assert.doesNotMatch(exceeded, /גבוה ממספר המצביעים|אינו זמין|הספירה בעיצומה|אינן בהכרח מייצגות|מתוך <bdi>/);
+  }
 });
 
 test('loads manual totalVotes changes even when the results snapshot has not changed', async t => {

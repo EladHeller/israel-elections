@@ -6,7 +6,7 @@ export const getCountingProgress = (results: ElectionResultsPayload, totalVotes?
   const countedVotes = hasCountedTotal ? results.countedVotes! : validVotes;
   const hasEstimate = Number.isSafeInteger(totalVotes) && totalVotes! > 0;
   const estimateExceeded = hasEstimate && countedVotes > totalVotes!;
-  const percentage = hasEstimate && !estimateExceeded ? countedVotes / totalVotes! * 100 : null;
+  const percentage = hasEstimate ? Math.min(100, countedVotes / totalVotes! * 100) : null;
   return {
     countedVotes,
     percentage,
