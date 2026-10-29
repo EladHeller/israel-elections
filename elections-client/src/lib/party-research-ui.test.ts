@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import PartyResearch from '../components/PartyResearch';
 import AppHeader from '../components/AppHeader';
 import PartyRow from '../components/PartyRow';
+import partyNames from '../data/party-names.json';
 
 const csv = 'שם ישוב,סמל ישוב,כשרים,מחל,אמת\nגדול,1,100,60,40\nקטן,2,10,9,1\n';
 const text = (renderer: ReturnType<typeof create>) => JSON.stringify(renderer.toJSON());
@@ -15,6 +16,9 @@ test('research route loads official CSV, selects a party, filters and refreshes 
   const originalFetch = globalThis.fetch;
   const originalWindow = globalThis.window;
   const originalDocument = globalThis.document;
+  const names = partyNames['26'] as Record<string, string>;
+  const originalName = names['אמת'];
+  delete names['אמת'];
   let refresh = () => {};
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: (callback: () => void) => { refresh = callback; return 1; }, clearInterval: () => {} } });
   Object.defineProperty(globalThis, 'document', { configurable: true, value: { documentElement: { dataset: {} }, visibilityState: 'visible' } });
@@ -69,6 +73,7 @@ test('research route loads official CSV, selects a party, filters and refreshes 
   } finally {
     await act(async () => renderer?.unmount());
     globalThis.fetch = originalFetch;
+    names['אמת'] = originalName;
     Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
     Object.defineProperty(globalThis, 'document', { configurable: true, value: originalDocument });
   }
@@ -90,4 +95,96 @@ test('header exposes research only for supported elections', () => {
   renderer.update(React.createElement(AppHeader, { ...props, currentElection: '14' }));
   assert.doesNotMatch(text(renderer), /מחקר מפלגות/);
   renderer.unmount();
+});
+
+test('research paginates every locality, resets on list changes, handles empty filters and navigates away', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalWindow = globalThis.window;
+  const originalDocument = globalThis.document;
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { clearInterval() {} } });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { documentElement: { dataset: {} } } });
+  const many = 'שם ישוב,סמל ישוב,כשרים,מחל,חדש\n' + Array.from({ length: 80 }, (_, index) => `יישוב ${index},${index + 1},100,${index + 1},1`).join('\n');
+  globalThis.fetch = async () => new Response(many, { headers: { 'last-modified': 'invalid' } });
+  let renderer!: ReturnType<typeof create>;
+  try {
+    await act(async () => {
+      renderer = create(React.createElement(MemoryRouter, { initialEntries: ['/research/25?party=invalid'] }, React.createElement(Routes, {},
+        React.createElement(Route, { path: '/research/:electionId', element: React.createElement(PartyResearch) }),
+        React.createElement(Route, { path: '/summary', element: React.createElement('p', {}, 'Summary destination') }),
+        React.createElement(Route, { path: '/results/:electionId', element: React.createElement('p', {}, 'Results destination') }))));
+      await tick();
+    });
+    const rows = () => renderer.root.findAllByType('tbody')[0].findAllByType('tr');
+    const more = () => renderer.root.findAllByType('button').find(button => button.children.includes('הצגת יישובים נוספים'))!;
+    assert.equal(rows().length, 20);
+    await act(async () => more().props.onClick()); assert.equal(rows().length, 70);
+    await act(async () => more().props.onClick()); assert.equal(rows().length, 80); assert.equal(more(), undefined);
+    await act(async () => renderer.root.findByType('select').props.onChange({ target: { value: 'חדש' } }));
+    assert.equal(rows().length, 20); assert.match(text(renderer), /חדש/);
+    await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '101' } }));
+    assert.match(text(renderer), /אין יישובים התואמים/);
+    await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '' } })); assert.equal(rows().length, 20);
+    await act(async () => renderer.root.findByType(AppHeader).props.setCurrentElection('14'));
+    assert.match(text(renderer), /Results destination/);
+    await act(async () => renderer.unmount());
+    await act(async () => {
+      renderer = create(React.createElement(MemoryRouter, { initialEntries: ['/research/25'] }, React.createElement(Routes, {},
+        React.createElement(Route, { path: '/research/:electionId', element: React.createElement(PartyResearch) }),
+        React.createElement(Route, { path: '/summary', element: React.createElement('p', {}, 'Summary destination') }))));
+      await tick();
+    });
+    await act(async () => renderer.root.findByType(AppHeader).props.setViewMode('summary'));
+    assert.match(text(renderer), /Summary destination/);
+  } finally {
+    await act(async () => renderer?.unmount()); globalThis.fetch = originalFetch;
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
+    Object.defineProperty(globalThis, 'document', { configurable: true, value: originalDocument });
+  }
+});
+
+test('research pauses hidden polling, deduplicates slow requests and ignores late success or failure after navigation', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalWindow = globalThis.window;
+  const originalDocument = globalThis.document;
+  let refresh = () => {};
+  const document = { documentElement: { dataset: {} }, visibilityState: 'visible' };
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: (callback: () => void) => { refresh = callback; return 1; }, clearInterval() {} } });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: document });
+  let renderer!: ReturnType<typeof create>;
+  try {
+    for (const outcome of ['success', 'failure', 'late-body']) {
+      let deferred = false;
+      let calls = 0;
+      let resolve!: (response: Response) => void;
+      let reject!: (error: Error) => void;
+      let finishBody!: (body: string) => void;
+      let signal: AbortSignal | null | undefined;
+      globalThis.fetch = async (_url, options) => {
+        calls++; signal = options?.signal;
+        if (!deferred) return new Response(csv);
+        if (outcome === 'late-body') return { ok: true, headers: new Headers(), text: () => new Promise<string>(done => { finishBody = done; }) } as Response;
+        return new Promise<Response>((done, fail) => { resolve = done; reject = fail; });
+      };
+      await act(async () => {
+        renderer = create(React.createElement(MemoryRouter, { initialEntries: ['/research/26'] }, React.createElement(Routes, {}, React.createElement(Route, { path: '/research/:electionId', element: React.createElement(PartyResearch) }))));
+        await tick();
+      });
+      const before = calls;
+      document.visibilityState = 'hidden';
+      await act(async () => { refresh(); await tick(); }); assert.equal(calls, before);
+      document.visibilityState = 'visible'; deferred = true;
+      await act(async () => { refresh(); await tick(); refresh(); }); assert.equal(calls, before + 1);
+      await act(async () => renderer.unmount()); assert.equal(signal?.aborted, true);
+      await act(async () => {
+        if (outcome === 'failure') reject(new Error('cancelled'));
+        else if (outcome === 'late-body') finishBody(csv);
+        else resolve(new Response(csv));
+        await tick();
+      });
+    }
+  } finally {
+    await act(async () => renderer?.unmount()); globalThis.fetch = originalFetch;
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
+    Object.defineProperty(globalThis, 'document', { configurable: true, value: originalDocument });
+  }
 });
