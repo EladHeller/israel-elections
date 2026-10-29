@@ -72,3 +72,7 @@ Crawler health records and alerts are described in [crawler-monitor.md](crawler-
 A failed publisher invocation triggers `election-browser-recovery.service`. The recovery script examines only that invocation's journal and restarts the desktop only for `browserType.connectOverCDP` failures. It waits for Chrome's local debugging endpoint to respond before returning. Systemd permits at most two recovery attempts in five minutes; source/download/publishing failures remain visible without restarting Chrome.
 
 Deployment joins the recovery job and retries its publisher health check once before rolling back. Both the recovery script and unit are installed and restored with the rest of the release.
+
+### Source outages
+
+If the official city CSV redirects to `maintenance.gov.il` or returns an HTTP error, the browser download reports that source failure immediately. It keeps the last published results and the existing heartbeat monitor reports the outage. Source errors do not trigger browser recovery; normal periodic attempts continue until the official file returns.
