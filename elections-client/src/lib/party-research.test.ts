@@ -95,3 +95,15 @@ test('station sources use verified historical rows or optional separate archives
   assert.equal(hasEmbeddedPollingStations('19'), true);
   assert.equal(hasEmbeddedPollingStations('20'), false);
 });
+
+
+test('parses the official election 26 קלפי header and excludes all CSV metadata', () => {
+  const csv = readFileSync(new URL('./fixtures/election26-polling-stations.csv', import.meta.url), 'utf8');
+  const stations = parsePollingStations(csv);
+  assert.equal(stations.length, 3);
+  assert.deepEqual(stations.map(row => row.pollingStation), ['1', '1.1', '1']);
+  assert.equal(new Set(stations.map(row => row.id)).size, 3);
+  assert.equal(stations.reduce((sum, row) => sum + row.validVotes, 0), 300);
+  assert.equal(rankLocalities(stations, 'מחל', 'percentage')[0].percentage, 70);
+  for (const row of stations) for (const key of ['קלפי', 'ברזל', 'ריכוז', 'שופט', 'חיצוניות', 'קלפי אחרת']) assert.equal(row.votes[key], undefined);
+});

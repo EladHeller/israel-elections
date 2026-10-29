@@ -27,7 +27,7 @@ function parseResearchRows(csv: string, pollingStations: boolean): LocalityVotes
   const nameIndex = header.indexOf('שם ישוב');
   const idIndex = header.indexOf('סמל ישוב');
   const validIndex = header.indexOf('כשרים');
-  const stationIndex = header.findIndex(key => key === 'מספר קלפי' || key === 'סמל קלפי');
+  const stationIndex = header.findIndex(key => ['מספר קלפי', 'סמל קלפי', 'קלפי'].includes(key));
   const splitIndex = header.indexOf('פיצול');
   if (pollingStations && stationIndex < 0) throw new Error('קובץ הנתונים אינו מכיל פירוט לפי קלפיות');
   if (nameIndex < 0 || validIndex < 0 || new Set(header).size !== header.length) {

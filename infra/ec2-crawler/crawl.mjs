@@ -27,7 +27,7 @@ try {
   try { csv = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
   catch { csv = new TextDecoder('windows-1255').decode(bytes); }
   const rows = parse(csv, { bom: true, skip_empty_lines: true });
-  if (rows.length < 2 || !rows[0].some(c => c.trim() === 'שם ישוב') || !rows[0].includes('כשרים') || (pollingStations && !rows[0].some(c => c.trim() === 'מספר קלפי'))) {
+  if (rows.length < 2 || !rows[0].some(c => c.trim() === 'שם ישוב') || !rows[0].includes('כשרים') || (pollingStations && !rows[0].some(c => ['מספר קלפי', 'סמל קלפי', 'קלפי'].includes(c.trim())))) {
     throw new Error('Downloaded content is not a valid results CSV');
   }
   console.log(JSON.stringify({ ok: true, path, source: download.url(), rows: rows.length - 1,
