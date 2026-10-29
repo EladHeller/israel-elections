@@ -100,7 +100,7 @@ Resources:
           var uri = request.uri;
           var isResource = /^\/(assets|data)(\/|$)/.test(uri) || /\.[^/]+\/?$/.test(uri);
           if ((request.method !== 'GET' && request.method !== 'HEAD') || isResource) return request;
-          var election = /^\/(results|simulator)\/([1-9][0-9]*)\/?$/.exec(uri);
+          var election = /^\/(results|simulator|research)\/([1-9][0-9]*)\/?$/.exec(uri);
           if (uri === '/' || /^\/summary\/?$/.test(uri) || (election && Number(election[2]) <= ${LatestElectionId})) {
             request.uri = '/index.html';
           } else {
