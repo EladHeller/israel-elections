@@ -1004,6 +1004,16 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.remaining-votes-panel { margin-top: 20px; }
+.remaining-votes-panel > p { margin-top: 12px; line-height: 1.5; }
+.panel.remaining-votes-panel .remaining-votes-table th:first-child { width: 30%; }
+.panel.remaining-votes-panel .remaining-votes-table th:nth-child(2) { width: 20%; }
+.panel.remaining-votes-panel .remaining-votes-table th:nth-child(3) { width: 24%; }
+.panel.remaining-votes-panel .remaining-votes-table th:nth-child(4) { width: 26%; }
+.remaining-votes-table td { font-size: 13px; }
+.remaining-votes-table bdi { white-space: nowrap; }
+.remaining-votes-impossible { color: var(--ink-50); font-size: 12px; }
+
 .close-seat-gain,
 .close-seat-loss {
   display: inline-block;
