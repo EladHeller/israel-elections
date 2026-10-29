@@ -48,7 +48,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   const requests: string[] = [];
   globalThis.fetch = async (url, options) => {
     requests.push(`${options?.method ?? 'GET'} ${url}`);
-    return new Response(String(url).includes('polling-stations') || election === '19' ? stations : cities, { headers: { 'content-type': 'text/csv', 'last-modified': 'Wed, 28 Oct 2026 20:00:00 GMT' } });
+    return new Response(String(url).includes('polling-stations') || election === '19' ? (election === '26' ? stations.replace('מספר קלפי', 'קלפי') : stations) : cities, { headers: { 'content-type': 'text/csv', 'last-modified': 'Wed, 28 Oct 2026 20:00:00 GMT' } });
   };
   const renderer = await state.render(`/research/${election}?party=אמת&level=stations`);
   const button = (label: string) => renderer.root.findAllByType('button').find(node => node.children.includes(label))!;

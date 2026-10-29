@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test, mock } from 'node:test';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const Module = require('node:module');
 const actualCsv = require('../../dist/csv-data.js');
+const actualConfig = require('../../dist/config.js').default;
 const csv = 'סמל ישוב,פסולים,מחל,דרך\n1,4,100,50\n';
 
 function listener(url: string | null = 'https://source.example/results.csv', sourceCsv = csv, canPublishEmpty = true) {
@@ -14,7 +16,7 @@ function listener(url: string | null = 'https://source.example/results.csv', sou
   let matches = false;
   let matchChecks = 0;
   let emptyChecks = 0;
-  const config = { currElections: 26, notPartiesKeys: ['שם ישוב', 'סמל ישוב', 'מספר קלפי', 'כשרים', 'פסולים'], distributionID: 'cdn',
+  const config = { currElections: 26, notPartiesKeys: actualConfig.notPartiesKeys, distributionID: 'cdn',
     electionsConfig: { 26: { csvUrl: url, agreements: [], blockPercentage: 0.0325 } } };
   const load = Module._load;
   const stub = mock.method(Module, '_load', function (request, parent, isMain) {
@@ -161,5 +163,18 @@ test('invalid and empty station downloads cannot overwrite published research da
     await assert.rejects(state.api.publishPollingStationsCsv(source, '2026-10-29T10:00:00.000Z'));
     assert.equal(state.uploads.length, 0);
     assert.equal(state.invalidations.length, 0);
+  }
+});
+
+
+test('publishes the official election 26 station format and retains older station header aliases', async () => {
+  const official = readFileSync('elections-client/src/lib/fixtures/election26-polling-stations.csv', 'utf8');
+  for (const alias of ['קלפי', 'מספר קלפי', 'סמל קלפי']) {
+    const source = official.replace(',קלפי,', `,${alias},`);
+    const state = listener();
+    await state.api.publishPollingStationsCsv(source, '2026-10-29T14:00:00.000Z');
+    assert.equal(state.uploads[0][0], 'data/26/polling-stations.csv');
+    assert.equal(state.uploads[0][1], source);
+    assert.equal(state.uploads.length, 2);
   }
 });

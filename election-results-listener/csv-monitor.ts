@@ -47,7 +47,7 @@ export async function publishResultsCsv(csvData: string, time: string) {
 // This dataset is for research only; it must never replace nationwide totals.
 export async function publishPollingStationsCsv(csvData: string, time: string) {
   const [header] = parse(csvData, { bom: true, skip_empty_lines: true, trim: true }) as string[][];
-  if (!header || !['שם ישוב', 'סמל ישוב', 'מספר קלפי', 'כשרים'].every(key => header.includes(key))) {
+  if (!header || !['שם ישוב', 'סמל ישוב', 'כשרים'].every(key => header.includes(key)) || !['מספר קלפי', 'סמל קלפי', 'קלפי'].some(key => header.includes(key))) {
     throw new Error('Invalid polling-station CSV: missing station columns');
   }
   const { voteData, countedVotes } = getCsvResults(csvData, notPartiesKeys);
