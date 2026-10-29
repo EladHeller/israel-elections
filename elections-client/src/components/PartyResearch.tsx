@@ -1,9 +1,9 @@
-import { hasLocalityData } from '../lib/locality-availability';
+import { hasLocalityData, hasEmbeddedPollingStations, pollingStationSource } from '../lib/locality-availability';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import { useElectionData } from '../hooks/use-election-data';
-import { parseLocalities, rankLocalities, type LocalityVotes } from '../lib/party-research';
+import { parseLocalities, parsePollingStations, rankLocalities, type LocalityVotes } from '../lib/party-research';
 
 export default function PartyResearch() {
   const { electionId = '' } = useParams();
@@ -18,6 +18,39 @@ export default function PartyResearch() {
   const [updated, setUpdated] = useState<string | null>(null);
   const supported = hasLocalityData(electionId);
   const counting = electionManifest?.phase === 'counting';
+  const [stationAvailability, setStationAvailability] = useState({ election: '', available: false });
+  const embeddedStations = hasEmbeddedPollingStations(electionId);
+  const stationSource = pollingStationSource(electionId);
+  const stationsAvailable = embeddedStations || (stationAvailability.election === electionId && stationAvailability.available);
+  const byStation = search.get('level') === 'stations' && stationsAvailable;
+  const plural = byStation ? 'קלפיות' : 'יישובים';
+  const singular = byStation ? 'קלפי' : 'יישוב';
+
+  useEffect(() => { setMinimum(0); setLimits({ votes: 20, percentage: 20 }); }, [electionId, byStation]);
+
+  useEffect(() => {
+    if (!stationSource || embeddedStations) return;
+    const controller = new AbortController();
+    let inFlight = false;
+    const check = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const response = await fetch(stationSource, { method: 'HEAD', cache: 'no-store', signal: controller.signal });
+        if (!controller.signal.aborted) setStationAvailability(previous => ({
+          election: electionId,
+          // Keep the option on transient refresh errors once this election's file was found.
+          available: (response.ok && !!response.headers.get('content-type')?.includes('csv')) || (previous.election === electionId && previous.available),
+        }));
+      } catch { /* The locality view remains usable when the optional file is absent. */ }
+      finally { inFlight = false; }
+    };
+    void check();
+    const interval = counting ? window.setInterval(() => {
+      if (document.visibilityState === 'visible') void check();
+    }, 30_000) : undefined;
+    return () => { controller.abort(); window.clearInterval(interval); };
+  }, [electionId, stationSource, embeddedStations, counting, attempt]);
 
   useEffect(() => {
     setData(null);
@@ -30,9 +63,9 @@ export default function PartyResearch() {
       if (inFlight) return;
       inFlight = true;
       try {
-        const response = await fetch(`/data/${electionId}/elections.csv`, { cache: 'no-store', signal: controller.signal });
+        const response = await fetch(byStation ? stationSource! : `/data/${electionId}/elections.csv`, { cache: 'no-store', signal: controller.signal });
         if (!response.ok) throw new Error('CSV unavailable');
-        const parsed = parseLocalities(await response.text());
+        const parsed = (byStation ? parsePollingStations : parseLocalities)(await response.text());
         if (controller.signal.aborted) return;
         setData(parsed);
         setError(false);
@@ -47,7 +80,7 @@ export default function PartyResearch() {
       if (document.visibilityState === 'visible') void load();
     }, 30_000) : undefined;
     return () => { controller.abort(); window.clearInterval(interval); };
-  }, [electionId, supported, counting, attempt]);
+  }, [electionId, supported, counting, attempt, byStation, stationSource]);
 
   const parties = useMemo(() => {
     const totals = new Map<string, number>();
@@ -60,42 +93,50 @@ export default function PartyResearch() {
   const byPercentage = useMemo(() => rankLocalities(data ?? [], party, 'percentage', minimum), [data, party, minimum]);
   const name = (key: string) => partyNames[key] || electionManifest?.lists.find(list => list.ballotLetter === key)?.name || key;
   return <div className="screen party-research">
-    <AppHeader statusText="מחקר תוצאות לפי יישוב" showSimulator isEdited={false}
-      currentElection={electionId} setCurrentElection={id => { setLimits({ votes: 20, percentage: 20 }); navigate(`/${hasLocalityData(id) ? 'research' : 'results'}/${id}`); }}
+    <AppHeader statusText={`מחקר תוצאות לפי ${singular}`} showSimulator isEdited={false}
+      currentElection={electionId} setCurrentElection={id => { setMinimum(0); setLimits({ votes: 20, percentage: 20 }); navigate(`/${hasLocalityData(id) ? 'research' : 'results'}/${id}`); }}
       availableElections={availableElections} viewMode="research"
       setViewMode={mode => navigate(mode === 'summary' ? '/summary' : `/${mode}/${electionId}`)} />
     <main className="panel">
       <h1>מחקר מפלגות</h1>
       {!supported ? <p>נתוני יישובים אינם זמינים לבחירות אלו.</p> : <>
-        <p>בחרו רשימה כדי לגלות באילו יישובים קיבלה את התמיכה הגבוהה ביותר.</p>
+        {stationsAvailable && <div className="research-level-switcher" role="group" aria-label="יחידת המחקר">
+          {(['localities', 'stations'] as const).map(level => <button key={level} type="button" className={`ghost${byStation === (level === 'stations') ? ' active' : ''}`}
+            aria-pressed={byStation === (level === 'stations')} onClick={() => {
+              const next = new URLSearchParams(search);
+              if (level === 'stations') next.set('level', level); else next.delete('level');
+              setSearch(next); setMinimum(0); setLimits({ votes: 20, percentage: 20 });
+            }}>{level === 'stations' ? 'לפי קלפיות' : 'לפי יישובים'}</button>)}
+        </div>}
+        <p>בחרו רשימה כדי לגלות באילו {plural} קיבלה את התמיכה הגבוהה ביותר.</p>
         {counting && <p className="research-notice">הספירה נמשכת: הדירוג מבוסס על הקולות שפורסמו עד כה, ועשוי להשתנות. הנתונים מתרעננים אוטומטית.</p>}
-        <p>האחוז מחושב מתוך הקולות הכשרים בכל יישוב. מעטפות כפולות וקולות שאינם משויכים ליישוב אינם נכללים.</p>
-        {updated && <p>קובץ נתוני היישובים עודכן: {new Date(updated).toLocaleString('he-IL')}</p>}
-        {error && <p role="alert">טעינת נתוני היישובים נכשלה.{data ? ' מוצגים הנתונים האחרונים שהתקבלו.' : ''} <button type="button" className="ghost" onClick={() => setAttempt(value => value + 1)}>ניסיון נוסף</button></p>}
-        {!data && !error && <p role="status">טוען נתוני יישובים...</p>}
-        {data && !parties.length && <p>טרם פורסמו תוצאות לפי יישוב.</p>}
+        <p>האחוז מחושב מתוך הקולות הכשרים בכל {singular}. מעטפות כפולות וקולות שאינם משויכים ליישוב אינם נכללים.</p>
+        {updated && <p>קובץ נתוני ה{plural} עודכן: {new Date(updated).toLocaleString('he-IL')}</p>}
+        {error && <p role="alert">טעינת נתוני ה{plural} נכשלה.{data ? ' מוצגים הנתונים האחרונים שהתקבלו.' : ''} <button type="button" className="ghost" onClick={() => setAttempt(value => value + 1)}>ניסיון נוסף</button></p>}
+        {!data && !error && <p role="status">טוען נתוני {plural}...</p>}
+        {data && !parties.length && <p>טרם פורסמו תוצאות לפי {singular}.</p>}
         {!!parties.length && <>
           <div className="research-controls">
-            <label>רשימה<select value={party} onChange={event => { setSearch({ party: event.target.value }); setLimits({ votes: 20, percentage: 20 }); }}>
+            <label>רשימה<select value={party} onChange={event => { const next = new URLSearchParams(search); next.set('party', event.target.value); setSearch(next); setLimits({ votes: 20, percentage: 20 }); }}>
               {parties.map(key => <option key={key} value={key}>{name(key)} ({key})</option>)}
             </select></label>
-            <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>
+            <label>מינימום קולות כשרים ב{singular}<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>
           </div>
           <h2>{name(party)}</h2>
-          <p>{byVotes.length.toLocaleString('he-IL')} יישובים שבהם התקבלו קולות לרשימה ועומדים בסינון</p>
+          <p>{byVotes.length.toLocaleString('he-IL')} {plural} שבה{byStation ? 'ן' : 'ם'} התקבלו קולות לרשימה ועומד{byStation ? 'ות' : 'ים'} בסינון</p>
           <div className="research-rankings">
             {(['votes', 'percentage'] as const).map(order => <section key={order}>
               <h3>{order === 'votes' ? 'הכי הרבה קולות' : 'אחוז התמיכה הגבוה ביותר'}</h3>
-              <table><thead><tr><th scope="col">דירוג</th><th scope="col">יישוב</th><th scope="col">קולות</th><th scope="col">אחוז</th></tr></thead>
+              <table><thead><tr><th scope="col">דירוג</th><th scope="col">יישוב</th>{byStation && <th scope="col">קלפי</th>}<th scope="col">קולות</th><th scope="col">אחוז</th></tr></thead>
                 <tbody>{(order === 'votes' ? byVotes : byPercentage).slice(0, limits[order]).map((row, index) => <tr key={row.id}>
-                  <td>{index + 1}</td><th scope="row">{row.name}</th><td>{row.partyVotes.toLocaleString('he-IL')}</td><td>{row.percentage.toLocaleString('he-IL', { maximumFractionDigits: 2 })}%</td>
+                  <td>{index + 1}</td><th scope="row">{row.name}</th>{byStation && <td>{row.pollingStation}{!!row.split && ` (פיצול ${row.split})`}</td>}<td>{row.partyVotes.toLocaleString('he-IL')}</td><td>{row.percentage.toLocaleString('he-IL', { maximumFractionDigits: 2 })}%</td>
                 </tr>)}</tbody></table>
               {limits[order] < byVotes.length && <button type="button" className="ghost research-show-more"
-                aria-label={order === 'votes' ? 'הצגת יישובים נוספים לפי מספר קולות' : 'הצגת יישובים נוספים לפי אחוז התמיכה'}
-                onClick={() => setLimits(previous => ({ ...previous, [order]: previous[order] + 50 }))}>הצגת יישובים נוספים</button>}
+                aria-label={`הצגת ${plural} נוספ${byStation ? 'ות' : 'ים'} לפי ${order === 'votes' ? 'מספר קולות' : 'אחוז התמיכה'}`}
+                onClick={() => setLimits(previous => ({ ...previous, [order]: previous[order] + 50 }))}>הצגת {plural} נוספ{byStation ? 'ות' : 'ים'}</button>}
             </section>)}
           </div>
-          {!byVotes.length && <p>אין יישובים התואמים לסינון.</p>}
+          {!byVotes.length && <p>אין {plural} התואמ{byStation ? 'ות' : 'ים'} לסינון.</p>}
         </>}
       </>}
     </main>

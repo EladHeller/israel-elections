@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { parseLocalities, rankLocalities } from './party-research';
-import { hasLocalityData, LOCALITY_ELECTIONS } from './locality-availability';
+import { parseLocalities, parsePollingStations, rankLocalities } from './party-research';
+import { hasLocalityData, LOCALITY_ELECTIONS, pollingStationSource, hasEmbeddedPollingStations } from './locality-availability';
 
 test('research is available only for elections with verified locality sources', () => {
   for (const election of LOCALITY_ELECTIONS) assert.ok(hasLocalityData(election));
@@ -47,4 +47,51 @@ for (let election = 15; election <= 25; election++) test(`parses actual election
   const likud = rankLocalities(localities, 'מחל', 'votes');
   assert.ok(likud[0].partyVotes > 10000);
   assert.ok(rankLocalities(localities, 'מחל', 'percentage').every(row => row.percentage <= 100));
+});
+
+test('station identities retain locality, fractional numbers and split stations', () => {
+  const csv = 'שם ישוב,סמל ישוב,מספר קלפי,פיצול,כשרים,א,ב,ברזל,ריכוז,שופט,קלפי\nעיר א,1,0001.0,0,100,60,40,0,0,0,0\nעיר א,1,1.0,1,20,5,15,0,0,0,0\nעיר א,1,1.1,0,10,9,1,0,0,0,0\nעיר ב,2,1,0,50,20,30,0,0,0,0\nמעטפות כפולות,9999,1,0,50,40,10,0,0,0,0\nעיר א,1,2,0,0,0,0,0,0,0,0\n';
+  const stations = parsePollingStations(csv);
+  assert.equal(stations.length, 4);
+  assert.equal(new Set(stations.map(row => row.id)).size, 4);
+  assert.deepEqual(stations.map(row => row.pollingStation), ['1', '1', '1.1', '1']);
+  assert.deepEqual(stations.map(row => row.split), [0, 1, 0, 0]);
+  assert.deepEqual(rankLocalities(stations, 'א', 'votes').map(row => row.partyVotes), [60, 20, 9, 5]);
+  assert.equal(rankLocalities(stations, 'א', 'percentage')[0].percentage, 90);
+  assert.equal(rankLocalities(stations, 'א', 'percentage', 30).length, 2);
+  assert.deepEqual(Object.keys(stations[0].votes), ['א', 'ב']);
+});
+
+test('station parser supports locality names without codes and rejects missing or invalid station identifiers', () => {
+  const stations = parsePollingStations('שם ישוב,סמל קלפי,כשרים,א\nא,01,5,5\nא,1,3,3\nב,1,10,10');
+  assert.equal(stations.length, 2);
+  assert.equal(stations[0].validVotes, 8);
+  assert.notEqual(stations[0].id, stations[1].id);
+  for (const csv of ['שם ישוב,כשרים,א\nא,10,1', ...['', '0', '-1', 'NaN'].map(number => `שם ישוב,מספר קלפי,כשרים,א\nא,${number},10,1`)]) {
+    assert.throws(() => parsePollingStations(csv));
+  }
+});
+
+for (let election = 15; election <= 19; election++) test(`election ${election} station totals match locality aggregation`, () => {
+  const csv = readFileSync(new URL(`../../public/data/${election}/elections.csv`, import.meta.url), 'utf8');
+  const localities = parseLocalities(csv);
+  const stations = parsePollingStations(csv);
+  assert.ok(stations.length > 6000);
+  const totals = (rows: typeof localities) => rows.reduce((sum, row) => sum + row.validVotes, 0);
+  assert.equal(totals(stations), totals(localities));
+  const grouped = new Map<string, number>();
+  for (const station of stations) grouped.set(station.name, (grouped.get(station.name) ?? 0) + station.validVotes);
+  assert.equal(grouped.size, localities.length);
+  for (const locality of localities) assert.equal(grouped.get(locality.name), locality.validVotes);
+});
+
+test('station sources use verified historical rows or optional separate archives', () => {
+  assert.equal(pollingStationSource('15'), '/data/15/elections.csv');
+  assert.equal(pollingStationSource('19'), '/data/19/elections.csv');
+  assert.equal(pollingStationSource('20'), '/data/20/polling-stations.csv');
+  assert.equal(pollingStationSource('26'), '/data/26/polling-stations.csv');
+  assert.equal(pollingStationSource('14'), null);
+  assert.equal(hasEmbeddedPollingStations('14'), false);
+  assert.equal(hasEmbeddedPollingStations('19'), true);
+  assert.equal(hasEmbeddedPollingStations('20'), false);
 });
