@@ -115,6 +115,7 @@ export const computeRemainingSeatRaces = (
 ): RemainingSeatRace[] => {
   const total = sumBy(Object.values(voteData), 'votes');
   if (total <= 0 || !Number.isSafeInteger(remainingVotes) || remainingVotes <= 0) return [];
+  // Sort by required share relative to national share, with impossible gains last.
   return Object.entries(voteData).filter(([, data]) => data.votes > 0).map(([party, data]) => {
     const seats = results[party]?.mandats ?? 0;
     const gainsSeat = (votes: number) => {
@@ -137,5 +138,6 @@ export const computeRemainingSeatRaces = (
     }
     return { party, currentShare: data.votes / total, requiredVotes,
       requiredShare: requiredVotes === null ? null : requiredVotes / remainingVotes };
-  }).sort((a, b) => (a.requiredShare ?? Infinity) - (b.requiredShare ?? Infinity));
+  }).sort((a, b) => (a.requiredShare === null ? Infinity : a.requiredShare / a.currentShare)
+    - (b.requiredShare === null ? Infinity : b.requiredShare / b.currentShare));
 };
