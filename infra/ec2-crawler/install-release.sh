@@ -92,10 +92,16 @@ cp "$release/infra/ec2-crawler/"election-publisher.* "$release/infra/ec2-crawler
 printf '%s\n' "BUCKET=$BUCKET" "DISTRIBUTION_ID=$DISTRIBUTION_ID" "REGION=$REGION" 'CURR_ELECTIONS=26' "CRAWLER_STATUS_BUCKET=$status_bucket" > "$config"
 chmod 600 "$config"
 systemctl daemon-reload
-if ! systemctl start election-publisher.service; then
+publisher_health_check() {
+  if systemctl start election-publisher.service; then return 0; fi
+  # Preserve the actual failure in the CD/SSM output before a rollback changes the logs.
+  journalctl -u election-publisher.service -n 40 --no-pager >&2 || true
+  return 1
+}
+if ! publisher_health_check; then
   # Join the OnFailure job and retry only once after bounded browser recovery.
   systemctl start election-browser-recovery.service
-  systemctl start election-publisher.service
+  publisher_health_check
 fi
 systemctl enable --now election-publisher.timer
 printf '%s\n' "$identity" > "$root/deployed.next"

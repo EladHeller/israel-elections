@@ -14,7 +14,7 @@ for (const alias of ['קלפי', 'מספר קלפי', 'סמל קלפי', 'missin
   const output: string[] = [];
   const errors: string[] = [];
   let disconnected = false;
-  const page = { url: () => 'https://votes26.bechirot.gov.il/', reload: async () => {}, locator: () => ({ waitFor: async () => {}, isVisible: async () => true }), screenshot: async () => {} };
+  const page = { url: () => 'https://votes26.bechirot.gov.il/', reload: async () => {}, locator: selector => { assert.equal(selector, '#DownloadCSVBallots'); return { waitFor: async () => {}, isVisible: async () => true }; }, screenshot: async () => { throw new Error('Diagnostic screenshots must not block polling'); } };
   const download = { saveAs: async () => {}, url: () => 'https://media26.bechirot.gov.il/files/expb.csv' };
   const process = { argv: ['node', 'crawl.mjs', 'polling-stations'], exitCode: 0 };
   await runInNewContext(`(async () => {${source}})()`, {
