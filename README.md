@@ -166,3 +166,16 @@ The latest version is deployed at:
 Research reads the existing same-origin `/data/:electionId/elections.csv` only when opened. Elections 15–19 contain polling-station rows, which are aggregated by locality code (by name for election 17, whose source has no locality-code column). Later files contain locality totals. Double envelopes, unnamed/non-locality rows and CSV metadata are excluded. Percentages use valid ballots as the denominator. The optional minimum-valid-ballots filter defaults to zero; no small locality is silently excluded. Rankings paginate in the UI and retain all matching localities.
 
 During counting, the CSV is refreshed every 30 seconds while the page is visible. Failed refreshes preserve the last successfully loaded rankings and display a retry control. This feature uses the existing crawler/S3/CloudFront data pipeline and requires no additional AWS resources.
+
+### Polling-station source archive
+
+The production EC2 crawler also downloads the official `expb.csv` using the same
+Chrome session after publishing city/nationwide results. It validates and publishes
+this research dataset at `/data/26/polling-stations.csv`, with timestamped copies
+alongside it whenever the content changes. It checks this file every cycle even if
+the city CSV is unchanged. A station download/validation failure preserves the last
+published station file and is reported through the existing crawler heartbeat;
+city results have already been published. The station CSV never feeds nationwide
+seat calculations. It uses the same short CDN cache as live city data, and routine
+deployments cannot overwrite it. The research UI still uses locality data; this
+archive prepares a future polling-station view.

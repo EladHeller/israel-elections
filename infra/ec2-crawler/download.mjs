@@ -1,4 +1,15 @@
 export async function downloadCities(context, page, timeoutMs = 90_000) {
+  return downloadCsv(context, () => page.locator('#DownloadCSVCities').click({ timeout: 15_000 }), timeoutMs);
+}
+
+// Use the same authenticated Chrome session and popup download flow as the city link.
+export async function downloadPollingStations(context, page, timeoutMs = 90_000) {
+  return downloadCsv(context, () => page.evaluate(() => {
+    window.open('https://media26.bechirot.gov.il/files/expb.csv', 'polling-stations-csv');
+  }), timeoutMs);
+}
+
+async function downloadCsv(context, start, timeoutMs) {
   const watched = new Set();
   let timer;
   let resolveDownload;
@@ -15,7 +26,7 @@ export async function downloadCities(context, page, timeoutMs = 90_000) {
     timer = setTimeout(() => reject(new Error('No download within timeout')), timeoutMs);
   });
   try {
-    const [download] = await Promise.all([pending, page.locator('#DownloadCSVCities').click({ timeout: 15_000 })]);
+    const [download] = await Promise.all([pending, start()]);
     return download;
   } finally {
     clearTimeout(timer);

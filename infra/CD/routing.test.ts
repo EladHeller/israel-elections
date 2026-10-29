@@ -56,7 +56,7 @@ test('scenario routes and election data use the intended CDN lifetimes', () => {
   const behaviors = template.split('        CacheBehaviors:\n')[1]
     .split('        DefaultCacheBehavior:')[0]
     .split('          - PathPattern: ').slice(1);
-  assert.equal(behaviors.length, 6);
+  assert.equal(behaviors.length, 7);
 
   assert.ok(behaviors[0].startsWith('/api/scenarios*'));
   assert.match(behaviors[0], /AllowedMethods:\n[\s\S]*- POST\n/);
@@ -74,13 +74,14 @@ test('scenario routes and election data use the intended CDN lifetimes', () => {
   assert.ok(behaviors[2].startsWith('/election-config.json'));
   assert.ok(behaviors[3].startsWith("!Sub '/data/${CurrentElections}/allResults.json'"));
   assert.ok(behaviors[4].startsWith("!Sub '/data/${CurrentElections}/elections.csv'"));
-  for (const behavior of behaviors.slice(2, 5)) {
+  assert.ok(behaviors[5].startsWith("!Sub '/data/${CurrentElections}/polling-stations.csv'"));
+  for (const behavior of behaviors.slice(2, 6)) {
     assert.match(behavior, /MinTTL: 0\n/);
     assert.match(behavior, /DefaultTTL: 15\n/);
     assert.match(behavior, /MaxTTL: 30\n/);
   }
-  assert.ok(behaviors[5].startsWith('/data/*'));
-  assert.match(behaviors[5], /MinTTL: 86400\n/);
-  assert.match(behaviors[5], /DefaultTTL: 86400\n/);
-  assert.match(behaviors[5], /MaxTTL: 31536000\n/);
+  assert.ok(behaviors[6].startsWith('/data/*'));
+  assert.match(behaviors[6], /MinTTL: 86400\n/);
+  assert.match(behaviors[6], /DefaultTTL: 86400\n/);
+  assert.match(behaviors[6], /MaxTTL: 31536000\n/);
 });
