@@ -1848,12 +1848,14 @@ body {
 .research-controls label { display: flex; flex-direction: column; gap: .5rem; }
 .research-controls select, .research-controls input { padding: .7rem; max-width: 100%; }
 .research-rankings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; margin-block: 1rem; }
+.research-show-more { margin-top: 1rem; min-height: 44px; font: inherit; }
+.research-show-more:hover { background: var(--surface-hover); color: var(--ink-90); }
+.research-show-more:focus-visible { outline: 2px solid var(--ink-70); outline-offset: 3px; }
 .research-rankings table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .research-rankings td, .research-rankings th { text-align: start; padding: .65rem .35rem; border-bottom: 1px solid var(--ink-15, #8885); }
 .research-notice { border-inline-start: 3px solid var(--accent, #d08b20); padding-inline-start: 1rem; }
 @media (max-width: 800px) { .research-rankings { grid-template-columns: 1fr; } }
 @media (max-width: 480px) {
-  .view-switcher { flex-wrap: wrap; }
-  .view-switcher button { flex: 1 1 40%; }
+  .view-switcher.view-switcher-four-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .research-controls label { max-width: 100%; }
 }

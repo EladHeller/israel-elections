@@ -92,8 +92,12 @@ test('header exposes research only for supported elections', () => {
   const props = { statusText: '', showSimulator: true, isEdited: false, currentElection: '25', setCurrentElection: () => {}, availableElections: ['25', '14'], viewMode: 'results' as const, setViewMode: () => {} };
   const renderer = create(React.createElement(AppHeader, props));
   assert.match(text(renderer), /מחקר מפלגות/);
+  assert.match(renderer.root.findByProps({ role: 'group' }).props.className, /view-switcher-four-options/);
+  renderer.update(React.createElement(AppHeader, { ...props, showSimulator: false }));
+  assert.equal(renderer.root.findByProps({ role: 'group' }).props.className, 'view-switcher');
   renderer.update(React.createElement(AppHeader, { ...props, currentElection: '14' }));
   assert.doesNotMatch(text(renderer), /מחקר מפלגות/);
+  assert.equal(renderer.root.findByProps({ role: 'group' }).props.className, 'view-switcher');
   renderer.unmount();
 });
 
@@ -114,15 +118,23 @@ test('research paginates every locality, resets on list changes, handles empty f
         React.createElement(Route, { path: '/results/:electionId', element: React.createElement('p', {}, 'Results destination') }))));
       await tick();
     });
-    const rows = () => renderer.root.findAllByType('tbody')[0].findAllByType('tr');
-    const more = () => renderer.root.findAllByType('button').find(button => button.children.includes('הצגת יישובים נוספים'))!;
-    assert.equal(rows().length, 20);
-    await act(async () => more().props.onClick()); assert.equal(rows().length, 70);
+    const rows = (index = 0) => renderer.root.findAllByType('tbody')[index].findAllByType('tr');
+    const more = (order = 'מספר קולות') => renderer.root.findAllByType('button').find(button => button.props['aria-label'] === `הצגת יישובים נוספים לפי ${order}`)!;
+    assert.equal(rows().length, 20); assert.equal(rows(1).length, 20);
+    assert.match(more().props.className, /ghost/);
+    assert.match(more('אחוז התמיכה').props.className, /ghost/);
+    for (const button of [more(), more('אחוז התמיכה')]) {
+      assert.equal(button.parent!.findAllByType('table').length, 1, 'each control belongs to its ranking');
+    }
+    await act(async () => more().props.onClick()); assert.equal(rows().length, 70); assert.equal(rows(1).length, 20);
+    await act(async () => more('אחוז התמיכה').props.onClick()); assert.equal(rows(1).length, 70); assert.equal(rows().length, 70);
     await act(async () => more().props.onClick()); assert.equal(rows().length, 80); assert.equal(more(), undefined);
+    assert.ok(more('אחוז התמיכה'));
+    await act(async () => more('אחוז התמיכה').props.onClick()); assert.equal(rows(1).length, 80); assert.equal(more('אחוז התמיכה'), undefined);
     await act(async () => renderer.root.findByType('select').props.onChange({ target: { value: 'חדש' } }));
-    assert.equal(rows().length, 20); assert.match(text(renderer), /חדש/);
+    assert.equal(rows().length, 20); assert.equal(rows(1).length, 20); assert.match(text(renderer), /חדש/);
     await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '101' } }));
-    assert.match(text(renderer), /אין יישובים התואמים/);
+    assert.match(text(renderer), /אין יישובים התואמים/); assert.equal(more(), undefined); assert.equal(more('אחוז התמיכה'), undefined);
     await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '' } })); assert.equal(rows().length, 20);
     await act(async () => renderer.root.findByType(AppHeader).props.setCurrentElection('14'));
     assert.match(text(renderer), /Results destination/);

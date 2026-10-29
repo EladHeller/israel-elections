@@ -198,7 +198,6 @@
   .election-night .header-dashboard .election-control { grid-row: 1; grid-column: 1; min-width: 0; }
   .election-night .header-dashboard .theme-toggle { grid-row: 1; grid-column: 2; }
   .election-night .header-dashboard .view-control { grid-column: 1 / -1; }
-  .election-night .header-dashboard .view-switcher { display: flex; }
   .election-night .header-dashboard .view-switcher button { flex: 1; min-height: 44px; }
   .election-night .header-context { font-size: 12px; }
   .election-night .current-results-overview .blocs-overview { padding: 14px 14px 0; }
