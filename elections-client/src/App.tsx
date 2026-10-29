@@ -18,6 +18,8 @@ import { getCountingProgress } from './lib/counting-progress';
 import { BottomPanels, PartyPanel } from './components/ElectionPanels';
 import CalcDetailsCard from './components/CalcDetailsCard';
 import CloseRacesSection from './components/CloseRacesSection';
+import RemainingVotesPanel from './components/RemainingVotesPanel';
+import { computeRemainingSeatRaces, estimateRemainingValidVotes } from './lib/remaining-votes';
 import { computeProximity } from './lib/proximity';
 import PreElectionView from './components/PreElectionView';
 import { useElectionData } from './hooks/use-election-data';
@@ -314,6 +316,15 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
   );
 
   const proximity = computeProximity(realResults, voteData, displayedConfig);
+  const baseRemainingVotes = estimateRemainingValidVotes(results, totalVotesEstimate,
+    isCounting && !electionConfig.finalResults);
+  // Manual simulator edits consume the same remaining-vote budget. Reset restores it.
+  const remainingVotes = baseRemainingVotes === null ? 0
+    : Math.max(0, baseSumVotes + baseRemainingVotes - totalVotes);
+  const remainingRaces = computeRemainingSeatRaces(realResults, voteData, displayedConfig, remainingVotes);
+  const remainingPanel = remainingRaces.length > 0 ? (
+    <RemainingVotesPanel races={remainingRaces} remainingVotes={remainingVotes} getPartyName={getPartyName} />
+  ) : null;
 
   const blocEntries = (blocs.order || Object.keys(blocs.blocks))
     .map((key) => ({ ...blocs.blocks[key], value: blocTotals[key] || 0 }))
@@ -457,6 +468,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         <>
           <main aria-label="ניתוח תוצאות הבחירות">
             {closeRaces}
+            {remainingPanel}
 
           </main>
           <div className="election-details">
@@ -471,6 +483,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
           {settings}
           {partyPanel}
           {closeRaces}
+          {remainingPanel}
           {agreements}
           <section className="grid grid-single">
             <BlocsDistributionPanel
