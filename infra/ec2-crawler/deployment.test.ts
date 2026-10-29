@@ -14,8 +14,9 @@ function fixture(t: TestContext, previous = true) {
   const units = join(dir, 'units');
   const source = join(dir, 'source');
   const config = join(dir, 'env');
-  for (const path of [root, bin, units, join(source, 'infra/ec2-crawler')]) mkdirSync(path, { recursive: true });
-  const files = ['crawl.mjs', 'download.mjs', 'publish.cjs', 'election-publisher.service', 'election-publisher.timer'];
+  const libexec = join(dir, 'libexec');
+  for (const path of [root, bin, units, libexec, join(source, 'infra/ec2-crawler')]) mkdirSync(path, { recursive: true });
+  const files = ['crawl.mjs', 'download.mjs', 'publish.cjs', 'recover-browser.sh', 'election-publisher.service', 'election-publisher.timer', 'election-browser-recovery.service'];
   for (const file of files) writeFileSync(join(source, 'infra/ec2-crawler', file), 'new-' + file);
   const artifact = join(dir, 'source.tar.gz');
   assert.equal(spawnSync('tar', ['-czf', artifact, '-C', dir, 'source']).status, 0);
@@ -37,7 +38,8 @@ case "$1" in
  disable) rm -f "$CRAWLER_ROOT/enabled" ;;
  start)
    if [[ "$2" = election-publisher.timer ]]; then touch "$CRAWLER_ROOT/active";
-   elif [[ "$(readlink "$CRAWLER_ROOT/app")" = *-v2 && "\${FAIL_HEALTH:-0}" = 1 ]]; then exit 8; fi ;;
+   elif [[ "$2" = election-browser-recovery.service ]]; then touch "$CRAWLER_ROOT/recovered";
+   elif [[ "$(readlink "$CRAWLER_ROOT/app")" = *-v2 && "\${FAIL_HEALTH:-0}" = 1 ]]; then exit 8; elif [[ "\${FAIL_ONCE:-0}" = 1 && ! -f "$CRAWLER_ROOT/recovered" ]]; then exit 8; fi ;;
 esac`);
   const old = join(root, 'releases', 'old');
   if (previous) {
@@ -47,13 +49,13 @@ esac`);
     writeFileSync(join(root, 'deployed'), 'old-marker');
     writeFileSync(join(root, 'active'), '');
     writeFileSync(join(root, 'enabled'), '');
-    for (const file of files) writeFileSync(join(file.startsWith('election-') ? units : root, file), 'old-' + file);
+    for (const file of files) writeFileSync(join(file === 'recover-browser.sh' ? libexec : file.startsWith('election-') ? units : root, file), 'old-' + file);
   }
   const run = (extra = {}) => spawnSync('bash', [resolve('infra/ec2-crawler/install-release.sh')], { encoding: 'utf8', env: {
-    ...process.env, PATH: bin + ':' + process.env.PATH, CRAWLER_ROOT: root, CRAWLER_UNITS: units, CRAWLER_CONFIG: config,
+    ...process.env, PATH: bin + ':' + process.env.PATH, CRAWLER_ROOT: root, CRAWLER_UNITS: units, CRAWLER_CONFIG: config, CRAWLER_LIBEXEC: libexec,
     SOURCE_REF: ref, BUCKET: 'results-bucket', DISTRIBUTION_ID: 'DIST123', REGION: 'us-east-1', CALLS: calls, ARTIFACT: artifact, ...extra,
   } });
-  return { dir, root, config, units, old, run, calls: () => readFileSync(calls, 'utf8'), clear: () => writeFileSync(calls, '') };
+  return { dir, root, config, units, libexec, old, run, calls: () => readFileSync(calls, 'utf8'), clear: () => writeFileSync(calls, '') };
 }
 
 test('deploys once and makes identical deployments a no-op without restarting services', t => {
@@ -228,4 +230,16 @@ test('status bucket changes reach the publisher environment and invalidate the d
   assert.match(readFileSync(f.config, 'utf8'), /CRAWLER_STATUS_BUCKET=status-two/);
   assert.doesNotMatch(f.calls(), /curl|npm/, 'same prepared source can be reused');
   assert.match(f.calls(), /systemctl start election-publisher.service/);
+});
+
+
+test('joins browser recovery and retries the activation health check once', t => {
+  const f = fixture(t);
+  const result = f.run({ FAIL_ONCE: '1' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(f.calls(), /systemctl start election-browser-recovery.service/);
+  assert.equal(f.calls().split('systemctl start election-publisher.service').length - 1, 2);
+  assert.equal(readlinkSync(join(f.root, 'app')), join(f.root, 'releases', ref + '-v2'));
+  assert.equal(readFileSync(join(f.libexec, 'recover-browser.sh'), 'utf8'), 'new-recover-browser.sh');
+  assert.equal(readFileSync(join(f.units, 'election-browser-recovery.service'), 'utf8'), 'new-election-browser-recovery.service');
 });

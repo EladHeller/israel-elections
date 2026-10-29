@@ -5,6 +5,7 @@ set -euo pipefail
 root=${CRAWLER_ROOT:-/opt/election-crawler}
 units=${CRAWLER_UNITS:-/etc/systemd/system}
 config=${CRAWLER_CONFIG:-/etc/election-publisher.env}
+libexec=${CRAWLER_LIBEXEC:-/usr/local/libexec/election-crawler}
 mkdir -p "$root/releases"
 exec 9>"$root/deploy.lock"
 flock -w 30 9
@@ -28,7 +29,7 @@ service_active=0
 systemctl is-active --quiet election-publisher.timer && timer_active=1
 systemctl is-enabled --quiet election-publisher.timer && timer_enabled=1
 systemctl is-active --quiet election-publisher.service && service_active=1
-files=("$config" "$root/deployed" "$root/crawl.mjs" "$root/download.mjs" "$root/publish.cjs" "$units/election-publisher.service" "$units/election-publisher.timer")
+files=("$config" "$root/deployed" "$root/crawl.mjs" "$root/download.mjs" "$root/publish.cjs" "$libexec/recover-browser.sh" "$units/election-publisher.service" "$units/election-publisher.timer" "$units/election-browser-recovery.service")
 for i in "${!files[@]}"; do
   [[ ! -e "${files[$i]}" ]] || cp -a "${files[$i]}" "$backup/$i"
 done
@@ -70,7 +71,7 @@ if [[ ! -f "$release/.prepared" ]]; then
   chown -R crawler:crawler "$stage"
   sudo -u crawler bash -c 'cd "$1" && npm ci && npm run build' -- "$stage"
   test -f "$stage/dist/csv-monitor.js"
-  for file in crawl.mjs download.mjs publish.cjs election-publisher.service election-publisher.timer; do
+  for file in crawl.mjs download.mjs publish.cjs recover-browser.sh election-publisher.service election-publisher.timer election-browser-recovery.service; do
     test -f "$stage/infra/ec2-crawler/$file"
   done
   touch "$stage/.prepared"
@@ -84,11 +85,18 @@ systemctl stop election-publisher.timer election-publisher.service
 ln -sfn "$release" "$root/app.next"
 mv -Tf "$root/app.next" "$root/app"
 for file in crawl.mjs download.mjs publish.cjs; do cp "$release/infra/ec2-crawler/$file" "$root/$file"; done
-cp "$release/infra/ec2-crawler/"election-publisher.* "$units/"
+install -d -m 755 "$libexec"
+chown root:root "$libexec"
+install -m 644 "$release/infra/ec2-crawler/recover-browser.sh" "$libexec/recover-browser.sh"
+cp "$release/infra/ec2-crawler/"election-publisher.* "$release/infra/ec2-crawler/election-browser-recovery.service" "$units/"
 printf '%s\n' "BUCKET=$BUCKET" "DISTRIBUTION_ID=$DISTRIBUTION_ID" "REGION=$REGION" 'CURR_ELECTIONS=26' "CRAWLER_STATUS_BUCKET=$status_bucket" > "$config"
 chmod 600 "$config"
 systemctl daemon-reload
-systemctl start election-publisher.service
+if ! systemctl start election-publisher.service; then
+  # Join the OnFailure job and retry only once after bounded browser recovery.
+  systemctl start election-browser-recovery.service
+  systemctl start election-publisher.service
+fi
 systemctl enable --now election-publisher.timer
 printf '%s\n' "$identity" > "$root/deployed.next"
 mv -f "$root/deployed.next" "$root/deployed"
