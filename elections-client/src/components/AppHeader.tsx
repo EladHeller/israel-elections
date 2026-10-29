@@ -50,7 +50,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       <ThemeToggle />
       <div className="view-control">
         <span>תצוגה</span>
-        <div className="view-switcher" role="group" aria-label="בחירת תצוגה">
+        <div className={`view-switcher${showSimulator && hasLocalityData(currentElection) ? ' view-switcher-four-options' : ''}`} role="group" aria-label="בחירת תצוגה">
           {VIEW_OPTIONS
             .filter(option => option.value !== 'research' || hasLocalityData(currentElection))
             .filter((option) => showSimulator || option.value !== 'simulator')

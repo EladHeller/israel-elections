@@ -14,7 +14,7 @@ export default function PartyResearch() {
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [minimum, setMinimum] = useState(0);
-  const [limit, setLimit] = useState(20);
+  const [limits, setLimits] = useState({ votes: 20, percentage: 20 });
   const [updated, setUpdated] = useState<string | null>(null);
   const supported = hasLocalityData(electionId);
   const counting = electionManifest?.phase === 'counting';
@@ -61,7 +61,7 @@ export default function PartyResearch() {
   const name = (key: string) => partyNames[key] || electionManifest?.lists.find(list => list.ballotLetter === key)?.name || key;
   return <div className="screen party-research">
     <AppHeader statusText="מחקר תוצאות לפי יישוב" showSimulator isEdited={false}
-      currentElection={electionId} setCurrentElection={id => { setLimit(20); navigate(`/${hasLocalityData(id) ? 'research' : 'results'}/${id}`); }}
+      currentElection={electionId} setCurrentElection={id => { setLimits({ votes: 20, percentage: 20 }); navigate(`/${hasLocalityData(id) ? 'research' : 'results'}/${id}`); }}
       availableElections={availableElections} viewMode="research"
       setViewMode={mode => navigate(mode === 'summary' ? '/summary' : `/${mode}/${electionId}`)} />
     <main className="panel">
@@ -71,15 +71,15 @@ export default function PartyResearch() {
         {counting && <p className="research-notice">הספירה נמשכת: הדירוג מבוסס על הקולות שפורסמו עד כה, ועשוי להשתנות. הנתונים מתרעננים אוטומטית.</p>}
         <p>האחוז מחושב מתוך הקולות הכשרים בכל יישוב. מעטפות כפולות וקולות שאינם משויכים ליישוב אינם נכללים.</p>
         {updated && <p>קובץ נתוני היישובים עודכן: {new Date(updated).toLocaleString('he-IL')}</p>}
-        {error && <p role="alert">טעינת נתוני היישובים נכשלה.{data ? ' מוצגים הנתונים האחרונים שהתקבלו.' : ''} <button type="button" onClick={() => setAttempt(value => value + 1)}>ניסיון נוסף</button></p>}
+        {error && <p role="alert">טעינת נתוני היישובים נכשלה.{data ? ' מוצגים הנתונים האחרונים שהתקבלו.' : ''} <button type="button" className="ghost" onClick={() => setAttempt(value => value + 1)}>ניסיון נוסף</button></p>}
         {!data && !error && <p role="status">טוען נתוני יישובים...</p>}
         {data && !parties.length && <p>טרם פורסמו תוצאות לפי יישוב.</p>}
         {!!parties.length && <>
           <div className="research-controls">
-            <label>רשימה<select value={party} onChange={event => { setSearch({ party: event.target.value }); setLimit(20); }}>
+            <label>רשימה<select value={party} onChange={event => { setSearch({ party: event.target.value }); setLimits({ votes: 20, percentage: 20 }); }}>
               {parties.map(key => <option key={key} value={key}>{name(key)} ({key})</option>)}
             </select></label>
-            <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimit(20); }} /></label>
+            <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>
           </div>
           <h2>{name(party)}</h2>
           <p>{byVotes.length.toLocaleString('he-IL')} יישובים שבהם התקבלו קולות לרשימה ועומדים בסינון</p>
@@ -87,13 +87,15 @@ export default function PartyResearch() {
             {(['votes', 'percentage'] as const).map(order => <section key={order}>
               <h3>{order === 'votes' ? 'הכי הרבה קולות' : 'אחוז התמיכה הגבוה ביותר'}</h3>
               <table><thead><tr><th scope="col">דירוג</th><th scope="col">יישוב</th><th scope="col">קולות</th><th scope="col">אחוז</th></tr></thead>
-                <tbody>{(order === 'votes' ? byVotes : byPercentage).slice(0, limit).map((row, index) => <tr key={row.id}>
+                <tbody>{(order === 'votes' ? byVotes : byPercentage).slice(0, limits[order]).map((row, index) => <tr key={row.id}>
                   <td>{index + 1}</td><th scope="row">{row.name}</th><td>{row.partyVotes.toLocaleString('he-IL')}</td><td>{row.percentage.toLocaleString('he-IL', { maximumFractionDigits: 2 })}%</td>
                 </tr>)}</tbody></table>
+              {limits[order] < byVotes.length && <button type="button" className="ghost research-show-more"
+                aria-label={order === 'votes' ? 'הצגת יישובים נוספים לפי מספר קולות' : 'הצגת יישובים נוספים לפי אחוז התמיכה'}
+                onClick={() => setLimits(previous => ({ ...previous, [order]: previous[order] + 50 }))}>הצגת יישובים נוספים</button>}
             </section>)}
           </div>
           {!byVotes.length && <p>אין יישובים התואמים לסינון.</p>}
-          {limit < byVotes.length && <button type="button" onClick={() => setLimit(value => value + 50)}>הצגת יישובים נוספים</button>}
         </>}
       </>}
     </main>
