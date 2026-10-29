@@ -108,7 +108,7 @@ counting, outside the simulator; demo data remains explicitly marked.
 
 Cloud-native infrastructure management:
 
-*   **CI**: Automated linting, type-checking, and unit testing with coverage reporting.
+*   **CI**: Automated linting, type-checking, and unit testing with coverage enforced directly in GitHub Actions (100% lines, statements and functions; at least 99.84% branches). Coverage totals appear in the job logs and summary.
 *   **CD**: Shell scripts and TypeScript utilities to manage AWS CloudFormation stacks, Lambda updates, S3 synchronization, and CloudFront invalidation.
 
 ## Development
@@ -136,6 +136,7 @@ npm test
 
 # Run tests with coverage
 npm run test:coverage
+npm run check-coverage
 ```
 
 ### Local Development (Client)
