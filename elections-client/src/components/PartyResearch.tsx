@@ -89,8 +89,9 @@ export default function PartyResearch() {
   }, [data]);
   const requested = search.get('party');
   const party = requested && parties.includes(requested) ? requested : parties[0] ?? '';
-  const byVotes = useMemo(() => rankLocalities(data ?? [], party, 'votes', minimum), [data, party, minimum]);
-  const byPercentage = useMemo(() => rankLocalities(data ?? [], party, 'percentage', minimum), [data, party, minimum]);
+  const effectiveMinimum = byStation ? 0 : minimum;
+  const byVotes = useMemo(() => rankLocalities(data ?? [], party, 'votes', effectiveMinimum), [data, party, effectiveMinimum]);
+  const byPercentage = useMemo(() => rankLocalities(data ?? [], party, 'percentage', effectiveMinimum), [data, party, effectiveMinimum]);
   const name = (key: string) => partyNames[key] || electionManifest?.lists.find(list => list.ballotLetter === key)?.name || key;
   return <div className="screen party-research">
     <AppHeader statusText={`מחקר תוצאות לפי ${singular}`} showSimulator isEdited={false}
@@ -120,7 +121,7 @@ export default function PartyResearch() {
             <label>רשימה<select value={party} onChange={event => { const next = new URLSearchParams(search); next.set('party', event.target.value); setSearch(next); setLimits({ votes: 20, percentage: 20 }); }}>
               {parties.map(key => <option key={key} value={key}>{name(key)} ({key})</option>)}
             </select></label>
-            <label>מינימום קולות כשרים ב{singular}<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>
+            {!byStation && <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>}
           </div>
           <h2>{name(party)}</h2>
           <p>{byVotes.length.toLocaleString('he-IL')} {plural} שבה{byStation ? 'ן' : 'ם'} התקבלו קולות לרשימה ועומד{byStation ? 'ות' : 'ים'} בסינון</p>
@@ -136,7 +137,7 @@ export default function PartyResearch() {
                 onClick={() => setLimits(previous => ({ ...previous, [order]: previous[order] + 50 }))}>הצגת {plural} נוספ{byStation ? 'ות' : 'ים'}</button>}
             </section>)}
           </div>
-          {!byVotes.length && <p>אין {plural} התואמ{byStation ? 'ות' : 'ים'} לסינון.</p>}
+          {!byStation && !byVotes.length && <p>אין יישובים התואמים לסינון.</p>}
         </>}
       </>}
     </main>

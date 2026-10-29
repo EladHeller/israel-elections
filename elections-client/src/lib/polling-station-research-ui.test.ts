@@ -72,16 +72,19 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   assert.equal(rows(0).length, 20);
   assert.match(renderer.root.findByType('output').children.join(''), /level=stations/);
   assert.match(renderer.root.findByType('output').children.join(''), /party=/);
-  await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '101' } }));
-  assert.match(content(renderer), /אין קלפיות התואמות לסינון/);
+  assert.equal(renderer.root.findAllByProps({ type: 'number' }).length, 0);
+  assert.doesNotMatch(content(renderer), /מינימום קולות כשרים/);
   await act(async () => { button('לפי יישובים').props.onClick(); await tick(); });
   assert.equal(renderer.root.findByProps({ type: 'number' }).props.value, 0);
   assert.doesNotMatch(renderer.root.findByType('output').children.join(''), /level=/);
   assert.equal(renderer.root.findByType('select').props.value, 'מחל');
   assert.equal(rows(0).length, 1);
   assert.equal(renderer.root.findAllByType('thead')[0].findAllByType('th').length, 4);
+  await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '10001' } }));
+  assert.equal(rows(0).length, 0);
   await act(async () => { button('לפי קלפיות').props.onClick(); await tick(); });
   assert.equal(rows(0).length, 20);
+  assert.equal(renderer.root.findAllByProps({ type: 'number' }).length, 0);
 });
 
 for (const unavailable of ['missing', 'html', 'network']) test(`optional station archive does not expose an unusable toggle (${unavailable})`, async t => {
