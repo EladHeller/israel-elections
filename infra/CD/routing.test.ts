@@ -9,7 +9,7 @@ const source = template.split('FunctionCode: !Sub |\n')[1].split('\n  CDN:')[0]
 const handler = runInNewContext(`${source}\nhandler`);
 
 test('CloudFront rewrites screen URLs without losing query parameters', () => {
-  for (const uri of ['/', '/results/1', '/results/25', '/results/26/', '/simulator/25', '/summary', '/summary/']) {
+  for (const uri of ['/', '/results/1', '/results/25', '/results/26/', '/simulator/25', '/research/15', '/research/25', '/research/26/', '/summary', '/summary/']) {
     for (const method of ['GET', 'HEAD']) {
       const request = { uri, method, querystring: { example: { value: '1' } } };
       assert.equal(handler({ request }), request);
@@ -19,8 +19,20 @@ test('CloudFront rewrites screen URLs without losing query parameters', () => {
   }
 });
 
+test('direct research links preserve the selected list and request metadata', () => {
+  for (const method of ['GET', 'HEAD']) {
+    const request = { uri: '/research/26', method, querystring: { party: { value: '%D7%9E%D7%97%D7%9C' } }, headers: { host: { value: 'elections.eladheller.com' } } };
+    const response = handler({ request });
+    assert.equal(response, request);
+    assert.equal(response.uri, '/index.html');
+    assert.deepEqual(response.querystring, { party: { value: '%D7%9E%D7%97%D7%9C' } });
+    assert.equal(response.headers.host.value, 'elections.eladheller.com');
+    assert.equal(response.method, method);
+  }
+});
+
 test('CloudFront returns an HTTP 404 for unknown screens and invalid elections', () => {
-  for (const uri of ['/missing', '/results', '/results/0', '/results/27', '/results/025', '/results/nope', '/simulator/25/extra', '/Summary']) {
+  for (const uri of ['/missing', '/results', '/results/0', '/results/27', '/results/025', '/results/nope', '/simulator/25/extra', '/research', '/research/0', '/research/27', '/research/025', '/research/nope', '/research/25/extra', '/Research/25', '/Summary']) {
     const response = handler({ request: { uri, method: 'GET' } });
     assert.equal(response.statusCode, 404, uri);
     assert.match(response.headers['content-type'].value, /text\/html/);
