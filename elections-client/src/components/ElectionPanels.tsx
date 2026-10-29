@@ -24,6 +24,7 @@ interface PartySummary {
 }
 
 interface PartyBarsProps {
+  researchElection?: string;
   electionNight: boolean;
   editable: boolean;
   parties: PartySummary[];
@@ -38,6 +39,7 @@ interface PartyBarsProps {
 }
 
 const PartyBars: React.FC<PartyBarsProps> = ({
+  researchElection,
   electionNight,
   editable,
   parties,
@@ -78,6 +80,7 @@ const PartyBars: React.FC<PartyBarsProps> = ({
         return (
           <PartyRow
             key={party.party}
+            researchHref={researchElection ? `/research/${researchElection}?party=${encodeURIComponent(party.party)}` : undefined}
             name={partyName}
             electionNight={electionNight}
             percentage={totalVotes > 0 ? `${(party.votes / totalVotes * 100).toLocaleString('he-IL', { maximumFractionDigits: 2 })}%` : '0%'}
@@ -202,6 +205,7 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
 );
 
 interface PartyPanelProps {
+  researchElection?: string;
   editable: boolean;
   isLatestElection: boolean;
   isDemo?: boolean;
@@ -222,6 +226,7 @@ interface PartyPanelProps {
 }
 
 export const PartyPanel: React.FC<PartyPanelProps> = ({
+  researchElection,
   editable,
   isLatestElection,
   isDemo,
@@ -250,6 +255,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
       )}
     </div>
     <PartyBars
+      researchElection={researchElection}
       electionNight={isLatestElection}
       editable={editable}
       parties={parties}

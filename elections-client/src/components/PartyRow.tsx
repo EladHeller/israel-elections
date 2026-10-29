@@ -1,7 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface PartyRowProps {
   name: string;
+  researchHref?: string;
   electionNight?: boolean;
   ballotLetter?: string;
   percentage?: string;
@@ -10,7 +12,7 @@ interface PartyRowProps {
   bar?: { width: number; color: string };
 }
 
-const PartyRow: React.FC<PartyRowProps> = ({ name, electionNight = false, ballotLetter, percentage, seats, votes, bar }) => (
+const PartyRow: React.FC<PartyRowProps> = ({ researchHref, name, electionNight = false, ballotLetter, percentage, seats, votes, bar }) => (
   <div className="party-row" style={bar ? { '--party-share': `${bar.width}%` } as React.CSSProperties : undefined}>
     <div className="party-meta" title={name}>
       {ballotLetter && (
@@ -18,7 +20,7 @@ const PartyRow: React.FC<PartyRowProps> = ({ name, electionNight = false, ballot
           {ballotLetter}
         </span>
       )}
-      <span className="party-name">{name}</span>
+      <span className="party-name">{researchHref ? <Link className="party-research-link" to={researchHref} title={`מחקר יישובים: ${name}`}>{name}</Link> : name}</span>
       {!electionNight && <span className="party-seats">{seats}</span>}
     </div>
     {electionNight && <span className="party-seats">{seats}</span>}
