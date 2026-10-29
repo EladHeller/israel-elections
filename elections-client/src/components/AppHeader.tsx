@@ -1,4 +1,5 @@
 import React from 'react';
+import { hasLocalityData } from '../lib/locality-availability';
 import type { AppViewMode } from '../types';
 import ElectionSelector from './ElectionSelector';
 import ThemeToggle from './ThemeToggle';
@@ -20,6 +21,7 @@ interface AppHeaderProps {
 const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
   { value: 'results', label: 'תוצאות' },
   { value: 'simulator', label: 'סימולטור' },
+  { value: 'research', label: 'מחקר מפלגות' },
   { value: 'summary', label: 'כל הכנסות' },
 ];
 
@@ -50,6 +52,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <span>תצוגה</span>
         <div className="view-switcher" role="group" aria-label="בחירת תצוגה">
           {VIEW_OPTIONS
+            .filter(option => option.value !== 'research' || hasLocalityData(currentElection))
             .filter((option) => showSimulator || option.value !== 'simulator')
             .map((option) => (
             <button

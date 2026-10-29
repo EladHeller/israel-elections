@@ -132,3 +132,11 @@ npm run deploy
 
 The latest version is deployed at:
 [https://elections.eladheller.com](https://elections.eladheller.com)
+
+### Party locality research
+
+`/research/:electionId?party=:ballotLetter` compares each list's strongest localities by absolute votes and by its share of the locality's valid ballots. The research tab and links from result rows are enabled for elections 15–26, whose locality/polling-station CSVs have been verified. Update `elections-client/src/lib/locality-availability.ts` when adding another verified source; nationwide totals alone are insufficient.
+
+Research reads the existing same-origin `/data/:electionId/elections.csv` only when opened. Elections 15–19 contain polling-station rows, which are aggregated by locality code (by name for election 17, whose source has no locality-code column). Later files contain locality totals. Double envelopes, unnamed/non-locality rows and CSV metadata are excluded. Percentages use valid ballots as the denominator. The optional minimum-valid-ballots filter defaults to zero; no small locality is silently excluded. Rankings paginate in the UI and retain all matching localities.
+
+During counting, the CSV is refreshed every 30 seconds while the page is visible. Failed refreshes preserve the last successfully loaded rankings and display a retry control. This feature uses the existing crawler/S3/CloudFront data pipeline and requires no additional AWS resources.
