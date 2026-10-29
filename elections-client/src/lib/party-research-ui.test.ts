@@ -9,7 +9,10 @@ import PartyRow from '../components/PartyRow';
 import partyNames from '../data/party-names.json';
 
 const csv = 'שם ישוב,סמל ישוב,כשרים,מחל,אמת\nגדול,1,100,60,40\nקטן,2,10,9,1\n';
-const text = (renderer: ReturnType<typeof create>) => JSON.stringify(renderer.toJSON());
+const text = (renderer: ReturnType<typeof create>) => {
+  const flatten = (node: any): string => typeof node === 'string' ? node : Array.isArray(node) ? node.map(flatten).join('') : flatten(node?.children ?? []);
+  return flatten(renderer.toJSON());
+};
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 test('research route loads official CSV, selects a party, filters and refreshes with retry', async () => {

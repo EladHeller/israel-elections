@@ -177,5 +177,15 @@ the city CSV is unchanged. A station download/validation failure preserves the l
 published station file and is reported through the existing crawler heartbeat;
 city results have already been published. The station CSV never feeds nationwide
 seat calculations. It uses the same short CDN cache as live city data, and routine
-deployments cannot overwrite it. The research UI still uses locality data; this
-archive prepares a future polling-station view.
+deployments cannot overwrite it.
+
+Party research also supports `?party=<ballotLetter>&level=stations` to rank polling
+stations by votes or percentage, with the same minimum-valid-ballots filter and
+independent pagination. The view retains locality, station number and split in
+each station's identity, and excludes double envelopes and non-locality rows.
+Elections 15–19 use the station rows already in `elections.csv`. For elections
+20–26, the station option appears only when the same-origin
+`/data/<election>/polling-stations.csv` archive is available as a CSV. During
+counting, availability is checked every 30 seconds so the option can appear when
+the first station file is published. Refresh failures preserve the last loaded
+rankings. Missing station files leave locality research available.
