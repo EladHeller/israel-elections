@@ -22,6 +22,9 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
   isSimulator,
   isDemo,
 }) => {
+  const displayedTotalVotes = isCounting
+    ? Math.max(totalVotes ?? 0, validVotes + (invalidVotes ?? 0))
+    : totalVotes;
   const invalidVotePercent =
     invalidVotes != null && (isCounting ? countedVotes : totalVotes)
       ? (invalidVotes / (isCounting ? countedVotes! : totalVotes!)) * 100
@@ -37,7 +40,7 @@ const ElectionStatsSection: React.FC<ElectionStatsSectionProps> = ({
         <span>אחוז הצבעה</span>
       </div>
       <div className="summary-caption">
-        <bdi>{totalVotes != null ? numberFormat.format(totalVotes) : '—'}</bdi> מצביעים
+        <bdi>{displayedTotalVotes != null ? numberFormat.format(displayedTotalVotes) : '—'}</bdi> מצביעים
       </div>
       <dl className="summary-breakdown">
         <div className="summary-detail">
