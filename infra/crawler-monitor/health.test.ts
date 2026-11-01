@@ -8,22 +8,26 @@ const minute = 60_000;
 const base = Date.parse('2026-10-28T12:00:00Z');
 const success = (time: number) => ({ status: 'success', finishedAt: new Date(time).toISOString() });
 
-test('opens only after two stale checks and never closes for one isolated recovery', () => {
-  let state = evaluate(null, success(base), base + 5 * minute);
+test('opens only after an hour without success and two stale checks, then requires stable recovery', () => {
+  let state = evaluate(null, success(base), base + 10 * minute);
+  assert.equal(state.incident, false, 'a short delay does not alert');
+  state = evaluate(state, success(base), base + 60 * minute);
+  assert.equal(state.bad, 0, 'exactly one hour is still healthy');
   assert.equal(state.incident, false);
-  state = evaluate(state, success(base), base + 6 * minute);
+  state = evaluate(state, success(base), base + 61 * minute);
+  assert.equal(state.bad, 1);
   assert.equal(state.incident, false);
-  state = evaluate(state, success(base), base + 7 * minute);
+  state = evaluate(state, success(base), base + 62 * minute);
   assert.equal(state.incident, true);
-  state = evaluate(state, success(base + 8 * minute), base + 8 * minute);
+  state = evaluate(state, success(base + 63 * minute), base + 63 * minute);
   assert.equal(state.incident, true);
-  state = evaluate(state, success(base + 8 * minute), base + 9 * minute);
+  state = evaluate(state, success(base + 63 * minute), base + 64 * minute);
   assert.equal(state.good, 1, 'repeated reads of one success do not recover');
-  state = evaluate(state, success(base + 10 * minute), base + 10 * minute);
-  state = evaluate(state, success(base + 11 * minute), base + 11 * minute);
+  state = evaluate(state, success(base + 65 * minute), base + 65 * minute);
+  state = evaluate(state, success(base + 66 * minute), base + 66 * minute);
   assert.equal(state.incident, false);
-  state = evaluate(state, null, base + 12 * minute);
-  state = evaluate(state, null, base + 13 * minute);
+  state = evaluate(state, null, base + 67 * minute);
+  state = evaluate(state, null, base + 68 * minute);
   assert.equal(state.incident, true, 'a later separate incident can alert again');
 });
 
