@@ -4,6 +4,44 @@ The crawler runs ordinary headed Google Chrome on Ubuntu in `il-central-1`. Chro
 
 CloudFormation manages a dedicated VPC/public subnet, no-ingress security group, encrypted root disk, `t3.medium` and SSM access. VNC, noVNC and CDP listen on localhost. Publishing permissions are limited to the configured bucket's `data/26/*` and invalidation on the selected CloudFront distribution.
 
+## Election shutdown and restart
+
+Production CD only deploys the crawler when the **prod environment variable**
+`CRAWLER_ENABLED` is exactly `true`. With an unset or different value, CD runs
+`scripts/teardown-ec2-crawler.sh` before deploying the site. Leave this variable
+unset between elections so ordinary site releases cannot recreate the server.
+
+The teardown disables alert actions, deletes the monitoring stack first, waits
+for completion, then deletes the crawler stack and waits again. This releases
+EC2 compute, its public IPv4, the 20 GiB root disk and the dedicated network.
+The monitoring Lambda, schedule, alarm, SNS topic and log group are removed.
+A missing stack is a successful no-op; permission and deletion failures stop
+execution. The monitor's private status bucket is retained by its template;
+its three tiny JSON records incur only minimal storage cost. The website,
+historical results, scenario API and source code are outside these two stacks.
+
+To shut down immediately with AWS credentials:
+
+```bash
+bash scripts/teardown-ec2-crawler.sh
+```
+
+The server's browser profile, downloads and local logs are deleted with its
+root disk. Source and provisioning scripts remain in Git; published election
+results remain in the website bucket. No paid AMI/snapshot is needed to rebuild.
+
+For the next election:
+
+1. Update election-specific configuration and the `data/26/*` publishing IAM
+   scope in the crawler template for the new election. Check publisher code
+   for other election-specific paths before enabling it.
+2. Set prod `CRAWLER_ENABLED=true`, and verify `CRAWLER_ALERT_EMAIL` and the
+   normal production bucket/domain configuration.
+3. Run production CD on `master` (push a commit). It creates a fresh instance,
+   monitor and application release using the existing deployment scripts.
+4. Check bootstrap and publisher health; confirm the new SNS email subscription.
+   A fresh browser profile may require checking the desktop/download flow.
+
 ## Infrastructure deployment
 
 Requirements: AWS CLI, Python 3 with PyYAML and suitable CloudFormation/EC2/IAM/SSM permissions.
