@@ -41,7 +41,7 @@
     "@aws-sdk/lib-storage": "^3.1141.0",
     "convict": "^6.2.5",
     "csv-parse": "^7.0.3",
-    "encoding": "^0.1.13",
+    "encoding": "^0.1.14",
     "mime-types": "^3.0.2"
   },
   "overrides": {
