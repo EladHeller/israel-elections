@@ -4,7 +4,7 @@ function evaluate(previous, success, now) {
   // EventBridge retries/duplicates cannot advance the counters twice in a minute.
   if (state.checkedAt && now - state.checkedAt < 55_000) return state;
   const timestamp = Date.parse(success?.finishedAt);
-  const fresh = success?.status === 'success' && Number.isFinite(timestamp) && timestamp <= now && now - timestamp <= 300_000;
+  const fresh = success?.status === 'success' && Number.isFinite(timestamp) && timestamp <= now && now - timestamp <= 60 * 60_000;
   state.checkedAt = now;
   if (!fresh) {
     state.bad++;
