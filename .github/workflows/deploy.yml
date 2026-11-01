@@ -52,6 +52,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Remove disabled crawler infrastructure
+        if: github.ref == 'refs/heads/master' && vars.CRAWLER_ENABLED != 'true'
+        run: bash scripts/teardown-ec2-crawler.sh
+
       - name: Build and Deploy
         run: |
           export NODE_ENV=${{ needs.env_detect.outputs.env_name }}
@@ -74,7 +78,7 @@ jobs:
           echo "url=$site_url" >> "$GITHUB_OUTPUT"
 
       - name: Deploy Israel EC2 results publisher
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' && vars.CRAWLER_ENABLED == 'true'
         env:
           REGION: ${{ secrets.AWS_REGION }}
           BUCKET: ${{ secrets.CLIENT_CODE_BUCKET }}
