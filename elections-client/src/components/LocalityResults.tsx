@@ -29,7 +29,7 @@ export default function LocalityResults() {
     .sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true })), [data, selectedId]);
   const selected = stationId ? stations.find(row => row.id === stationId) : locality;
   const results = useMemo(() => selected ? localResults(selected, electionConfig) : {}, [selected, electionConfig]);
-  const parties = useMemo(() => Object.entries(selected?.votes ?? {}).map(([party, votes]) => ({
+  const parties = useMemo(() => Object.entries(selected?.votes ?? {}).filter(([, votes]) => votes > 0).map(([party, votes]) => ({
     party, votes, mandats: results[party]?.mandats ?? 0,
   })).sort((a, b) => b.votes - a.votes || a.party.localeCompare(b.party, 'he')), [selected, results]);
   const options = useMemo(() => [...(data?.localities ?? [])]
@@ -40,6 +40,7 @@ export default function LocalityResults() {
     - Object.values(blocTotals).reduce((sum, seats) => sum + seats, 0);
   const blocKeys = Object.keys(blocs.blocks);
   const hasBlocs = Object.hasOwn(blocConfigurations, electionId);
+  const locationRow = selected?.pollingStation ? selected : stations.length === 1 ? stations[0] : undefined;
 
   return <div className="screen locality-results">
     <AppHeader statusText="תוצאות לפי יישוב וקלפי" showSimulator isEdited={false}
@@ -69,7 +70,7 @@ export default function LocalityResults() {
             {locality && stationId && !selected && <p role="alert">הקלפי שבקישור אינה זמינה. <Link to={localityHref(electionId, locality)}>לתוצאות היישוב כולו</Link></p>}
             {selected && <>
               <h2>{selected.name}{selected.pollingStation ? ` — ${stationLabel(selected)}` : ''}</h2>
-              {selected.pollingStation && <PollingStationLocation key={selected.id} location={findPollingLocation(locations, selected)} localityName={selected.name} />}
+              {locationRow && <PollingStationLocation key={locationRow.id} location={findPollingLocation(locations, locationRow)} localityName={selected.name} />}
               {counting && <p className="research-notice">הספירה נמשכת: מוצגים הקולות שפורסמו עד כה. הנתונים מתרעננים אוטומטית.</p>}
               {electionManifest && electionManifest.phase !== 'final' && data.updated && <p>קובץ הנתונים עודכן: {new Date(data.updated).toLocaleString('he-IL')}</p>}
               <p>{format(selected.validVotes)} קולות כשרים · אחוז חסימה {format(electionConfig.blockPercentage * 100)}%</p>

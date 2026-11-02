@@ -131,8 +131,6 @@ export default function PartyResearch() {
             {!byStation && <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>}
           </div>
           <h2>{name(party)}</h2>
-          {results && party && <AutomaticScenarios election={electionId} voteData={results.voteData}
-            config={electionConfig} blocs={blocs} partyToBloc={partyToBloc} party={party} getPartyName={name} counting={counting} />}
           <p>{byVotes.length.toLocaleString('he-IL')} {plural} שבה{byStation ? 'ן' : 'ם'} התקבלו קולות לרשימה ועומד{byStation ? 'ות' : 'ים'} בסינון</p>
           <div className="research-rankings">
             {(['votes', 'percentage'] as const).map(order => <section key={order}>
@@ -147,6 +145,8 @@ export default function PartyResearch() {
             </section>)}
           </div>
           {!byStation && !byVotes.length && <p>אין יישובים התואמים לסינון.</p>}
+          {results && party && <AutomaticScenarios election={electionId} voteData={results.voteData}
+            config={electionConfig} blocs={blocs} partyToBloc={partyToBloc} party={party} getPartyName={name} counting={counting} />}
         </>}
       </>}
     </main>
