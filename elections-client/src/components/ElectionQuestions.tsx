@@ -86,7 +86,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
           <button type="submit" className="ui-button ui-button-primary" disabled={!validElection || !data.results || !question.trim() || busy} aria-label="שליחת השאלה">{busy ? 'מחשב…' : 'שאלו'}</button></div>
       </form>
       <div className="question-examples" aria-label="שאלות לדוגמה"><span>למשל</span>{examples.map(example => <button type="button" className="ui-button ui-button-quiet" key={example} onClick={() => { changeQuestion(example); document.getElementById('election-question')?.focus(); }}>{example}</button>)}</div>
-      <p className="question-caption">השאלות נשמרות כדי לשפר את המענה. גרסת הניסיון תומכת בחלק מהניסוחים.</p>
+      <p className="question-caption">השאלות נשמרות לשיפור המענה, ללא צירוף פרטים מזהים על השואל, ונגישות רק לבעל האתר. גרסת הניסיון תומכת בחלק מהניסוחים.</p>
       <div className="question-response" aria-live="polite" aria-busy={busy}>
         {busy && <p role="status">בודק את הנתונים…</p>}
         {error && <p className="question-error" role="alert">{error}</p>}
