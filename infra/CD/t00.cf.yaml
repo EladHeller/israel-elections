@@ -125,7 +125,7 @@ Resources:
         CacheBehaviors:
           - !If
             - HasScenarioApi
-            - PathPattern: /api/scenarios*
+            - PathPattern: /api/*
               TargetOriginId: scenario-api
               ViewerProtocolPolicy: redirect-to-https
               Compress: true

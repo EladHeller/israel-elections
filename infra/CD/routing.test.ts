@@ -68,7 +68,7 @@ test('scenario routes and election data use the intended CDN lifetimes', () => {
     .split('          - PathPattern: ').slice(1);
   assert.equal(behaviors.length, 7);
 
-  assert.ok(behaviors[0].startsWith('/api/scenarios*'));
+  assert.ok(behaviors[0].startsWith('/api/*'));
   assert.match(behaviors[0], /AllowedMethods:\n[\s\S]*- POST\n/);
   assert.match(behaviors[0], /CachedMethods:\n\s+- GET\n\s+- HEAD\n/);
   assert.match(behaviors[0], /MinTTL: 0\n/);

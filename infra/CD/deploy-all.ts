@@ -209,7 +209,9 @@ async function main() {
 
   // S3Key stays dist.zip, so CloudFormation cannot detect a new code archive.
   const lambda = new LambdaClient({ region });
-  for (const FunctionName of ['Israel-elections-function', 'Israel-elections-scenario-share']) {
+  const questionLogFunctionName = getOutput(backendOutputs, 'QuestionLogFunctionName');
+  if (!questionLogFunctionName) throw new Error('Missing QuestionLogFunctionName output');
+  for (const FunctionName of ['Israel-elections-function', 'Israel-elections-scenario-share', questionLogFunctionName]) {
     await lambda.send(new UpdateFunctionCodeCommand({
       FunctionName, S3Bucket: bucketCodeName, S3Key: 'dist.zip',
     }));
