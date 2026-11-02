@@ -87,6 +87,22 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     assert.equal(scenarioLink(), undefined);
     assert.ok(requests.slice(comparisonRequests).includes('/data/25/allResults.json'));
     assert.ok(!requests.slice(comparisonRequests).some(path => path.endsWith('.csv')));
+    for (const wording of ['בכמה אחוזים עלתה הליכוד מהבחירות הקודמות', 'בכמה אחוזים עלתה הליכוד מהכנסת הקודמת']) {
+      await ask(wording);
+      assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /נקודות אחוז/);
+    }
+    for (const [wording, source] of [
+      ['באיזה עיר קיבל הליכוד הכי הרבה קולות', '/data/26/elections.csv'],
+      ['באיזו קלפי קיבל הליכוד אחוז הכי גבוה מהקולות', '/data/26/polling-stations.csv'],
+      ['איזו מפלגה קבלה הכי הרבה קולות במקום', '/data/26/elections.csv'],
+    ]) {
+      const start: number = requests.length;
+      await ask(wording);
+      assert.equal(records.at(-1)!.outcome, 'answered');
+      assert.ok(requests.slice(start).includes(source));
+      assert.equal(scenarioLink(), undefined);
+      assert.ok(renderer.root.findByType(QuestionAnswer));
+    }
     await ask('מה היה קורה אם הליכוד הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /חלוקת המנדטים נשארת ללא שינוי/);
     await ask('מה היה קורה אם הליכוד לא הייתה מקבלת קולות בכלל');

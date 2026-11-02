@@ -28,7 +28,7 @@ export function parseInsight(text: string, parties: string[]): QuestionParse | n
   if (/^כמה קולות (?:לא עברו את אחוז החסימה|הלכו לרשימות שלא עברו את אחוז החסימה|התבזבזו)$/.test(text) && !parties.length) return make('wasted');
   if (/^מה (?:היה קורה )?(?:אם|אילו) @0 (?:הייתה עוברת|היתה עוברת|עברה) את אחוז החסימה$/.test(text) && parties.length === 1) return make('threshold-entry', { party: parties[0] });
   if (/^(?:בכמה יישובים|בכמה ישובים) @0 (?:קיבלה|קבלה) קולות$/.test(text) && parties.length === 1) return make('coverage', { party: parties[0] });
-  const winner = /^מי (?:ניצחה|ניצח|קיבלה הכי הרבה קולות) ב(?:יישוב |ישוב )?(.+?)(?: בקלפי (\d+(?:\.\d+)?))?(?: ובכמה קולות)?$/.exec(text);
+  const winner = /^(?:מי|איזו (?:מפלגה|רשימה)|איזה (?:מפלגה|רשימה)) (?:ניצחה|ניצח|(?:קיבלה|קבלה|קיבל) (?:את )?הכי הרבה קולות) ב(?:יישוב |ישוב )?(.+?)(?: בקלפי (\d+(?:\.\d+)?))?(?: ובכמה קולות)?$/.exec(text);
   if (winner && !parties.length && !/@/.test(text)) return make('winner', { place: winner[1], station: winner[2], level: winner[2] ? 'stations' : 'localities', minimum: 0 });
   let base = text;
   let minimum = 100;

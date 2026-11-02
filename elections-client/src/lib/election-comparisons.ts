@@ -42,7 +42,7 @@ const electionWords: Record<string, string> = {
 };
 function sourceElection(value: string, context: QuestionContext): string | null {
   value = value.replace(/^ב(?=בחירות|כנסת|הכנסת)/, '').replace(/^(בחירות הקודמות)$/, 'הבחירות הקודמות').replace(/ ה (\d+)$/, ' $1');
-  if (value === 'הבחירות הקודמות' || value === 'פעם שעברה' || value === 'הפעם הקודמת') {
+  if (value === 'הבחירות הקודמות' || value === 'הכנסת הקודמת' || value === 'כנסת קודמת' || value === 'פעם שעברה' || value === 'הפעם הקודמת') {
     const id = Number(context.electionId) - 1;
     return Number.isSafeInteger(id) && id > 0 ? String(id) : null;
   }
@@ -78,7 +78,7 @@ export function parseComparison(text: string, context: QuestionContext): Questio
     const source = sourceElection(sourceText, context);
     return !target ? badTarget : !source ? badSource : finish({ kind: 'comparison-scenario', target, source, mode: scenario[2].startsWith('מספר') ? 'votes' : 'share' });
   }
-  const match = /^(.*?) (?:לעומת|בהשוואה ל|מאז) ?(.+)$/.exec(text)
+  const match = /^(.*?) (?:לעומת|בהשוואה ל|מאז|מ(?=הבחירות |הכנסת |כנסת )) ?(.+)$/.exec(text)
     ?? (/^(?:בכמה|איזו רשימה|איזה רשימה|מי) /.test(text) && /עלתה|עלה|ירדה|ירד|התחזקה|התחזק|נחלשה|נחלש|עלו|ירדו/.test(text) ? ['', text, 'הבחירות הקודמות'] : null);
   if (!match) return null;
   // Geographic comparisons belong to the geographic operator and its data loader.
@@ -145,10 +145,21 @@ export function executeComparison(query: ComparisonQuery, context: QuestionConte
   const previous = query.kind === 'comparison-scenario' && query.mode === 'zero' ? undefined : context.comparison;
   if ((query.kind === 'comparison' || query.mode !== 'zero') && (!previous || previous.id !== query.source || Number(previous.id) >= Number(current.id))) throw new Error('נתוני מערכת הבחירות המבוקשת אינם זמינים להשוואה.');
   const oldTotal = previous ? totalVotes(previous.votes) : 0;
-  const oldTarget = (target: ComparisonTarget): ComparisonTarget => target.type === 'list' ? { type: 'list', id: matchingList(target.id, current, previous!) } : target;
+  const oldTarget = (target: ComparisonTarget): ComparisonTarget => {
+    if (target.type !== 'list') return target;
+    // Curated pair for explicit comparisons only; ballot letters alone are insufficient.
+    if (query.kind === 'comparison' && query.target && current.id === '26' && previous!.id === '25'
+      && current.names[target.id] === 'הציונות הדתית וזהות') {
+      const ids = Object.keys(previous!.votes).filter(id => previous!.names[id] === 'הציונות הדתית');
+      if (ids.length === 1) return { type: 'list', id: ids[0] };
+    }
+    return { type: 'list', id: matchingList(target.id, current, previous!) };
+  };
   const sum = (snapshot: ElectionSnapshot, ids: string[]) => ids.reduce((n, id) => n + snapshot.votes[id].votes, 0);
   const label = (target: ComparisonTarget) => target.type === 'list' ? current.names[target.id] ?? target.id : current.blocs!.blocks[target.id].label;
-  const membership = (target: ComparisonTarget) => target.type === 'list' ? 'התאמה לפי שם רשימה זהה בלבד; שינויים בהרכב הרשימה אינם מזוהים.'
+  const membership = (target: ComparisonTarget) => target.type === 'list' ? previous && current.names[target.id] !== previous.names[(oldTarget(target) as { type: 'list'; id: string }).id]
+    ? `השוואה בין הרשימה ${current.names[target.id]} בבחירות ${current.id} לרשימה ${previous.names[(oldTarget(target) as { type: 'list'; id: string }).id]} בבחירות ${previous.id}. הרכב הרשימות שונה; אין כאן מדידה של השינוי בתמיכה ברכיב מסוים בתוך הרשימה.`
+    : 'התאמה לפי שם רשימה זהה בלבד; שינויים בהרכב הרשימה אינם מזוהים.'
     : `הרכב הגוש לפי הגדרות האתר: בבחירות ${current.id}: ${members(target, current).map(id => current.names[id] ?? id).join(', ')}${previous ? `; בבחירות ${previous.id}: ${members(target, previous).map(id => previous.names[id] ?? id).join(', ')}` : ''}. ההרכב עשוי להשתנות בין הבחירות.`;
   if (query.kind === 'comparison-scenario') {
     const ids = members(query.target, current);
