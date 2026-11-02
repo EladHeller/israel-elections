@@ -35,6 +35,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
       if (mode === 'throw') throw 'offline';
       return new Response(mode === 'empty' ? csv.split('\n')[0] : csv);
     }
+    if (path === '/data/25/allResults.json' && mode === 'comparison-pending') await new Promise<void>(resolve => { pending = resolve; });
+    if (path === '/data/25/allResults.json' && mode === 'comparison-fail') return new Response('', { status: 404 });
     if (mode === 'results-fail') throw new Error('offline');
     return new Response(JSON.stringify(path.includes('election-config') ? {} : snapshot));
   };
@@ -68,6 +70,22 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.ok(renderer.root.findByType(QuestionAnswer));
     assert.equal(renderer.root.findAllByType('table').length, 0); assert.equal(renderer.root.findAllByType('textarea').length, 0);
     assert.ok(!text().includes('פענוח השאלה') && !text().includes('חישוב התשובה'));
+    const comparisonRequests = requests.length;
+    await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
+    assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /נקודות אחוז/);
+    assert.ok(requests.slice(comparisonRequests).includes('/data/25/allResults.json'));
+    assert.ok(!requests.slice(comparisonRequests).some(path => path.endsWith('.csv')));
+    await ask('מה היה קורה אם הליכוד הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות');
+    assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /חלוקת המנדטים נשארת ללא שינוי/);
+    await ask('מה היה קורה אם הליכוד לא הייתה מקבלת קולות בכלל');
+    assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /מאבדת/);
+    mode = 'comparison-fail'; await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
+    assert.equal(records.at(-1)!.outcome, 'failed'); assert.match(text(), /לא הצלחתי לטעון את תוצאות/);
+    mode = 'comparison-pending'; await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
+    await act(async () => input().props.onChange({ target: { value: 'שאלה חדשה' } }));
+    await act(async () => { pending?.(); await tick(); });
+    assert.equal(records.at(-1)!.outcome, 'cancelled'); assert.ok(!text().includes('נקודות אחוז'));
+    mode = 'ok';
     await ask('מי ינצח?'); assert.match(text(), /לא הצלחתי/); assert.equal(records.at(-1)!.outcome, 'unsupported');
     await ask('כמה קולות היו חסרים לליכוד כדי לקבל מנדט נוסף בתוצאות האמת?');
     assert.match(text(), /הייתה צריכה עוד/); assert.equal(records.at(-1)!.outcome, 'answered');
@@ -136,10 +154,12 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
 
 test('prose includes explicit green gains and red losses without unchanged seat clutter', () => {
   let renderer!: ReturnType<typeof create>;
-  const show = (kind: 'insight' | 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'below-threshold-winners' | 'results', rows: (string | number)[][]) => {
+  const show = (kind: 'insight' | 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'below-threshold-winners' | 'results' | 'comparison' | 'comparison-scenario', rows: (string | number)[][]) => {
     renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [] } })); return JSON.stringify(renderer.toJSON());
   };
   try {
+    assert.match(show('comparison', [['עלייה של 3 נקודות אחוז, גידול יחסי של 20%']]), /3 נקודות אחוז/);
+    assert.match(show('comparison-scenario', [['נתוני התרחיש'], ['מאבדת', -1]]), /נתוני התרחיש/);
     assert.match(show('insight', [['ציון דמיון 100.00%']]), /ציון דמיון 100.00%/);
     assert.match(show('scenario', [['א', 10, 11, 1], ['ב', 12, 10, -2], ['ג', 1, 1, 0], ['ד', 1, 0, -1], ['ה', 10, 12, 2]]), /מקבלת.*מנדט אחד/);
     assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-gain' }).length, 2); assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-loss' }).length, 2);

@@ -13,6 +13,7 @@ import { executeElectionQuestion, parseElectionQuestion, type Answer, type Quest
 import type { PreviousElection } from '../lib/question-insights';
 import { recordQuestion, type QuestionOutcome } from '../lib/question-log';
 import { phaseHasResults } from '../lib/election-manifest';
+import { loadComparisonElection } from '../lib/comparison-data';
 
 const examples = ['מה היה קורה אם לא היה אחוז חסימה?', 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?', 'כמה קולות היו חסרים לעמך ישראל לעבור את אחוז החסימה?'];
 type Reply = { answer: Answer; kind: QuestionQuery['kind']; explanation: string; time?: string };
@@ -42,7 +43,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     const attempt = { id: crypto.randomUUID(), election: electionId, question: question.trim() };
     const names = { ...data.partyNames };
     for (const list of data.electionManifest!.lists) names[list.ballotLetter] ??= list.name;
-    const context = { votes: data.results.voteData, names, config: data.electionConfig };
+    const context = { votes: data.results.voteData, names, config: data.electionConfig, electionId, blocs: data.blocs };
     setBusy(true); setReply(null); setError(null); setSaveFailed(false);
     let outcome: QuestionOutcome = 'failed';
     try {
@@ -59,6 +60,8 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         places = (('level' in parsed.query && parsed.query.level === 'stations') ? parsePollingStations : parseLocalities)(await response.text());
       }
       let previous: PreviousElection | undefined;
+      const comparison = (parsed.query.kind === 'comparison' || parsed.query.kind === 'comparison-scenario') && parsed.query.source
+        ? await loadComparisonElection(parsed.query.source, controller.signal) : undefined;
       if (parsed.query.kind === 'insight' && ['strengthened', 'weakened'].includes(parsed.query.metric)) {
         const id = String(Number(electionId) - 1);
         if (!hasLocalityData(id)) throw new Error('אין נתוני יישובים למערכת הבחירות הקודמת.');
@@ -67,7 +70,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         previous = { id, names: (partyNamesAll as Record<string, Record<string, string>>)[id] ?? {}, places: parseLocalities(await response.text()) };
       }
       if (controller.signal.aborted) return;
-      const answer = executeElectionQuestion(parsed.query, { ...context, previous }, places);
+      const answer = executeElectionQuestion(parsed.query, { ...context, previous, comparison }, places);
       outcome = answer.rows.length ? 'answered' : 'empty';
       setReply({ answer, kind: parsed.query.kind, explanation: parsed.explanation, time: data.results.time });
     } catch (failure) {
