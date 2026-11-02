@@ -6,6 +6,8 @@ export interface LocalityVotes {
   pollingStation?: string;
   split?: number;
   clusterCode?: string;
+  eligibleVoters?: number;
+  voters?: number;
   validVotes: number;
   votes: Record<string, number>;
 }
@@ -28,6 +30,8 @@ function parseResearchRows(csv: string, pollingStations: boolean): LocalityVotes
   const nameIndex = header.indexOf('שם ישוב');
   const idIndex = header.indexOf('סמל ישוב');
   const validIndex = header.indexOf('כשרים');
+  const eligibleIndex = header.findIndex(key => ['בזב', "בז''ב", 'בוחרים'].includes(key));
+  const votersIndex = header.indexOf('מצביעים');
   const stationIndex = header.findIndex(key => ['מספר קלפי', 'סמל קלפי', 'קלפי'].includes(key));
   const splitIndex = header.indexOf('פיצול');
   const clusterIndex = header.indexOf('ריכוז');
@@ -43,6 +47,10 @@ function parseResearchRows(csv: string, pollingStations: boolean): LocalityVotes
     if (!value || !Number.isSafeInteger(result) || result < 0) throw new Error('מספר קולות לא תקין');
     return result;
   };
+  // Optional turnout metadata must not prevent ordinary vote research. Invalid
+  // or missing values propagate as NaN when rows are aggregated and are excluded
+  // from turnout calculations rather than silently counted as zero.
+  const optionalCount = (value: string): number => value && Number.isSafeInteger(Number(value)) && Number(value) >= 0 ? Number(value) : NaN;
   for (const row of rows) {
     const name = row[nameIndex];
     const code = idIndex < 0 ? null : Number(row[idIndex]);
@@ -57,6 +65,8 @@ function parseResearchRows(csv: string, pollingStations: boolean): LocalityVotes
     const id = station ? JSON.stringify([localityId, station.pollingStation, station.split]) : localityId;
     const locality = localities.get(id) ?? { id, name, ...station, ...(pollingStations && clusterIndex >= 0 && row[clusterIndex] ? { clusterCode: String(Number(row[clusterIndex])) } : {}), validVotes: 0, votes: {} };
     locality.validVotes += count(row[validIndex]);
+    if (eligibleIndex >= 0) locality.eligibleVoters = (locality.eligibleVoters ?? 0) + optionalCount(row[eligibleIndex]);
+    if (votersIndex >= 0) locality.voters = (locality.voters ?? 0) + optionalCount(row[votersIndex]);
     for (const { party, index } of parties) locality.votes[party] = (locality.votes[party] ?? 0) + count(row[index]);
     localities.set(id, locality);
   }

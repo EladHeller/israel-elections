@@ -4,6 +4,20 @@ import type { Answer, QuestionQuery } from '../lib/election-questions';
 const count = (value: string | number) => typeof value === 'number' ? value.toLocaleString('he-IL') : value;
 export default function QuestionAnswer({ answer, kind }: { answer: Answer; kind: QuestionQuery['kind'] }) {
   if (!answer.rows.length) return <p>לא נמצאו תוצאות מתאימות בנתונים הזמינים.</p>;
+  if (kind === 'insight' || kind === 'comparison' || kind === 'comparison-scenario') return <>{answer.rows.map((row, index) => <p key={index} className={typeof row[1] === 'number' ? `question-seat-change ${row[1] > 0 ? 'is-gain' : 'is-loss'}` : undefined}>{row[0]}</p>)}</>;
+  if (kind === 'below-threshold-winners') return <>{answer.rows.map((row, index) => <p key={index}>
+    <strong>{row[0]}</strong>: <strong>{row[1]}</strong> קיבלה {count(row[2])} קולות, שהם {row[3]} מהקולות הכשרים במקום ({row[4]}).
+  </p>)}</>;
+  if (kind === 'seat-loss') return <>{answer.rows.map((row, index) => <p key={index}>
+    <strong>{row[0]}</strong>{typeof row[1] === 'number'
+      ? <> צריכה לאבד <strong>{count(row[1])} קולות</strong> כדי לרדת ממספר המנדטים הנוכחי שלה ({count(row[2])}). הירידה יכולה להיות של יותר ממנדט אחד אם היא יורדת מתחת לאחוז החסימה.</>
+      : <>: אין הפחתת קולות שמקטינה את מספר המנדטים שלה בתוצאות שנבחרו.</>}
+  </p>)}</>;
+  if (kind === 'seat-gap') return <>{answer.rows.map((row, index) => <p key={index}>
+    <strong>{row[0]}</strong>{typeof row[1] === 'number'
+      ? <> הייתה צריכה עוד <strong>{count(row[1])} קולות</strong> כדי להגדיל את מספר המנדטים שלה מעבר ל־{count(row[2])}.</>
+      : <>: לא נמצאה תוספת שמגדילה את מספר המנדטים שלה בטווח החיפוש.</>}
+  </p>)}</>;
   if (kind === 'scenario') {
     const changed = answer.rows.filter(row => Number(row[3]) !== 0);
     if (!changed.length) return <p>חלוקת המנדטים נשארת ללא שינוי.</p>;

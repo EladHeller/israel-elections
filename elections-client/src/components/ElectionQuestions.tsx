@@ -1,14 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import ElectionSelector from './ElectionSelector';
-import ThemeToggle from './ThemeToggle';
+import { useNavigate, useParams } from 'react-router-dom';
+import AppHeader from './AppHeader';
 import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
+import BetaBadge from './BetaBadge';
 import { useElectionData } from '../hooks/use-election-data';
+import partyNamesAll from '../data/party-names.json';
+import { insightNeedsPlaces } from '../lib/question-insights';
 import { hasLocalityData, pollingStationSource } from '../lib/locality-availability';
 import { parseLocalities, parsePollingStations } from '../lib/party-research';
 import { executeElectionQuestion, parseElectionQuestion, type Answer, type QuestionQuery } from '../lib/election-questions';
+import type { PreviousElection } from '../lib/question-insights';
 import { recordQuestion, type QuestionOutcome } from '../lib/question-log';
+import { phaseHasResults } from '../lib/election-manifest';
+import { loadComparisonElection } from '../lib/comparison-data';
 
 const examples = ['מה היה קורה אם לא היה אחוז חסימה?', 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?', 'כמה קולות היו חסרים לעמך ישראל לעבור את אחוז החסימה?'];
 type Reply = { answer: Answer; kind: QuestionQuery['kind']; explanation: string; time?: string };
@@ -38,7 +43,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     const attempt = { id: crypto.randomUUID(), election: electionId, question: question.trim() };
     const names = { ...data.partyNames };
     for (const list of data.electionManifest!.lists) names[list.ballotLetter] ??= list.name;
-    const context = { votes: data.results.voteData, names, config: data.electionConfig };
+    const context = { votes: data.results.voteData, names, config: data.electionConfig, electionId, blocs: data.blocs };
     setBusy(true); setReply(null); setError(null); setSaveFailed(false);
     let outcome: QuestionOutcome = 'failed';
     try {
@@ -47,15 +52,25 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         outcome = 'unsupported'; setError(parsed.error); return;
       }
       let places;
-      if (parsed.query.kind === 'rank') {
-        const source = parsed.query.level === 'stations' ? pollingStationSource(electionId) : hasLocalityData(electionId) ? `/data/${electionId}/elections.csv` : null;
+      if (parsed.query.kind === 'rank' || parsed.query.kind === 'below-threshold-winners' || insightNeedsPlaces(parsed.query)) {
+        const source = ('level' in parsed.query && parsed.query.level === 'stations') ? pollingStationSource(electionId) : hasLocalityData(electionId) ? `/data/${electionId}/elections.csv` : null;
         if (!source) throw new Error('אין נתוני מקומות לבחירות אלו. אפשר לשאול על התוצאות הארציות או לבחור מערכת אחרת.');
         const response = await fetch(source, { cache: 'no-store', signal: controller.signal });
         if (!response.ok) throw new Error('לא הצלחתי לטעון את נתוני המקומות. אפשר לנסות שוב.');
-        places = (parsed.query.level === 'stations' ? parsePollingStations : parseLocalities)(await response.text());
+        places = (('level' in parsed.query && parsed.query.level === 'stations') ? parsePollingStations : parseLocalities)(await response.text());
+      }
+      let previous: PreviousElection | undefined;
+      const comparison = (parsed.query.kind === 'comparison' || parsed.query.kind === 'comparison-scenario') && parsed.query.source
+        ? await loadComparisonElection(parsed.query.source, controller.signal) : undefined;
+      if (parsed.query.kind === 'insight' && ['strengthened', 'weakened'].includes(parsed.query.metric)) {
+        const id = String(Number(electionId) - 1);
+        if (!hasLocalityData(id)) throw new Error('אין נתוני יישובים למערכת הבחירות הקודמת.');
+        const response = await fetch(`/data/${id}/elections.csv`, { cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('לא הצלחתי לטעון את נתוני הבחירות הקודמות.');
+        previous = { id, names: (partyNamesAll as Record<string, Record<string, string>>)[id] ?? {}, places: parseLocalities(await response.text()) };
       }
       if (controller.signal.aborted) return;
-      const answer = executeElectionQuestion(parsed.query, context, places);
+      const answer = executeElectionQuestion(parsed.query, { ...context, previous, comparison }, places);
       outcome = answer.rows.length ? 'answered' : 'empty';
       setReply({ answer, kind: parsed.query.kind, explanation: parsed.explanation, time: data.results.time });
     } catch (failure) {
@@ -70,12 +85,19 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     }
   };
   const validElection = !!electionId && data.availableElections.includes(electionId);
-  return <main className="screen election-questions" dir="rtl">
-    <header className="header"><Link className="ui-link" to={validElection ? `/results/${electionId}` : '/'}>לתוצאות הבחירות</Link><ThemeToggle /></header>
-    <section className="panel question-workspace">
-      <div className="question-intro"><p className="subtitle">שאלות על הבחירות</p><h1>מה תרצו לדעת?</h1>
+  return <div className="screen election-questions" dir="rtl">
+    <AppHeader statusText="שאלות על הבחירות" showSimulator={!!data.electionManifest && phaseHasResults(data.electionManifest.phase)}
+      isEdited={false} currentElection={validElection ? electionId : null}
+      availableElections={data.availableElections} viewMode="questions"
+      setCurrentElection={id => navigate(`/questions/${id}`)}
+      setViewMode={mode => navigate(mode === 'summary' ? '/summary' : validElection ? `/${mode}/${electionId}` : mode === 'questions' ? '/questions' : '/')} />
+    <main className="panel question-workspace">
+      <div className="question-intro"><p className="subtitle">שאלות על הבחירות <BetaBadge /></p><h1>מה תרצו לדעת?</h1>
         <p>תוצאות, יישובים ותרחישים — בחרו מערכת בחירות ושאלו.</p></div>
-      <ElectionSelector value={validElection ? electionId : null} elections={data.availableElections} onChange={id => navigate(`/questions/${id}`)} />
+      <aside className="question-beta-notice" aria-label="גרסת בטא">
+        <strong>גרסת בטא — המענה עדיין ניסיוני</strong>
+        <p>לא כל שאלה או ניסוח נתמכים, והתשובות עלולות להיות שגויות או חלקיות. מומלץ לבדוק אותן מול נתוני התוצאות באתר.</p>
+      </aside>
       {electionId && data.availableElections.length > 0 && !validElection && <p role="alert">מערכת הבחירות אינה קיימת. בחרו מערכת מהרשימה.</p>}
       {data.error && <p role="alert">טעינת נתוני הבחירות נכשלה. אפשר לבחור שוב או לרענן את העמוד.</p>}
       {data.refreshError && <p role="status">{data.refreshError}</p>}
@@ -86,15 +108,15 @@ function QuestionScreen({ electionId }: { electionId: string }) {
           <button type="submit" className="ui-button ui-button-primary" disabled={!validElection || !data.results || !question.trim() || busy} aria-label="שליחת השאלה">{busy ? 'מחשב…' : 'שאלו'}</button></div>
       </form>
       <div className="question-examples" aria-label="שאלות לדוגמה"><span>למשל</span>{examples.map(example => <button type="button" className="ui-button ui-button-quiet" key={example} onClick={() => { changeQuestion(example); document.getElementById('election-question')?.focus(); }}>{example}</button>)}</div>
-      <p className="question-caption">השאלות נשמרות לשיפור המענה, ללא צירוף פרטים מזהים על השואל, ונגישות רק לבעל האתר. גרסת הניסיון תומכת בחלק מהניסוחים.</p>
+      <p className="question-caption">השאלות נשמרות לשיפור המענה, ללא צירוף פרטים מזהים על השואל, ונגישות רק לבעל האתר.</p>
       <div className="question-response" aria-live="polite" aria-busy={busy}>
         {busy && <p role="status">בודק את הנתונים…</p>}
         {error && <p className="question-error" role="alert">{error}</p>}
-        {reply && <article><p className="question-interpretation">{reply.explanation}</p><QuestionAnswer answer={reply.answer} kind={reply.kind} />
+        {reply && <article><p className="question-interpretation">{reply.explanation}</p><QuestionAnswer answer={reply.answer} kind={reply.kind} /><p className="question-answer-note">{reply.answer.note}</p>
           {data.electionManifest?.phase === 'counting' && <p className="question-caption">הספירה נמשכת. <ResultsTimestamp time={reply.time} /></p>}
         </article>}
         {saveFailed && <p className="question-caption" role="status">המענה זמין, אך שמירת השאלה נכשלה.</p>}
       </div>
-    </section>
-  </main>;
+    </main>
+  </div>;
 }

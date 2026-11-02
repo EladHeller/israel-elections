@@ -231,6 +231,7 @@ body {
 
 .view-switcher {
   display: flex;
+  flex-wrap: wrap;
   padding: 3px;
   border: 1px solid var(--ink-20);
   border-radius: 12px;
@@ -1941,9 +1942,12 @@ a { color: var(--ink-70); transition: color .15s ease; }
 a:hover { color: var(--ink-90); }
 .ui-link { display: inline-flex; gap: .4rem; align-items: center; padding: .35rem .6rem; border-radius: 8px; background: var(--surface-muted); }
 a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.election-questions { max-width: 900px; margin-inline: auto; }
-.election-questions .header { display: flex; justify-content: space-between; align-items: center; }
-.question-workspace { padding: clamp(20px, 5vw, 48px); }
+.question-workspace { max-width: 900px; margin-inline: auto; padding: clamp(20px, 5vw, 48px); }
+.beta-badge { display: inline-flex; align-items: center; flex-shrink: 0; padding: .15rem .6rem; border: 1px solid currentColor; border-radius: 999px; background: var(--selection-background); color: var(--warning-text); font-size: .8rem; font-weight: 800; line-height: 1.5; white-space: nowrap; }
+.view-switcher button .beta-badge { margin-inline-start: .35rem; }
+.question-beta-notice { margin-block: 0 24px; padding: 16px 20px; border: 1px solid var(--warning-text); border-inline-start-width: 5px; border-radius: 12px; background: var(--selection-background); color: var(--warning-text); line-height: 1.65; }
+.question-beta-notice strong { font-size: 1.05rem; }
+.question-beta-notice p { margin: .4rem 0 0; }
 .question-intro { margin-bottom: 28px; }
 .question-intro h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); margin-block: .4rem .8rem; line-height: 1.2; }
 .question-intro p { color: var(--ink-50); }

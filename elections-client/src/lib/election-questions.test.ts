@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { executeElectionQuestion as execute, parseElectionQuestion as parse, normalizeQuestion, type QuestionContext, type QuestionQuery } from './election-questions';
 import names from '../data/party-names.json';
 import type { LocalityVotes } from './party-research';
+import { computeScenarioResults } from './scenario';
 
 const context: QuestionContext = { votes: { מחל: { votes: 500, mandats: 0 }, ט: { votes: 310, mandats: 0 }, ך: { votes: 190, mandats: 0 } }, names: { מחל: 'הליכוד', ט: 'הציונות הדתית וזהות', ך: 'עמך ישראל' }, config: { blockPercentage: 0.2, agreements: [['מחל', 'ט']], algorithm: 'baderOffer' } };
 function query(text: string, ctx = context): QuestionQuery {
@@ -12,6 +13,138 @@ function query(text: string, ctx = context): QuestionQuery {
   return result.query;
 }
 function rejected(text: string, ctx = context) { assert.ok('error' in parse(text, ctx), text); }
+
+test('below-threshold local winners distinguish strict majorities from first place including ties', () => {
+  for (const unit of ['קלפיות', 'קלפי', 'יישובים', 'ישובים']) {
+    for (const list of ['מפלגה', 'רשימה']) {
+      for (const metric of ['רוב הקולות', 'הכי הרבה קולות', 'מספר הקולות הגבוה ביותר', 'מעל 50% מהקולות', 'יותר מ־50 אחוז מהקולות']) {
+        const expected = { kind: 'below-threshold-winners', level: unit.startsWith('קלפ') ? 'stations' : 'localities', measure: /הכי הרבה|הגבוה/.test(metric) ? 'plurality' : 'majority' };
+        assert.deepEqual(query(`באילו ${unit} ${list} שלא עברה את אחוז החסימה קיבלה את ${metric}?`), expected);
+        assert.deepEqual(query(`איזה ${unit} קיבלה ${list} שלא עברה את אחוז החסימה הארצי ${metric}`), expected);
+      }
+    }
+  }
+  rejected('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות מעל 100 כשרים');
+  const places: LocalityVotes[] = [
+    { id: '1', name: 'רוב', pollingStation: '3', split: 0, validVotes: 100, votes: { ך: 60, מחל: 40 } },
+    { id: '2', name: 'חצי', validVotes: 100, votes: { ך: 50, מחל: 30, ט: 20 } },
+    { id: '3', name: 'מוביל', pollingStation: '2', validVotes: 100, votes: { ך: 40, מחל: 35, ט: 25 } },
+    { id: '4', name: 'תיקו', validVotes: 100, votes: { ך: 45, מחל: 45, ט: 10 } },
+    { id: '5', name: 'עברה', validVotes: 100, votes: { מחל: 70, ך: 30 } },
+    { id: '6', name: 'ללא כשרים', validVotes: 0, votes: {} },
+    { id: '7', name: 'ללא קולות', validVotes: 100, votes: {} },
+    { id: '8', name: 'לא מוכרת', validVotes: 100, votes: { לאמוכרת: 70, ך: 30 } },
+  ];
+  const majority = query('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות');
+  const plurality = query('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה הכי הרבה קולות');
+  const before = structuredClone(places);
+  assert.deepEqual(execute(majority, context, places).rows, [['רוב — קלפי 3 / פיצול 0', 'עמך ישראל', 60, '60.00%', 'מקום ראשון']]);
+  const rows = execute(plurality, context, places).rows;
+  assert.equal(rows.length, 4);
+  assert.deepEqual(rows.find(row => row[0] === 'תיקו'), ['תיקו', 'עמך ישראל', 45, '45.00%', 'תיקו במקום הראשון']);
+  assert.ok(rows.some(row => row[0] === 'מוביל — קלפי 2'));
+  assert.equal(execute(plurality, { ...context, config: { ...context.config, blockPercentage: 0.19 } }, places).rows.length, 0);
+  assert.equal(execute(majority, context, []).rows.length, 0);
+  assert.throws(() => execute(majority, context), /זמינים/);
+  assert.equal(execute(majority, { ...context, names: {} }, places).rows[0][1], 'ך');
+  const tiedPlaces: LocalityVotes[] = [
+    { id: 'b', name: 'ב', validVotes: 100, votes: { ך: 45, ט: 45, מחל: 10 } },
+    { id: 'a', name: 'א', validVotes: 100, votes: { ך: 45, ט: 45, מחל: 10 } },
+    { id: 'c', name: 'ג', validVotes: 200, votes: { ך: 90, מחל: 110 } },
+    { id: 'd', name: 'ד', validVotes: 200, votes: { ך: 90, ט: 90, מחל: 20 } },
+  ];
+  const bothBelow = { ...context, config: { ...context.config, blockPercentage: 0.35 } };
+  const tiedRows = execute(plurality, bothBelow, tiedPlaces).rows;
+  assert.equal(tiedRows.length, 6);
+  assert.deepEqual(tiedRows.map(row => row[0]), ['ד', 'ד', 'א', 'א', 'ב', 'ב']);
+  assert.deepEqual(places, before);
+});
+
+test('seat-loss questions remove votes only from the selected list and find the first loss', () => {
+  for (const name of ['הציונות הדתית', 'ציונות הדתית', 'ט', 'ליכוד']) {
+    for (const wording of [`כמה קולות צריכים לרדת ל${name} כדי שתאבד מנדט?`, `כמה קולות צריך להוריד ל${name} כדי שירד לה מנדט`, `כמה קולות היו צריכים לרדת ל${name} כדי לאבד מנדט בתוצאות האמת`]) {
+      assert.deepEqual(query(wording), { kind: 'seat-loss', party: name === 'ליכוד' ? 'מחל' : 'ט' });
+    }
+  }
+  rejected('כמה קולות צריכים לרדת לציונות הדתית כדי שתאבד מנדט ויעברו לליכוד');
+  for (const algorithm of ['baderOffer', 'ceilRound'] as const) {
+    for (const agreements of [[], [['מחל', 'ט']]] as [string, string][][]) {
+      const ctx = { ...context, config: { ...context.config, algorithm, agreements } };
+      const before = structuredClone(ctx);
+      for (const party of ['ט', 'ך']) {
+        const seats = (delta: number) => computeScenarioResults({ ...ctx.votes, [party]: { ...ctx.votes[party], votes: ctx.votes[party].votes - delta } }, ctx.config).realResults[party]?.mandats ?? 0;
+        const baseline = seats(0);
+        let expected = 1;
+        while (expected <= ctx.votes[party].votes && seats(expected) >= baseline) expected++;
+        const answer = execute({ kind: 'seat-loss', party }, ctx);
+        assert.equal(answer.rows[0][1], expected <= ctx.votes[party].votes ? expected : '—');
+        assert.equal(answer.rows[0][2], baseline);
+      }
+      assert.deepEqual(ctx, before);
+    }
+  }
+  assert.throws(() => execute({ kind: 'seat-loss', party: 'missing' }, context), /קיימת/);
+  const edge = { ...context, config: { ...context.config, blockPercentage: 0.3095 } };
+  const answer = execute({ kind: 'seat-loss', party: 'ט' }, edge);
+  assert.equal(answer.rows[0][1], 1);
+  assert.ok(Number(answer.rows[0][2]) > 1);
+  assert.equal(computeScenarioResults({ ...edge.votes, ט: { votes: 309, mandats: 0 } }, edge.config).realResults['ט']?.mandats ?? 0, 0);
+});
+
+test('next-seat questions accept natural Hebrew and return the first added-vote seat gain', () => {
+  for (const name of ['הציונות הדתית', 'ציונות הדתית', 'ט']) {
+    for (const wording of [`כמה קולות היו חסרים ל${name} כדי לקבל מנדט נוסף בתוצאות האמת?`, `כמה קולות חסרים ל${name} להשיג עוד מנדט`, `כמה קולות נוספים הייתה צריכה ${name} כדי לקבל מנדט נוסף`]) {
+      assert.deepEqual(query(wording), { kind: 'seat-gap', party: 'ט' });
+    }
+  }
+  rejected('כמה קולות היו חסרים לציונות הדתית כדי לקבל מנדט נוסף בבחירות 25');
+  rejected('כמה קולות היו חסרים לציונות הדתית כדי לקבל מנדט נוסף בלי הסכמי עודפים');
+  for (const algorithm of ['baderOffer', 'ceilRound'] as const) {
+    for (const agreements of [[], [['מחל', 'ט']]] as [string, string][][]) {
+      const ctx = { ...context, config: { ...context.config, algorithm, agreements } };
+      const before = structuredClone(ctx);
+      for (const party of ['ט', 'ך']) {
+        const seats = (delta: number) => computeScenarioResults({ ...ctx.votes, [party]: { ...ctx.votes[party], votes: ctx.votes[party].votes + delta } }, ctx.config).realResults[party]?.mandats ?? 0;
+        const baseline = seats(0);
+        let expected = 1;
+        while (expected <= 1000 && seats(expected) <= baseline) expected++;
+        const answer = execute({ kind: 'seat-gap', party }, ctx);
+        assert.equal(answer.rows[0][1], expected <= 1000 ? expected : '—');
+        assert.equal(answer.rows[0][2], baseline);
+      }
+      assert.deepEqual(ctx, before);
+    }
+  }
+  assert.throws(() => execute({ kind: 'seat-gap', party: 'missing' }, context), /קיימת/);
+  const single = { ...context, votes: { מחל: { votes: 100, mandats: 0 } }, config: { ...context.config, agreements: [] } };
+  assert.equal(execute({ kind: 'seat-gap', party: 'מחל' }, single).rows[0][1], '—');
+  assert.equal(execute({ kind: 'seat-gap', party: 'ט' }, { ...context, config: { ...context.config, blockPercentage: 1 } }).rows[0][1], '—');
+});
+
+test('short next-seat questions resolve list aliases and use the existing seat calculation', () => {
+  for (const name of ['ליכוד', 'הליכוד', 'מחל', 'רשימת הליכוד', 'הציונות הדתית']) {
+    const party = name === 'הציונות הדתית' ? 'ט' : 'מחל';
+    for (const tense of ['חסרים', 'היו חסרים']) {
+      for (const target of ['למנדט נוסף', 'לעוד מנדט', 'למנדט הבא']) {
+        const parsed = query(`כמה קולות ${tense} ל${name} ${target}?`);
+        assert.deepEqual(parsed, { kind: 'seat-gap', party });
+        assert.deepEqual(execute(parsed, context), execute({ kind: 'seat-gap', party }, context));
+      }
+    }
+  }
+  const parsed = query('כמה קולות חסרים לליכוד למנדט נוסף');
+  const answer = execute(parsed, context);
+  const delta = Number(answer.rows[0][1]);
+  const seats = (added: number) => computeScenarioResults({ ...context.votes, מחל: { ...context.votes['מחל'], votes: context.votes['מחל'].votes + added } }, context.config).realResults['מחל'].mandats;
+  assert.ok(delta > 0);
+  assert.ok(seats(delta) > seats(0));
+  assert.equal(seats(delta - 1), seats(0));
+  assert.deepEqual(query('כמה קולות היו חסרים לליכוד למנדט נוסף בתוצאות האמת'), parsed);
+  for (const suffix of ['בלי הסכמי עודפים', 'בבחירות 25', 'בירושלים', 'וכמה לשס', 'אם אחוז החסימה ישתנה']) {
+    rejected(`כמה קולות חסרים לליכוד למנדט נוסף ${suffix}`);
+  }
+  rejected('כמה קולות חסרים לליכוד למנדט שני');
+});
 
 test('Hebrew normalization, list names, ballot letters, prefixes and current-election aliases', () => {
   assert.equal(normalizeQuestion('  ש״ס — הַלִּיכוּד?  '), 'שס הליכוד');

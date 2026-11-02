@@ -3,6 +3,7 @@ import { hasLocalityData } from '../lib/locality-availability';
 import type { AppViewMode } from '../types';
 import ElectionSelector from './ElectionSelector';
 import ThemeToggle from './ThemeToggle';
+import BetaBadge from './BetaBadge';
 
 interface AppHeaderProps {
   statusText: string;
@@ -23,6 +24,7 @@ const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
   { value: 'simulator', label: 'סימולטור' },
   { value: 'research', label: 'מחקר מפלגות' },
   { value: 'localities', label: 'יישובים' },
+  { value: 'questions', label: 'שאלות על הבחירות' },
   { value: 'summary', label: 'כל הכנסות' },
 ];
 
@@ -63,12 +65,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               aria-pressed={viewMode === option.value}
               onClick={() => setViewMode(option.value)}
             >
-              {option.label}
+              {option.label}{option.value === 'questions' && <> <BetaBadge compact /></>}
             </button>
           ))}
         </div>
       </div>
-      <a className="ui-link" href={currentElection ? `/questions/${currentElection}` : "/questions"}>שאלות על הבחירות</a>
       {actions}
       <ElectionSelector
         value={currentElection}
