@@ -52,6 +52,17 @@ test('scenario cards open a complete frozen snapshot, handle failures, retry and
     { ...scenario, party: undefined, delta: 0, threshold: 0.03, goals: ['majority:right+left:lose'] }] };
   await act(async () => worker.deliver(analysis));
   assert.equal(renderer.root.findAllByType('article').length, 5);
+  const first = renderer.root.findAllByType('article')[0];
+  assert.match(first.findByType('h3').children.map(child => typeof child === 'string' ? child : '').join(''), /אילו/);
+  assert.equal(first.findAllByType('ul').length, 0);
+  assert.equal(first.findAllByType('details').length, 1);
+  assert.equal(first.findByType('details').props.open, undefined, 'supporting details start collapsed');
+  const deltas = first.findByProps({ 'aria-label': 'השינוי במנדטים לפי רשימה' });
+  assert.equal(deltas.findByProps({ className: 'gain' }).findByType('bdi').children.join(''), '+1');
+  assert.equal(deltas.findByProps({ className: 'lose' }).findByType('bdi').children.join(''), '−1');
+  assert.match(text(renderer), /קולות נוספים/);
+  assert.match(text(renderer), /קולות פחות/);
+
   assert.match(text(renderer), /יצירת רוב לימין/);
   assert.match(text(renderer), /ביטול רוב לימין \+ שמאל/);
   assert.match(text(renderer), /תוספת מנדט/);

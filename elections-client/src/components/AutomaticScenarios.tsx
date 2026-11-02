@@ -62,15 +62,23 @@ export default function AutomaticScenarios({ election, getPartyName, demo = fals
     {current?.analysis && !scenarios.length && <p>לא נמצאו תרחישים שמשנים מנדטים בטווח הקרוב.</p>}
     <div className="automatic-scenario-grid">
       {scenarios.map(scenario => <article className="automatic-scenario" key={`${scenario.party || 'threshold'}:${scenario.delta}:${scenario.threshold}`}>
-        <h3>{scenario.party ? <>{getPartyName(scenario.party)}: <bdi>{signed(scenario.delta)}</bdi> קולות</>
-          : scenario.threshold === 0 ? 'ללא אחוז חסימה' : <>אחוז חסימה של <bdi>{percent(scenario.threshold!)}%</bdi></>}</h3>
-        {scenario.party && <p className="summary-caption">{percent(scenario.relativeDistance)}% מקולות הרשימה · {percent(scenario.distance)}% מהקולות הכשרים בארץ</p>}
-        <p>{[...new Set(scenario.goals.map(goalLabel))].join(' · ') || (scenario.threshold !== undefined ? 'חלוקת המנדטים לפי הכלל החדש' : 'השינוי הקרוב במנדטים')}</p>
-        <ul className="automatic-seat-deltas">{Object.entries(scenario.seatDeltas).map(([key, delta]) =>
-          <li key={key}><span>{getPartyName(key)}</span><bdi className={delta > 0 ? 'gain' : 'lose'}>{signed(delta)}</bdi></li>)}</ul>
-        {!!Object.keys(scenario.blocDeltas).length && <p className="automatic-bloc-deltas">{Object.entries(scenario.blocDeltas).map(([key, delta]) =>
-          <span key={key}>{blocName(key)} <bdi>{signed(delta)}</bdi></span>)}</p>}
-        <button type="button" className="ghost" disabled={opening} onClick={() => open(scenario)}>פתיחה בסימולטור</button>
+        <div className="automatic-scenario-heading">
+          <h3>{scenario.party ? <>אילו {getPartyName(scenario.party)} הייתה מקבלת <bdi>{numberFormat.format(Math.abs(scenario.delta))}</bdi> קולות {scenario.delta > 0 ? 'נוספים' : 'פחות'}</>
+            : scenario.threshold === 0 ? 'ללא אחוז חסימה' : <>אחוז חסימה של <bdi>{percent(scenario.threshold!)}%</bdi></>}</h3>
+          <details className="automatic-scenario-details">
+            <summary>פרטי התרחיש</summary>
+            {scenario.party && <p>{percent(scenario.relativeDistance)}% מקולות הרשימה · {percent(scenario.distance)}% מהקולות הכשרים בארץ</p>}
+            <p>{[...new Set(scenario.goals.map(goalLabel))].join(' · ') || (scenario.threshold !== undefined ? 'חלוקת המנדטים לפי הכלל החדש' : 'השינוי הקרוב במנדטים')}</p>
+          </details>
+        </div>
+        <div className="automatic-scenario-outcome">
+          <p className="automatic-scenario-caption">השינוי במנדטים</p>
+          <p className="automatic-seat-deltas" aria-label="השינוי במנדטים לפי רשימה">{Object.entries(scenario.seatDeltas).map(([key, delta]) =>
+            <span key={key} className={delta > 0 ? 'gain' : 'lose'}><span>{getPartyName(key)}</span> <bdi>{signed(delta)}</bdi></span>)}</p>
+          {!!Object.keys(scenario.blocDeltas).length && <p className="automatic-bloc-deltas"><span>מאזן הגושים:</span>{Object.entries(scenario.blocDeltas).map(([key, delta]) =>
+            <span key={key}>{blocName(key)} <bdi className={delta > 0 ? 'gain' : 'lose'}>{signed(delta)}</bdi></span>)}</p>}
+        </div>
+        <button type="button" className="ghost automatic-scenario-open" disabled={opening} onClick={() => open(scenario)}>פתיחה בסימולטור</button>
       </article>)}
     </div>
     {openError && <p role="alert">פתיחת התרחיש נכשלה. אפשר לנסות שוב.</p>}
