@@ -68,6 +68,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           ))}
         </div>
       </div>
+      <a className="ui-link" href={currentElection ? `/questions/${currentElection}` : "/questions"}>שאלות על הבחירות</a>
       {actions}
       <ElectionSelector
         value={currentElection}

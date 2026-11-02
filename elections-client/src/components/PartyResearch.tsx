@@ -1,3 +1,5 @@
+import { usePollingLocations } from '../hooks/use-polling-locations';
+import { findPollingLocation } from '../lib/polling-locations';
 import AutomaticScenarios from './AutomaticScenarios';
 import { useBlocPreferences } from '../hooks/use-bloc-preferences';
 import { hasLocalityData, hasEmbeddedPollingStations, pollingStationSource } from '../lib/locality-availability';
@@ -11,6 +13,7 @@ import { localityHref } from '../lib/locality-results';
 export default function PartyResearch() {
   const { electionId = '' } = useParams();
   const navigate = useNavigate();
+  const locations = usePollingLocations(electionId);
   const [search, setSearch] = useSearchParams();
   const { availableElections, partyNames, electionManifest, results, electionConfig, blocs: defaultBlocs } = useElectionData(electionId);
   const { blocs, partyToBloc } = useBlocPreferences(electionId, defaultBlocs);
@@ -128,15 +131,13 @@ export default function PartyResearch() {
             {!byStation && <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>}
           </div>
           <h2>{name(party)}</h2>
-          {results && party && <AutomaticScenarios election={electionId} voteData={results.voteData}
-            config={electionConfig} blocs={blocs} partyToBloc={partyToBloc} party={party} getPartyName={name} counting={counting} />}
           <p>{byVotes.length.toLocaleString('he-IL')} {plural} שבה{byStation ? 'ן' : 'ם'} התקבלו קולות לרשימה ועומד{byStation ? 'ות' : 'ים'} בסינון</p>
           <div className="research-rankings">
             {(['votes', 'percentage'] as const).map(order => <section key={order}>
               <h3>{order === 'votes' ? 'הכי הרבה קולות' : 'אחוז התמיכה הגבוה ביותר'}</h3>
               <table><thead><tr><th scope="col">דירוג</th><th scope="col">יישוב</th>{byStation && <th scope="col">קלפי</th>}<th scope="col">קולות</th><th scope="col">אחוז</th></tr></thead>
                 <tbody>{(order === 'votes' ? byVotes : byPercentage).slice(0, limits[order]).map((row, index) => <tr key={row.id} className="research-location-row" onClick={event => { if (!event.defaultPrevented) navigate(localityHref(electionId, row)); }}>
-                  <td>{index + 1}</td><th scope="row"><Link className="party-research-link" to={localityHref(electionId, row)}>{row.name}</Link></th>{byStation && <td>{row.pollingStation}{!!row.split && ` (פיצול ${row.split})`}</td>}<td>{row.partyVotes.toLocaleString('he-IL')}</td><td>{row.percentage.toLocaleString('he-IL', { maximumFractionDigits: 2 })}%</td>
+                  <td>{index + 1}</td><th scope="row"><Link className="party-research-link" to={localityHref(electionId, row)}>{row.name}</Link></th>{byStation && <td>{row.pollingStation}{!!row.split && ` (פיצול ${row.split})`}{findPollingLocation(locations, row) && <span className="polling-location-name">{findPollingLocation(locations, row)!.name}</span>}</td>}<td>{row.partyVotes.toLocaleString('he-IL')}</td><td>{row.percentage.toLocaleString('he-IL', { maximumFractionDigits: 2 })}%</td>
                 </tr>)}</tbody></table>
               {limits[order] < byVotes.length && <button type="button" className="ghost research-show-more"
                 aria-label={`הצגת ${plural} נוספ${byStation ? 'ות' : 'ים'} לפי ${order === 'votes' ? 'מספר קולות' : 'אחוז התמיכה'}`}
@@ -144,6 +145,8 @@ export default function PartyResearch() {
             </section>)}
           </div>
           {!byStation && !byVotes.length && <p>אין יישובים התואמים לסינון.</p>}
+          {results && party && <AutomaticScenarios election={electionId} voteData={results.voteData}
+            config={electionConfig} blocs={blocs} partyToBloc={partyToBloc} party={party} getPartyName={name} counting={counting} />}
         </>}
       </>}
     </main>

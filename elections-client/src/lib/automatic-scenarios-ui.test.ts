@@ -49,7 +49,7 @@ test('scenario cards open a complete frozen snapshot, handle failures, retry and
   const analysis = { votes: [scenario, { ...scenario, delta: -9, goals: ['party:lose'], blocDeltas: {} },
     { ...scenario, party: undefined, goals: [], blocDeltas: {} }],
   thresholds: [{ ...scenario, party: undefined, delta: 0, threshold: 0, goals: [] },
-    { ...scenario, party: undefined, delta: 0, threshold: 0.03, goals: ['majority:right+left:lose'] }] };
+    { ...scenario, party: undefined, delta: 0, threshold: 0.03, goals: ['majority:right+left:lose'], seatDeltas: { b: 1 } }] };
   await act(async () => worker.deliver(analysis));
   assert.equal(renderer.root.findAllByType('article').length, 5);
   const first = renderer.root.findAllByType('article')[0];
@@ -87,6 +87,7 @@ test('scenario cards open a complete frozen snapshot, handle failures, retry and
   const updated = FakeWorker.instances.at(-1)!;
   await act(async () => updated.deliver(analysis));
   assert.match(text(renderer), /מתעדכנים עם הספירה/);
+  assert.doesNotMatch(text(renderer), /אחוז חסימה של 3%/);
   await act(async () => { await open(0); });
   assert.match(text(renderer), /פתיחת התרחיש נכשלה/);
   await act(async () => updated.deliver({ votes: [], thresholds: [] }));

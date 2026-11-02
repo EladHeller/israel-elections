@@ -33,7 +33,8 @@ export default function AutomaticScenarios({ election, getPartyName, demo = fals
     return () => { active = false; worker?.terminate(); };
   }, [payload, attempt]);
   const current = state?.payload === payload ? state : null;
-  const scenarios = current?.analysis ? selectScenarios(current.analysis, !!input.party) : [];
+  const scenarios = current?.analysis ? selectScenarios(current.analysis, !!input.party).filter(scenario =>
+    !input.party || scenario.party || (scenario.seatDeltas[input.party] ?? 0) !== 0) : [];
   const open = async (scenario: AutomaticScenario) => {
     setOpening(true); setOpenError(false);
     try {

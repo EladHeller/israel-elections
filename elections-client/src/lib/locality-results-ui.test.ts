@@ -311,3 +311,25 @@ test('station dropdown reuses the searchable selector, filters splits and return
   assert.equal(renderer.root.findByType('output').children.join(''), '/localities/25?locality=3000');
   assert.equal(trigger().findAllByType('span')[0].children[0], 'כל היישוב');
 });
+
+test('current election joins cluster names in the selector, details and party research, but never historical elections', async t => {
+  const state = setup(t);
+  state.setStations('שם ישוב,סמל ישוב,קלפי,ריכוז,כשרים,מחל,אמת\nירושלים,3000,1,5,100,60,40\nירושלים,3000,2,99999,100,40,60');
+  const renderer = await state.render('/localities/26?locality=3000');
+  await act(async () => { await import('../data/polling-locations-26.json'); await tick(); });
+  const selector = renderer.root.findAllByType(SearchableSelect).find(node => node.props.label === 'קלפי')!;
+  assert.match(selector.props.options[1].name, /אשכולות/);
+  await change(renderer, '["3000","1",null]', 'קלפי');
+  assert.match(text(renderer), /מגן האלף/);
+  assert.equal(renderer.root.findAllByType('iframe').length, 0);
+  await act(async () => renderer.root.findAllByType('button').find(node => node.children.includes('הצג במפה'))!.props.onClick());
+  assert.equal(renderer.root.findAllByType('iframe').length, 1);
+  await change(renderer, '["3000","2",null]', 'קלפי');
+  assert.equal(renderer.root.findAllByType('iframe').length, 0);
+  assert.doesNotMatch(text(renderer), /Google Maps/);
+  await state.visit('/research/26?level=stations&party=מחל');
+  await act(async () => { await tick(); });
+  assert.match(text(renderer), /אשכולות/);
+  await state.visit('/localities/25?locality=3000&station=%5B%223000%22%2C%221%22%2Cnull%5D');
+  assert.doesNotMatch(text(renderer), /Google Maps/);
+});

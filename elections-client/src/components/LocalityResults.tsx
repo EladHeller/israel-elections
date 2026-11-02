@@ -2,6 +2,9 @@ import React, { useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import SearchableSelect from './SearchableSelect';
+import PollingStationLocation from './PollingStationLocation';
+import { usePollingLocations } from '../hooks/use-polling-locations';
+import { findPollingLocation } from '../lib/polling-locations';
 import { useElectionData } from '../hooks/use-election-data';
 import { useLocalityResults } from '../hooks/use-locality-results';
 import { hasLocalityData } from '../lib/locality-availability';
@@ -16,6 +19,7 @@ export default function LocalityResults() {
   const navigate = useNavigate();
   const [query, setQuery] = useSearchParams();
   const { availableElections, electionConfig, electionManifest, partyNames, blocs } = useElectionData(electionId, false);
+  const locations = usePollingLocations(electionId);
   const counting = electionManifest?.phase === 'counting';
   const { data, error, retry } = useLocalityResults(electionId, counting);
   const selectedId = query.get('locality');
@@ -25,7 +29,7 @@ export default function LocalityResults() {
     .sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true })), [data, selectedId]);
   const selected = stationId ? stations.find(row => row.id === stationId) : locality;
   const results = useMemo(() => selected ? localResults(selected, electionConfig) : {}, [selected, electionConfig]);
-  const parties = useMemo(() => Object.entries(selected?.votes ?? {}).map(([party, votes]) => ({
+  const parties = useMemo(() => Object.entries(selected?.votes ?? {}).filter(([, votes]) => votes > 0).map(([party, votes]) => ({
     party, votes, mandats: results[party]?.mandats ?? 0,
   })).sort((a, b) => b.votes - a.votes || a.party.localeCompare(b.party, 'he')), [selected, results]);
   const options = useMemo(() => [...(data?.localities ?? [])]
@@ -36,6 +40,7 @@ export default function LocalityResults() {
     - Object.values(blocTotals).reduce((sum, seats) => sum + seats, 0);
   const blocKeys = Object.keys(blocs.blocks);
   const hasBlocs = Object.hasOwn(blocConfigurations, electionId);
+  const locationRow = selected?.pollingStation ? selected : stations.length === 1 ? stations[0] : undefined;
 
   return <div className="screen locality-results">
     <AppHeader statusText="תוצאות לפי יישוב וקלפי" showSimulator isEdited={false}
@@ -54,7 +59,7 @@ export default function LocalityResults() {
                 setQuery(new URLSearchParams({ locality: value }));
               }} />
               {locality && stations.length > 1 && <SearchableSelect label="קלפי" key={`${electionId}:${locality.id}`}
-                value={stationId ?? ''} options={[{ id: '', name: 'כל היישוב' }, ...stations.map(row => ({ id: row.id, name: stationLabel(row) }))]}
+                value={stationId ?? ''} options={[{ id: '', name: 'כל היישוב' }, ...stations.map(row => ({ id: row.id, name: [stationLabel(row), findPollingLocation(locations, row)?.name].filter(Boolean).join(' — ') }))]}
                 onChange={value => {
                   if (value) navigate(localityHref(electionId, stations.find(row => row.id === value)!));
                   else navigate(localityHref(electionId, locality));
@@ -65,6 +70,7 @@ export default function LocalityResults() {
             {locality && stationId && !selected && <p role="alert">הקלפי שבקישור אינה זמינה. <Link to={localityHref(electionId, locality)}>לתוצאות היישוב כולו</Link></p>}
             {selected && <>
               <h2>{selected.name}{selected.pollingStation ? ` — ${stationLabel(selected)}` : ''}</h2>
+              {locationRow && <PollingStationLocation key={locationRow.id} location={findPollingLocation(locations, locationRow)} localityName={selected.name} />}
               {counting && <p className="research-notice">הספירה נמשכת: מוצגים הקולות שפורסמו עד כה. הנתונים מתרעננים אוטומטית.</p>}
               {electionManifest && electionManifest.phase !== 'final' && data.updated && <p>קובץ הנתונים עודכן: {new Date(data.updated).toLocaleString('he-IL')}</p>}
               <p>{format(selected.validVotes)} קולות כשרים · אחוז חסימה {format(electionConfig.blockPercentage * 100)}%</p>

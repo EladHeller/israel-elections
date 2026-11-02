@@ -1743,7 +1743,7 @@ body {
 .scenario-share-feedback input { display: block; width: 100%; min-width: 0; margin-top: 8px; }
 .scenario-share-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .shared-scenario-return { color: var(--ink-50); font-size: 0.9em; text-decoration: none; }
-.shared-scenario-return:hover { text-decoration: underline; }
+.shared-scenario-return:hover { color: var(--ink-90); }
 
 /* Keep interactive boundaries distinct from quiet table separators. */
 .theme-toggle,
@@ -1853,7 +1853,7 @@ body {
 }
 
 .party-research-link { color: inherit; text-decoration: none; }
-.party-research-link:hover, .party-research-link:focus-visible { text-decoration: underline; }
+.party-research-link:hover, .party-research-link:focus-visible { color: var(--ink-50); }
 .research-controls { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-block: 1.5rem; }
 .research-controls label { display: flex; flex-direction: column; gap: .5rem; }
 .research-controls select, .research-controls input { padding: .7rem; max-width: 100%; }
@@ -1927,3 +1927,52 @@ body {
 .searchable-select-options { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
 .searchable-select-options button.is-active { outline: 2px solid var(--ink-50); outline-offset: -2px; }
 .searchable-select-menu p { padding: .5rem; margin: 0; color: var(--ink-50); }
+
+/* Baseline for every control; component variants refine these styles. */
+button, select { font: inherit; border: 1px solid var(--control-border); border-radius: 10px; padding: .65rem 1rem; background: var(--card); color: var(--ink-90); cursor: pointer; }
+select { appearance: none; padding-inline-end: 2rem; background-image: linear-gradient(45deg, transparent 50%, var(--ink-50) 50%), linear-gradient(135deg, var(--ink-50) 50%, transparent 50%); background-position: left .9rem top 50%, left .6rem top 50%; background-size: .3rem .3rem; background-repeat: no-repeat; }
+.ui-button { min-height: 44px; font-weight: 600; transition: background .15s ease, border-color .15s ease; }
+.ui-button-primary, button.primary { background: var(--button-background); color: var(--button-text); border-color: var(--button-background); }
+.ui-button-quiet { background: var(--surface-muted); color: var(--ink-70); border-color: transparent; }
+button:hover:not(:disabled), select:hover:not(:disabled) { filter: brightness(.96); }
+button:disabled, select:disabled { opacity: .55; cursor: default; }
+a, a:hover, a:focus-visible, a:visited { text-decoration: none; }
+a { color: var(--ink-70); transition: color .15s ease; }
+a:hover { color: var(--ink-90); }
+.ui-link { display: inline-flex; gap: .4rem; align-items: center; padding: .35rem .6rem; border-radius: 8px; background: var(--surface-muted); }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.election-questions { max-width: 900px; margin-inline: auto; }
+.election-questions .header { display: flex; justify-content: space-between; align-items: center; }
+.question-workspace { padding: clamp(20px, 5vw, 48px); }
+.question-intro { margin-bottom: 28px; }
+.question-intro h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); margin-block: .4rem .8rem; line-height: 1.2; }
+.question-intro p { color: var(--ink-50); }
+.question-form { margin-block: 28px 16px; }
+.question-form label { display: block; margin-bottom: 8px; font-weight: 600; }
+.question-input-row { display: flex; gap: 10px; padding: 8px; border: 1px solid var(--control-border); border-radius: 16px; background: var(--card); }
+.question-input-row:focus-within { border-color: var(--ink-50); box-shadow: 0 0 0 3px var(--selection-background); }
+.question-input-row input { min-width: 0; width: 100%; border: 0; border-radius: 8px; background: transparent; color: var(--ink-90); padding: .65rem; font: inherit; }
+.question-input-row button { flex-shrink: 0; }
+.question-examples { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.question-examples > span, .question-caption { color: var(--ink-50); font-size: .88rem; }
+.question-examples button { white-space: normal; text-align: start; font-size: .88rem; }
+.question-caption { line-height: 1.65; }
+.question-response { margin-top: 28px; font-size: 1.12rem; line-height: 1.85; }
+.question-response:empty { margin-top: 0; }
+.question-response article { border-top: 1px solid var(--ink-20); padding-top: 16px; }
+.question-interpretation, .question-answer-note { color: var(--ink-50); font-size: .92rem; }
+.question-seat-change { padding: 10px 16px; border-radius: 12px; }
+.question-seat-change.is-gain { color: var(--gain); background: var(--gain-background); }
+.question-seat-change.is-loss, .question-error { color: var(--loss); background: var(--loss-background); }
+.question-error { padding: 12px 16px; border-radius: 12px; }
+@media (max-width: 560px) { .question-input-row { gap: 4px; padding: 5px; } .question-input-row button { padding-inline: .75rem; } }
+
+.polling-location { margin-block: 1rem; padding: 1rem; border: 1px solid var(--ink-20); border-radius: 12px; background: var(--surface-muted); }
+.polling-location-heading, .polling-location-actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.polling-location-heading { justify-content: space-between; }
+.polling-location-heading p { margin: .35rem 0; color: var(--ink-70); }
+.polling-location-actions .ui-link { min-height: 44px; box-sizing: border-box; }
+.polling-location-map { display: block; width: 100%; height: 300px; border: 0; border-radius: 10px; margin-block: 1rem; background: var(--card); }
+.polling-location small { display: block; margin-block-start: .75rem; color: var(--ink-70); }
+.polling-location-name { display: block; font-size: .85em; color: var(--ink-70); white-space: normal; }
+@media (max-width: 600px) { .polling-location { padding: .75rem; } .polling-location-map { height: 240px; } }
