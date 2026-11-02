@@ -17,7 +17,13 @@ export default function QuestionAnswer({ answer, kind }: { answer: Answer; kind:
     <strong>{row[0]}</strong>{typeof row[1] === 'number'
       ? <> הייתה צריכה עוד <strong>{count(row[1])} קולות</strong> כדי להגדיל את מספר המנדטים שלה מעבר ל־{count(row[2])}.</>
       : <>: לא נמצאה תוספת שמגדילה את מספר המנדטים שלה בטווח החיפוש.</>}
-  </p>)}</>;
+  </p>)}{answer.seatChanges?.map(change => {
+    const delta = change.after - change.before;
+    const amount = Math.abs(delta) === 1 ? 'מנדט אחד' : `${count(Math.abs(delta))} מנדטים`;
+    return <p key={change.party} className={`question-seat-change ${delta > 0 ? 'is-gain' : 'is-loss'}`}>
+      בתרחיש הזה <strong>{change.name}</strong> {delta > 0 ? 'מקבלת' : 'מאבדת'} {amount}, {delta > 0 ? 'ועולה' : 'ויורדת'} מ־{count(change.before)} ל־{count(change.after)} מנדטים.
+    </p>;
+  })}</>;
   if (kind === 'scenario') {
     const changed = answer.rows.filter(row => Number(row[3]) !== 0);
     if (!changed.length) return <p>חלוקת המנדטים נשארת ללא שינוי.</p>;

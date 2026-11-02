@@ -154,8 +154,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
 
 test('prose includes explicit green gains and red losses without unchanged seat clutter', () => {
   let renderer!: ReturnType<typeof create>;
-  const show = (kind: 'insight' | 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'below-threshold-winners' | 'results' | 'comparison' | 'comparison-scenario', rows: (string | number)[][]) => {
-    renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [] } })); return JSON.stringify(renderer.toJSON());
+  const show = (kind: 'insight' | 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'below-threshold-winners' | 'results' | 'comparison' | 'comparison-scenario', rows: (string | number)[][], seatChanges?: import('./election-questions').SeatChange[]) => {
+    renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [], seatChanges } })); return JSON.stringify(renderer.toJSON());
   };
   try {
     assert.match(show('comparison', [['עלייה של 3 נקודות אחוז, גידול יחסי של 20%']]), /3 נקודות אחוז/);
@@ -170,7 +170,22 @@ test('prose includes explicit green gains and red losses without unchanged seat 
     assert.match(show('rank', [['יישוב', 80, '80%']]), /הכשרים במקום/); assert.match(show('gap', [['א', 0]]), /כבר מגיעה/); assert.match(show('gap', [['א', 10]]), /צריכה עוד/);
     assert.match(show('rank', []), /לא נמצאו/); assert.equal(renderer.root.findAllByType('table').length, 0);
     assert.match(show('seat-gap', [['הציונות הדתית וזהות', 1234, 8]]), /1,234.*מעבר ל־.*8/);
-    assert.match(show('seat-gap', [['א', '—', 120]]), /לא נמצאה.*בטווח החיפוש/);
+    const impact = show('seat-gap', [['הליכוד', 42000, 27]], [
+      { party: 'מחל', name: 'הליכוד', before: 27, after: 28 },
+      { party: 'ב', name: 'רשימה ב', before: 23, after: 22 },
+      { party: 'ג', name: 'רשימה ג', before: 10, after: 11 },
+      { party: 'ד', name: 'רשימה ד', before: 5, after: 4 },
+    ]);
+    assert.match(impact, /42,000/);
+    assert.match(impact, /הליכוד.*מקבלת.*מנדט אחד.*27.*28/);
+    assert.match(impact, /רשימה ב.*מאבדת.*מנדט אחד.*23.*22/);
+    assert.match(impact, /רשימה ג.*מקבלת.*מנדט אחד.*10.*11/);
+    assert.match(impact, /רשימה ד.*מאבדת.*מנדט אחד.*5.*4/);
+    assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-gain' }).length, 2);
+    assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-loss' }).length, 2);
+    assert.match(show('seat-gap', [['א', 12, 0]], [{ party: 'א', name: 'א', before: 0, after: 4 }]), /מקבלת.*4.*מנדטים/);
+    assert.match(show('seat-gap', [['א', '—', 120]], []), /לא נמצאה.*בטווח החיפוש/);
+    assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-loss' }).length, 0);
     assert.match(show('seat-loss', [['א', 1234, 8]]), /צריכה לאבד.*1,234/);
     assert.match(show('seat-loss', [['א', '—', 0]]), /אין הפחתת קולות/);
     assert.match(show('below-threshold-winners', [['מקום — קלפי 1', 'עמך ישראל', 45, '45.00%', 'תיקו במקום הראשון']]), /עמך ישראל.*45.*תיקו במקום הראשון/);
