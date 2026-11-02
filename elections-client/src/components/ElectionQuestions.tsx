@@ -4,6 +4,7 @@ import ElectionSelector from './ElectionSelector';
 import ThemeToggle from './ThemeToggle';
 import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
+import BetaBadge from './BetaBadge';
 import { useElectionData } from '../hooks/use-election-data';
 import { hasLocalityData, pollingStationSource } from '../lib/locality-availability';
 import { parseLocalities, parsePollingStations } from '../lib/party-research';
@@ -73,8 +74,12 @@ function QuestionScreen({ electionId }: { electionId: string }) {
   return <main className="screen election-questions" dir="rtl">
     <header className="header"><Link className="ui-link" to={validElection ? `/results/${electionId}` : '/'}>לתוצאות הבחירות</Link><ThemeToggle /></header>
     <section className="panel question-workspace">
-      <div className="question-intro"><p className="subtitle">שאלות על הבחירות</p><h1>מה תרצו לדעת?</h1>
+      <div className="question-intro"><p className="subtitle">שאלות על הבחירות <BetaBadge /></p><h1>מה תרצו לדעת?</h1>
         <p>תוצאות, יישובים ותרחישים — בחרו מערכת בחירות ושאלו.</p></div>
+      <aside className="question-beta-notice" aria-label="גרסת בטא">
+        <strong>גרסת בטא — המענה עדיין ניסיוני</strong>
+        <p>לא כל שאלה או ניסוח נתמכים, והתשובות עלולות להיות שגויות או חלקיות. מומלץ לבדוק אותן מול נתוני התוצאות באתר.</p>
+      </aside>
       <ElectionSelector value={validElection ? electionId : null} elections={data.availableElections} onChange={id => navigate(`/questions/${id}`)} />
       {electionId && data.availableElections.length > 0 && !validElection && <p role="alert">מערכת הבחירות אינה קיימת. בחרו מערכת מהרשימה.</p>}
       {data.error && <p role="alert">טעינת נתוני הבחירות נכשלה. אפשר לבחור שוב או לרענן את העמוד.</p>}
@@ -86,7 +91,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
           <button type="submit" className="ui-button ui-button-primary" disabled={!validElection || !data.results || !question.trim() || busy} aria-label="שליחת השאלה">{busy ? 'מחשב…' : 'שאלו'}</button></div>
       </form>
       <div className="question-examples" aria-label="שאלות לדוגמה"><span>למשל</span>{examples.map(example => <button type="button" className="ui-button ui-button-quiet" key={example} onClick={() => { changeQuestion(example); document.getElementById('election-question')?.focus(); }}>{example}</button>)}</div>
-      <p className="question-caption">השאלות נשמרות לשיפור המענה, ללא צירוף פרטים מזהים על השואל, ונגישות רק לבעל האתר. גרסת הניסיון תומכת בחלק מהניסוחים.</p>
+      <p className="question-caption">השאלות נשמרות לשיפור המענה, ללא צירוף פרטים מזהים על השואל, ונגישות רק לבעל האתר.</p>
       <div className="question-response" aria-live="polite" aria-busy={busy}>
         {busy && <p role="status">בודק את הנתונים…</p>}
         {error && <p className="question-error" role="alert">{error}</p>}

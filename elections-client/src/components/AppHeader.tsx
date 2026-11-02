@@ -3,6 +3,7 @@ import { hasLocalityData } from '../lib/locality-availability';
 import type { AppViewMode } from '../types';
 import ElectionSelector from './ElectionSelector';
 import ThemeToggle from './ThemeToggle';
+import BetaBadge from './BetaBadge';
 
 interface AppHeaderProps {
   statusText: string;
@@ -68,7 +69,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           ))}
         </div>
       </div>
-      <a className="ui-link" href={currentElection ? `/questions/${currentElection}` : "/questions"}>שאלות על הבחירות</a>
+      <a className="ui-link questions-link" href={currentElection ? `/questions/${currentElection}` : "/questions"}>שאלות על הבחירות <BetaBadge /></a>
       {actions}
       <ElectionSelector
         value={currentElection}
