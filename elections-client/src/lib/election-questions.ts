@@ -18,7 +18,8 @@ export type QuestionQuery =
   | { kind: 'scenario'; threshold?: number; withoutAgreements?: boolean; transfer?: { from: string; to: string; fraction: number } };
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
 export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection; electionId?: string; blocs?: BlocsConfig; comparison?: ElectionSnapshot }
-export interface Answer { note: string; columns: string[]; rows: (string | number)[][] }
+export interface SeatChange { party: string; name: string; before: number; after: number }
+export interface Answer { note: string; columns: string[]; rows: (string | number)[][]; seatChanges?: SeatChange[] }
 
 export const normalizeQuestion = (value: string): string => value.normalize('NFKC')
   .replace(/[\u0591-\u05bd\u05bf-\u05c2\u05c4-\u05c5\u05c7]/g, '').replace(/["'״׳?？!,:;]/g, '').replace(/[־–—-]/g, ' ')
@@ -192,7 +193,16 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     const current = baseline[query.party] ?? { votes: votes[query.party].votes, mandats: 0 };
     const [margin] = computeSeatMargins({ [query.party]: current }, votes, config);
     if (query.kind === 'seat-loss') return { note: 'הפחתת קולות מהרשימה בלבד מקטינה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. ירידה מתחת לאחוז החסימה עלולה להוריד כמה מנדטים יחד; אין כאן תחזית.', columns: ['רשימה', 'קולות להפחתה', 'מנדטים כעת'], rows: [[label(query.party), margin.lose ?? '—', current.mandats]] };
-    return { note: 'הוספת קולות חדשים לרשימה בלבד מגדילה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. החיפוש מוגבל לתוספת בגודל כלל הקולות הכשרים הקיימים; אין כאן תחזית.', columns: ['רשימה', 'קולות נוספים', 'מנדטים כעת'], rows: [[label(query.party), margin.gain ?? '—', current.mandats]] };
+    let seatChanges: SeatChange[] = [];
+    if (margin.gain !== null) {
+      const changed = structuredClone(votes);
+      changed[query.party].votes += margin.gain;
+      const scenario = computeScenarioResults(changed, config).realResults;
+      seatChanges = Object.keys(votes).map(party => ({ party, name: label(party), before: baseline[party]?.mandats ?? 0, after: scenario[party]?.mandats ?? 0 }))
+        .filter(change => change.before !== change.after)
+        .sort((a, b) => Number(b.party === query.party) - Number(a.party === query.party) || (b.after - b.before) - (a.after - a.before) || a.party.localeCompare(b.party));
+    }
+    return { note: 'הוספת קולות חדשים לרשימה בלבד מגדילה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מוצגים כל השינויים במנדטים בתרחיש של התוספת המינימלית שנמצאה. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. החיפוש מוגבל לתוספת בגודל כלל הקולות הכשרים הקיימים; אין כאן תחזית.', columns: ['רשימה', 'קולות נוספים', 'מנדטים כעת'], rows: [[label(query.party), margin.gain ?? '—', current.mandats]], seatChanges };
   }
   if (query.kind === 'results') {
     query.parties.forEach(known);
