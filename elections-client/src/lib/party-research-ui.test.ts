@@ -24,11 +24,12 @@ test('research route loads official CSV, selects a party, filters and refreshes 
   delete names['אמת'];
   let refresh = () => {};
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: (callback: () => void) => { refresh = callback; return 1; }, clearInterval: () => {} } });
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { documentElement: { dataset: {} }, visibilityState: 'visible' } });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { documentElement: { dataset: {} }, visibilityState: 'visible', addEventListener() {}, removeEventListener() {} } });
   let fail = false;
   let empty = false;
   let requestedUrl = '';
   globalThis.fetch = async url => {
+    if (String(url).endsWith('.json')) return new Response(null, { status: 404 });
     requestedUrl = String(url);
     return new Response(empty ? 'שם ישוב,כשרים,מחל\n' : csv, { status: fail ? 503 : 200, headers: { 'last-modified': 'Wed, 28 Oct 2026 20:00:00 GMT' } });
   };
@@ -164,7 +165,7 @@ test('research pauses hidden polling, deduplicates slow requests and ignores lat
   const originalWindow = globalThis.window;
   const originalDocument = globalThis.document;
   let refresh = () => {};
-  const document = { documentElement: { dataset: {} }, visibilityState: 'visible' };
+  const document = { documentElement: { dataset: {} }, visibilityState: 'visible', addEventListener() {}, removeEventListener() {} };
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: (callback: () => void) => { refresh = callback; return 1; }, clearInterval() {} } });
   Object.defineProperty(globalThis, 'document', { configurable: true, value: document });
   let renderer!: ReturnType<typeof create>;
@@ -177,6 +178,7 @@ test('research pauses hidden polling, deduplicates slow requests and ignores lat
       let finishBody!: (body: string) => void;
       let signal: AbortSignal | null | undefined;
       globalThis.fetch = async (_url, options) => {
+    if (String(_url).endsWith('.json')) return new Response(null, { status: 404 });
         calls++; signal = options?.signal;
         if (!deferred) return new Response(csv);
         if (outcome === 'late-body') return { ok: true, headers: new Headers(), text: () => new Promise<string>(done => { finishBody = done; }) } as Response;

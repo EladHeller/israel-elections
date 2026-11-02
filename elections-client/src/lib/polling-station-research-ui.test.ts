@@ -16,7 +16,7 @@ const content = (renderer: ReturnType<typeof create>) => {
 
 function setup(t: any) {
   const intervals = new Set<() => void>();
-  const document = { documentElement: { dataset: {} }, visibilityState: 'visible' };
+  const document = { documentElement: { dataset: {} }, visibilityState: 'visible', addEventListener() {}, removeEventListener() {} };
   const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
   const previousDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: (callback: () => void) => { intervals.add(callback); return callback; }, clearInterval: (callback: () => void) => intervals.delete(callback) } });
@@ -47,6 +47,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   const state = setup(t);
   const requests: string[] = [];
   globalThis.fetch = async (url, options) => {
+    if (String(url).endsWith('.json')) return new Response(null, { status: 404 });
     requests.push(`${options?.method ?? 'GET'} ${url}`);
     return new Response(String(url).includes('polling-stations') || election === '19' ? (election === '26' ? stations.replace('מספר קלפי', 'קלפי') : stations) : cities, { headers: { 'content-type': 'text/csv', 'last-modified': 'Wed, 28 Oct 2026 20:00:00 GMT' } });
   };
@@ -90,6 +91,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
 for (const unavailable of ['missing', 'html', 'network']) test(`optional station archive does not expose an unusable toggle (${unavailable})`, async t => {
   const state = setup(t);
   globalThis.fetch = async (_url, options) => {
+    if (String(_url).endsWith('.json')) return new Response(null, { status: 404 });
     if (options?.method === 'HEAD') {
       if (unavailable === 'network') throw new Error('Offline');
       return new Response(null, { status: unavailable === 'missing' ? 404 : 200, headers: { 'content-type': 'text/html' } });
@@ -108,6 +110,7 @@ test('station counting refresh preserves data on failure and discovers a newly p
   let fail = false;
   let calls = 0;
   globalThis.fetch = async (url, options) => {
+    if (String(url).endsWith('.json')) return new Response(null, { status: 404 });
     calls++;
     if (options?.method === 'HEAD') return new Response(null, { status: exists ? 200 : 404, headers: { 'content-type': 'text/csv' } });
     return new Response(String(url).includes('polling-stations') ? stations : cities, { status: fail ? 503 : 200 });
@@ -137,6 +140,7 @@ test('availability checks deduplicate in-flight probes and ignore responses afte
   let signal: AbortSignal;
   let probes = 0;
   globalThis.fetch = async (_url, options) => {
+    if (String(_url).endsWith('.json')) return new Response(null, { status: 404 });
     if (options?.method !== 'HEAD') return new Response(cities);
     probes++; signal = options.signal as AbortSignal;
     return new Promise<Response>(resolve => { complete = resolve; });
