@@ -24,6 +24,7 @@ const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
   { value: 'simulator', label: 'סימולטור' },
   { value: 'research', label: 'מחקר מפלגות' },
   { value: 'localities', label: 'יישובים' },
+  { value: 'questions', label: 'שאלות על הבחירות' },
   { value: 'summary', label: 'כל הכנסות' },
 ];
 
@@ -64,12 +65,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               aria-pressed={viewMode === option.value}
               onClick={() => setViewMode(option.value)}
             >
-              {option.label}
+              {option.label}{option.value === 'questions' && <> <BetaBadge /></>}
             </button>
           ))}
         </div>
       </div>
-      <a className="ui-link questions-link" href={currentElection ? `/questions/${currentElection}` : "/questions"}>שאלות על הבחירות <BetaBadge /></a>
       {actions}
       <ElectionSelector
         value={currentElection}

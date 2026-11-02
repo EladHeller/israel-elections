@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import ElectionSelector from './ElectionSelector';
-import ThemeToggle from './ThemeToggle';
+import { useNavigate, useParams } from 'react-router-dom';
+import AppHeader from './AppHeader';
 import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
 import BetaBadge from './BetaBadge';
@@ -10,6 +9,7 @@ import { hasLocalityData, pollingStationSource } from '../lib/locality-availabil
 import { parseLocalities, parsePollingStations } from '../lib/party-research';
 import { executeElectionQuestion, parseElectionQuestion, type Answer, type QuestionQuery } from '../lib/election-questions';
 import { recordQuestion, type QuestionOutcome } from '../lib/question-log';
+import { phaseHasResults } from '../lib/election-manifest';
 
 const examples = ['מה היה קורה אם לא היה אחוז חסימה?', 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?', 'כמה קולות היו חסרים לעמך ישראל לעבור את אחוז החסימה?'];
 type Reply = { answer: Answer; kind: QuestionQuery['kind']; explanation: string; time?: string };
@@ -71,16 +71,19 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     }
   };
   const validElection = !!electionId && data.availableElections.includes(electionId);
-  return <main className="screen election-questions" dir="rtl">
-    <header className="header"><Link className="ui-link" to={validElection ? `/results/${electionId}` : '/'}>לתוצאות הבחירות</Link><ThemeToggle /></header>
-    <section className="panel question-workspace">
+  return <div className="screen election-questions" dir="rtl">
+    <AppHeader statusText="שאלות על הבחירות" showSimulator={!!data.electionManifest && phaseHasResults(data.electionManifest.phase)}
+      isEdited={false} currentElection={validElection ? electionId : null}
+      availableElections={data.availableElections} viewMode="questions"
+      setCurrentElection={id => navigate(`/questions/${id}`)}
+      setViewMode={mode => navigate(mode === 'summary' ? '/summary' : validElection ? `/${mode}/${electionId}` : mode === 'questions' ? '/questions' : '/')} />
+    <main className="panel question-workspace">
       <div className="question-intro"><p className="subtitle">שאלות על הבחירות <BetaBadge /></p><h1>מה תרצו לדעת?</h1>
         <p>תוצאות, יישובים ותרחישים — בחרו מערכת בחירות ושאלו.</p></div>
       <aside className="question-beta-notice" aria-label="גרסת בטא">
         <strong>גרסת בטא — המענה עדיין ניסיוני</strong>
         <p>לא כל שאלה או ניסוח נתמכים, והתשובות עלולות להיות שגויות או חלקיות. מומלץ לבדוק אותן מול נתוני התוצאות באתר.</p>
       </aside>
-      <ElectionSelector value={validElection ? electionId : null} elections={data.availableElections} onChange={id => navigate(`/questions/${id}`)} />
       {electionId && data.availableElections.length > 0 && !validElection && <p role="alert">מערכת הבחירות אינה קיימת. בחרו מערכת מהרשימה.</p>}
       {data.error && <p role="alert">טעינת נתוני הבחירות נכשלה. אפשר לבחור שוב או לרענן את העמוד.</p>}
       {data.refreshError && <p role="status">{data.refreshError}</p>}
@@ -100,6 +103,6 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         </article>}
         {saveFailed && <p className="question-caption" role="status">המענה זמין, אך שמירת השאלה נכשלה.</p>}
       </div>
-    </section>
-  </main>;
+    </main>
+  </div>;
 }
