@@ -15,8 +15,9 @@ export const detectAvailableElections = async (
 
 export const fetchElectionResults = async <TResult = unknown>(
   electionId: string,
+  signal?: AbortSignal,
 ): Promise<TResult> => {
-  const res = await fetch(`/data/${electionId}/allResults.json`, { cache: 'no-store' });
+  const res = await fetch(`/data/${electionId}/allResults.json`, { cache: 'no-store', ...(signal ? { signal } : {}) });
   if (!res.ok) {
     throw new Error(`Failed to load data for election ${electionId}`);
   }

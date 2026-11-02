@@ -3,8 +3,11 @@ import { executeInsight, parseInsight, type InsightQuery, type PreviousElection 
 import { computeScenarioResults } from './scenario';
 import { computeSeatMargins } from './analytics';
 import { rankLocalities, type LocalityVotes } from './party-research';
+import { parseComparison, executeComparison, type ComparisonQuery, type ElectionSnapshot } from './election-comparisons';
+import type { BlocsConfig } from '../types';
 
 export type QuestionQuery =
+  | ComparisonQuery
   | InsightQuery
   | { kind: 'results'; parties: string[] }
   | { kind: 'rank'; party: string; level: 'localities' | 'stations'; order: 'votes' | 'percentage'; limit: number }
@@ -14,7 +17,7 @@ export type QuestionQuery =
   | { kind: 'below-threshold-winners'; level: 'localities' | 'stations'; measure: 'majority' | 'plurality' }
   | { kind: 'scenario'; threshold?: number; withoutAgreements?: boolean; transfer?: { from: string; to: string; fraction: number } };
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
-export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection }
+export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection; electionId?: string; blocs?: BlocsConfig; comparison?: ElectionSnapshot }
 export interface Answer { note: string; columns: string[]; rows: (string | number)[][] }
 
 export const normalizeQuestion = (value: string): string => value.normalize('NFKC')
@@ -26,7 +29,7 @@ export const normalizeQuestion = (value: string): string => value.normalize('NFK
 // shorthand is shown back to the user using the full list name before calculation.
 const listAliases: Record<string, string[]> = { 'הציונות הדתית וזהות': ['הציונות הדתית'], 'נעם לישראל': ['נועם', 'נעם'] };
 const aliases = ['הליכוד', 'ליכוד', 'שס', 'יהדות התורה', 'יש עתיד', 'ישראל ביתנו', 'הציונות הדתית', 'עמך ישראל', 'נועם', 'נעם', 'הדמוקרטים', 'כחול לבן', 'רעם', 'הרשימה המשותפת'];
-function resolveParties(text: string, context: QuestionContext): { text: string; parties: string[]; ambiguous: boolean } {
+export function resolveParties(text: string, context: QuestionContext): { text: string; parties: string[]; ambiguous: boolean } {
   const candidates = new Map<string, Set<string>>();
   const add = (alias: string, party: string) => {
     const normalized = normalizeQuestion(alias);
@@ -69,6 +72,8 @@ function resolveParties(text: string, context: QuestionContext): { text: string;
 export function parseElectionQuestion(input: string, context: QuestionContext): QuestionParse {
   if (input.length > 600) return { error: 'השאלה ארוכה מדי. נסו שאלה אחת עד 600 תווים.' };
   const raw = normalizeQuestion(input).replace(/^איפה /, 'באילו יישובים ');
+  const comparison = parseComparison(raw, context);
+  if (comparison) return comparison;
   const neutralInsight = raw.startsWith('מי ') ? null : parseInsight(raw, []);
   if (neutralInsight) return neutralInsight;
   const normalized = raw.replace(/מפלגת |רשימת |מפלגות |רשימות /g, '');
@@ -144,6 +149,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
   const label = (id: string) => names[id] ?? id;
   const total = Object.values(votes).reduce((sum, entry) => sum + entry.votes, 0);
   if (!Number.isSafeInteger(total) || total <= 0) throw new Error('אין עדיין קולות כשרים לחישוב.');
+  if (query.kind === 'comparison' || query.kind === 'comparison-scenario') return executeComparison(query, context);
   const known = (party: string) => {
     if (!Object.hasOwn(votes, party)) throw new Error('הרשימה אינה קיימת בבחירות שנבחרו.');
   };

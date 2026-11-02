@@ -4,7 +4,7 @@ import type { Answer, QuestionQuery } from '../lib/election-questions';
 const count = (value: string | number) => typeof value === 'number' ? value.toLocaleString('he-IL') : value;
 export default function QuestionAnswer({ answer, kind }: { answer: Answer; kind: QuestionQuery['kind'] }) {
   if (!answer.rows.length) return <p>לא נמצאו תוצאות מתאימות בנתונים הזמינים.</p>;
-  if (kind === 'insight') return <>{answer.rows.map((row, index) => <p key={index} className={typeof row[1] === 'number' ? `question-seat-change ${row[1] > 0 ? 'is-gain' : 'is-loss'}` : undefined}>{row[0]}</p>)}</>;
+  if (kind === 'insight' || kind === 'comparison' || kind === 'comparison-scenario') return <>{answer.rows.map((row, index) => <p key={index} className={typeof row[1] === 'number' ? `question-seat-change ${row[1] > 0 ? 'is-gain' : 'is-loss'}` : undefined}>{row[0]}</p>)}</>;
   if (kind === 'below-threshold-winners') return <>{answer.rows.map((row, index) => <p key={index}>
     <strong>{row[0]}</strong>: <strong>{row[1]}</strong> קיבלה {count(row[2])} קולות, שהם {row[3]} מהקולות הכשרים במקום ({row[4]}).
   </p>)}</>;
