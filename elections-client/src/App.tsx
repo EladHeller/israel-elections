@@ -1,3 +1,4 @@
+import AutomaticScenarios from './components/AutomaticScenarios';
 import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { computeBlocTotals, computeBlocMap } from './lib/analytics';
@@ -391,6 +392,9 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
         : undefined}
     />
   );
+  const automaticScenarios = !isSimulator && !awaitingResults && <AutomaticScenarios
+    election={currentElection} voteData={baseVoteData} config={baseConfig} blocs={blocs}
+    partyToBloc={partyToBloc} getPartyName={getPartyName} demo={isDemo} counting={isCounting} />;
   const settings = (
     <ElectionSettingsSection
       editable={isSimulator}
@@ -471,6 +475,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
           <main aria-label="ניתוח תוצאות הבחירות">
             {closeRaces}
             {remainingPanel}
+            {automaticScenarios}
 
           </main>
           <div className="election-details">
@@ -486,6 +491,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
           {partyPanel}
           {closeRaces}
           {remainingPanel}
+          {automaticScenarios}
           {agreements}
           <section className="grid grid-single">
             <BlocsDistributionPanel

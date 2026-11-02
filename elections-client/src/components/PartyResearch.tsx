@@ -1,3 +1,5 @@
+import AutomaticScenarios from './AutomaticScenarios';
+import { useBlocPreferences } from '../hooks/use-bloc-preferences';
 import { hasLocalityData, hasEmbeddedPollingStations, pollingStationSource } from '../lib/locality-availability';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -10,7 +12,8 @@ export default function PartyResearch() {
   const { electionId = '' } = useParams();
   const navigate = useNavigate();
   const [search, setSearch] = useSearchParams();
-  const { availableElections, partyNames, electionManifest } = useElectionData(electionId, false);
+  const { availableElections, partyNames, electionManifest, results, electionConfig, blocs: defaultBlocs } = useElectionData(electionId);
+  const { blocs, partyToBloc } = useBlocPreferences(electionId, defaultBlocs);
   const [data, setData] = useState<LocalityVotes[] | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -125,6 +128,8 @@ export default function PartyResearch() {
             {!byStation && <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>}
           </div>
           <h2>{name(party)}</h2>
+          {results && party && <AutomaticScenarios election={electionId} voteData={results.voteData}
+            config={electionConfig} blocs={blocs} partyToBloc={partyToBloc} party={party} getPartyName={name} counting={counting} />}
           <p>{byVotes.length.toLocaleString('he-IL')} {plural} שבה{byStation ? 'ן' : 'ם'} התקבלו קולות לרשימה ועומד{byStation ? 'ות' : 'ים'} בסינון</p>
           <div className="research-rankings">
             {(['votes', 'percentage'] as const).map(order => <section key={order}>
