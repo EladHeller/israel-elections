@@ -22,6 +22,7 @@ const VIEW_OPTIONS: { value: AppViewMode; label: string }[] = [
   { value: 'results', label: 'תוצאות' },
   { value: 'simulator', label: 'סימולטור' },
   { value: 'research', label: 'מחקר מפלגות' },
+  { value: 'localities', label: 'יישובים' },
   { value: 'summary', label: 'כל הכנסות' },
 ];
 
@@ -52,7 +53,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <span>תצוגה</span>
         <div className={`view-switcher${showSimulator && hasLocalityData(currentElection) ? ' view-switcher-four-options' : ''}`} role="group" aria-label="בחירת תצוגה">
           {VIEW_OPTIONS
-            .filter(option => option.value !== 'research' || hasLocalityData(currentElection))
+            .filter(option => !['research', 'localities'].includes(option.value) || hasLocalityData(currentElection))
             .filter((option) => showSimulator || option.value !== 'simulator')
             .map((option) => (
             <button
