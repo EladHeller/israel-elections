@@ -1,3 +1,5 @@
+import { usePollingLocations } from '../hooks/use-polling-locations';
+import { findPollingLocation } from '../lib/polling-locations';
 import AutomaticScenarios from './AutomaticScenarios';
 import { useBlocPreferences } from '../hooks/use-bloc-preferences';
 import { hasLocalityData, hasEmbeddedPollingStations, pollingStationSource } from '../lib/locality-availability';
@@ -11,6 +13,7 @@ import { localityHref } from '../lib/locality-results';
 export default function PartyResearch() {
   const { electionId = '' } = useParams();
   const navigate = useNavigate();
+  const locations = usePollingLocations(electionId);
   const [search, setSearch] = useSearchParams();
   const { availableElections, partyNames, electionManifest, results, electionConfig, blocs: defaultBlocs } = useElectionData(electionId);
   const { blocs, partyToBloc } = useBlocPreferences(electionId, defaultBlocs);
@@ -136,7 +139,7 @@ export default function PartyResearch() {
               <h3>{order === 'votes' ? 'הכי הרבה קולות' : 'אחוז התמיכה הגבוה ביותר'}</h3>
               <table><thead><tr><th scope="col">דירוג</th><th scope="col">יישוב</th>{byStation && <th scope="col">קלפי</th>}<th scope="col">קולות</th><th scope="col">אחוז</th></tr></thead>
                 <tbody>{(order === 'votes' ? byVotes : byPercentage).slice(0, limits[order]).map((row, index) => <tr key={row.id} className="research-location-row" onClick={event => { if (!event.defaultPrevented) navigate(localityHref(electionId, row)); }}>
-                  <td>{index + 1}</td><th scope="row"><Link className="party-research-link" to={localityHref(electionId, row)}>{row.name}</Link></th>{byStation && <td>{row.pollingStation}{!!row.split && ` (פיצול ${row.split})`}</td>}<td>{row.partyVotes.toLocaleString('he-IL')}</td><td>{row.percentage.toLocaleString('he-IL', { maximumFractionDigits: 2 })}%</td>
+                  <td>{index + 1}</td><th scope="row"><Link className="party-research-link" to={localityHref(electionId, row)}>{row.name}</Link></th>{byStation && <td>{row.pollingStation}{!!row.split && ` (פיצול ${row.split})`}{findPollingLocation(locations, row) && <span className="polling-location-name">{findPollingLocation(locations, row)!.name}</span>}</td>}<td>{row.partyVotes.toLocaleString('he-IL')}</td><td>{row.percentage.toLocaleString('he-IL', { maximumFractionDigits: 2 })}%</td>
                 </tr>)}</tbody></table>
               {limits[order] < byVotes.length && <button type="button" className="ghost research-show-more"
                 aria-label={`הצגת ${plural} נוספ${byStation ? 'ות' : 'ים'} לפי ${order === 'votes' ? 'מספר קולות' : 'אחוז התמיכה'}`}

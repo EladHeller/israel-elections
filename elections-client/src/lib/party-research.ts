@@ -5,6 +5,7 @@ export interface LocalityVotes {
   name: string;
   pollingStation?: string;
   split?: number;
+  clusterCode?: string;
   validVotes: number;
   votes: Record<string, number>;
 }
@@ -29,6 +30,7 @@ function parseResearchRows(csv: string, pollingStations: boolean): LocalityVotes
   const validIndex = header.indexOf('כשרים');
   const stationIndex = header.findIndex(key => ['מספר קלפי', 'סמל קלפי', 'קלפי'].includes(key));
   const splitIndex = header.indexOf('פיצול');
+  const clusterIndex = header.indexOf('ריכוז');
   if (pollingStations && stationIndex < 0) throw new Error('קובץ הנתונים אינו מכיל פירוט לפי קלפיות');
   if (nameIndex < 0 || validIndex < 0 || new Set(header).size !== header.length) {
     throw new Error('קובץ הנתונים אינו מכיל נתוני יישובים תקינים');
@@ -53,7 +55,7 @@ function parseResearchRows(csv: string, pollingStations: boolean): LocalityVotes
       station = { pollingStation: String(number), ...(splitIndex >= 0 ? { split: count(row[splitIndex]) } : {}) };
     }
     const id = station ? JSON.stringify([localityId, station.pollingStation, station.split]) : localityId;
-    const locality = localities.get(id) ?? { id, name, ...station, validVotes: 0, votes: {} };
+    const locality = localities.get(id) ?? { id, name, ...station, ...(pollingStations && clusterIndex >= 0 && row[clusterIndex] ? { clusterCode: String(Number(row[clusterIndex])) } : {}), validVotes: 0, votes: {} };
     locality.validVotes += count(row[validIndex]);
     for (const { party, index } of parties) locality.votes[party] = (locality.votes[party] ?? 0) + count(row[index]);
     localities.set(id, locality);

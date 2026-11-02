@@ -1943,3 +1943,13 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .question-seat-change.is-loss, .question-error { color: var(--loss); background: var(--loss-background); }
 .question-error { padding: 12px 16px; border-radius: 12px; }
 @media (max-width: 560px) { .question-input-row { gap: 4px; padding: 5px; } .question-input-row button { padding-inline: .75rem; } }
+
+.polling-location { margin-block: 1rem; padding: 1rem; border: 1px solid var(--ink-20); border-radius: 12px; background: var(--surface-muted); }
+.polling-location-heading, .polling-location-actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.polling-location-heading { justify-content: space-between; }
+.polling-location-heading p { margin: .35rem 0; color: var(--ink-70); }
+.polling-location-actions .ui-link { min-height: 44px; box-sizing: border-box; }
+.polling-location-map { display: block; width: 100%; height: 300px; border: 0; border-radius: 10px; margin-block: 1rem; background: var(--card); }
+.polling-location small { display: block; margin-block-start: .75rem; color: var(--ink-70); }
+.polling-location-name { display: block; font-size: .85em; color: var(--ink-70); white-space: normal; }
+@media (max-width: 600px) { .polling-location { padding: .75rem; } .polling-location-map { height: 240px; } }
