@@ -1885,3 +1885,10 @@ body {
 .locality-blocs dd { margin: .5rem 0 0; font-size: 1.5rem; font-weight: 700; }
 .research-location-row { cursor: pointer; }
 .research-location-row:hover, .research-location-row:focus-within { background: var(--surface-hover); }
+
+.locality-selector-control { display: flex; flex-direction: column; gap: .5rem; width: 280px; max-width: 100%; }
+.locality-selector-menu { max-height: none; overflow: visible; box-sizing: border-box; }
+.locality-selector-menu input { width: 100%; box-sizing: border-box; margin-bottom: .5rem; font: inherit; border: 1px solid var(--ink-20); border-radius: 9px; background: var(--card); color: var(--ink-90); }
+.locality-selector-options { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
+.locality-selector-options button.is-active { outline: 2px solid var(--ink-50); outline-offset: -2px; }
+.locality-selector-menu p { padding: .5rem; margin: 0; color: var(--ink-50); }

@@ -4,6 +4,7 @@ import React from 'react';
 import { act, create } from 'react-test-renderer';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import LocalityResults from '../components/LocalityResults';
+import LocalitySelector from '../components/LocalitySelector';
 import PartyResearch from '../components/PartyResearch';
 import AppHeader from '../components/AppHeader';
 import { localityHref } from './locality-results';
@@ -22,7 +23,8 @@ function setup(t: any) {
   const originalFetch = globalThis.fetch;
   const originals = [Object.getOwnPropertyDescriptor(globalThis, 'window'), Object.getOwnPropertyDescriptor(globalThis, 'document')];
   const intervals = new Set<() => void>();
-  const document = { documentElement: { dataset: {} }, visibilityState: 'visible' };
+  const pointers = new Set<(event: any) => void>();
+  const document = { documentElement: { dataset: {} }, visibilityState: 'visible', addEventListener(_name: string, fn: (event: any) => void) { pointers.add(fn); }, removeEventListener(_name: string, fn: (event: any) => void) { pointers.delete(fn); } };
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: (fn: () => void) => { intervals.add(fn); return fn; }, clearInterval: (fn: () => void) => intervals.delete(fn) } });
   Object.defineProperty(globalThis, 'document', { configurable: true, value: document });
   let renderer!: ReturnType<typeof create>;
@@ -47,10 +49,10 @@ function setup(t: any) {
     });
   });
   return {
-    calls, intervals, document,
+    calls, intervals, document, pointers,
     setMissing(value: boolean) { missing = value; }, setFail(value: boolean) { fail = value; },
     setBody(value: string) { body = value; }, setStations(value: string) { stationBody = value; }, setModified(value: string) { modified = value; },
-    async render(url: string) {
+    async render(url: string, createNodeMock: (element: any) => any = () => null) {
       await act(async () => {
         renderer = create(React.createElement(MemoryRouter, { initialEntries: [url] }, React.createElement(React.Fragment, {},
           React.createElement(Routes, {},
@@ -58,7 +60,7 @@ function setup(t: any) {
             React.createElement(Route, { path: '/research/:electionId', element: React.createElement(PartyResearch) }),
             React.createElement(Route, { path: '/results/:electionId', element: React.createElement('p', {}, 'Results') }),
             React.createElement(Route, { path: '/summary', element: React.createElement('p', {}, 'Summary') })),
-          React.createElement(Location))));
+          React.createElement(Location))), { createNodeMock });
         await tick();
       });
       return renderer;
@@ -68,6 +70,10 @@ function setup(t: any) {
 }
 
 const change = async (renderer: ReturnType<typeof create>, value: string, label: string) => {
+  if (label === 'יישוב') {
+    await act(async () => { renderer.root.findByType(LocalitySelector).props.onChange(value); await tick(); });
+    return;
+  }
   const control = renderer.root.findAllByType('label').find(node => node.children.includes(label))!;
   await act(async () => { control.findByType('select').props.onChange({ target: { value } }); await tick(); });
 };
@@ -105,13 +111,14 @@ test('locality page contains votes, percentages, local seats and configured bloc
   await change(renderer, '', 'קלפי');
   assert.equal(renderer.root.findByType('output').children.join(''), '/localities/25?locality=3000');
   await change(renderer, '2', 'יישוב');
-  assert.equal(renderer.root.findAllByType('select').length, 1, 'single-station localities hide the station selector');
+  assert.equal(renderer.root.findAllByType('select').length, 0, 'single-station localities hide the station selector');
   await change(renderer, '', 'יישוב');
   assert.equal(renderer.root.findAllByType('table').length, 0);
   await state.visit('/localities/25?locality=3000');
+  await act(async () => renderer.root.findByType(LocalitySelector).findByType('button').props.onClick());
   await act(async () => renderer.root.findByProps({ type: 'search' }).props.onChange({ target: { value: 'אינו קיים' } }));
   assert.match(text(renderer), /לא נמצאו/);
-  assert.ok(renderer.root.findAllByType('option').some(option => option.props.value === '3000'), 'selected locality stays in the selector during filtering');
+  assert.match(text(renderer), /ירושלים/, 'selected locality stays visible in the trigger during filtering');
   await act(async () => renderer.root.findByProps({ type: 'search' }).props.onChange({ target: { value: 'ירושלים' } }));
   await act(async () => { renderer.root.findByType(AppHeader).props.setCurrentElection('14'); await tick(); });
   assert.match(text(renderer), /Results/);
@@ -122,7 +129,7 @@ test('missing station data is optional, direct invalid links never show another 
   state.setMissing(true);
   const renderer = await state.render('/localities/20?locality=3000');
   assert.equal(renderer.root.findAllByProps({ 'aria-label': 'חלוקת גושים' }).length, 0);
-  assert.equal(renderer.root.findAllByType('select').length, 1);
+  assert.equal(renderer.root.findAllByType('select').length, 0);
   await state.visit('/localities/20?locality=3000&station=missing');
   assert.match(text(renderer), /הקלפי שבקישור אינה זמינה/);
   assert.equal(renderer.root.findAllByType('table').length, 0);
@@ -148,12 +155,12 @@ test('embedded historical station files are aggregated and single station deep l
   const row = parsePollingStations(stations)[2];
   const renderer = await state.render(localityHref('19', row));
   assert.equal(state.calls.filter(url => url.includes('polling-stations')).length, 0);
-  assert.equal(renderer.root.findAllByType('select').length, 1);
+  assert.equal(renderer.root.findAllByType('select').length, 0);
   assert.match(text(renderer), /קלפי 1/);
   assert.equal(renderer.root.findAllByProps({ 'aria-label': 'חלוקת גושים' }).length, 0);
   await state.visit('/localities/19?locality=3000');
   assert.match(text(renderer), /1,000/);
-  assert.equal(renderer.root.findAllByType('select').length, 2);
+  assert.equal(renderer.root.findAllByType('select').length, 1);
 });
 
 test('loading errors can be retried, empty files are explicit, and counting refresh keeps the last valid snapshot', async t => {
@@ -173,7 +180,7 @@ test('loading errors can be retried, empty files are explicit, and counting refr
   assert.equal(renderer.root.findAllByType('table').length, 1);
   state.setFail(false); state.setMissing(true); state.setModified('invalid');
   await act(async () => { for (const refresh of state.intervals) refresh(); await tick(); });
-  assert.equal(renderer.root.findAllByType('select').length, 2, 'a transient missing optional file retains previous stations');
+  assert.equal(renderer.root.findAllByType('select').length, 1, 'a transient missing optional file retains previous stations');
   assert.doesNotMatch(text(renderer), /קובץ הנתונים עודכן/);
   const before = state.calls.length;
   state.document.visibilityState = 'hidden';
@@ -189,7 +196,7 @@ test('slow requests deduplicate, unmount aborts late responses and optional malf
   const state = setup(t);
   state.setStations('not a CSV');
   const renderer = await state.render('/localities/26?locality=3000');
-  assert.equal(renderer.root.findAllByType('select').length, 1);
+  assert.equal(renderer.root.findAllByType('select').length, 0);
   const pending: ((value: Response) => void)[] = [];
   let signal: AbortSignal | null | undefined;
   let calls = 0;
@@ -217,4 +224,62 @@ test('equal local vote totals sort consistently and unassigned seat winners are 
   const rows = renderer.root.findByType('tbody').findAllByType('tr');
   assert.equal(rows[0].findAllByType('td')[0].children[0], '400');
   assert.equal(rows[1].findAllByType('td')[0].children[0], '400');
+});
+
+
+test('locality dropdown filters inside the popup and supports keyboard and pointer selection', async t => {
+  const state = setup(t);
+  const renderer = await state.render('/localities/25?locality=3000');
+  const selector = () => renderer.root.findByType(LocalitySelector);
+  const trigger = () => selector().findAllByType('button')[0];
+  const key = async (value: string) => act(async () => {
+    selector().findByProps({ role: 'combobox' }).props.onKeyDown({ key: value, preventDefault() {}, stopPropagation() {} }); await tick();
+  });
+  assert.equal(renderer.root.findAllByProps({ type: 'search' }).length, 0);
+  await act(async () => trigger().props.onClick());
+  assert.equal(selector().findAllByProps({ role: 'option' }).length, 2);
+  await act(async () => selector().findByProps({ role: 'combobox' }).props.onChange({ target: { value: 'קטן' } }));
+  assert.equal(selector().findAllByProps({ role: 'option' }).length, 1);
+  await key('ArrowDown'); await key('ArrowUp'); await key('Enter');
+  assert.match(renderer.root.findByType('output').children.join(''), /locality=2/);
+  assert.equal(renderer.root.findAllByProps({ role: 'combobox' }).length, 0);
+  await act(async () => trigger().props.onKeyDown({ key: 'ArrowUp', preventDefault() {} }));
+  await act(async () => selector().findAllByProps({ role: 'option' })[1].props.onClick());
+  assert.match(renderer.root.findByType('output').children.join(''), /locality=3000/);
+  await act(async () => trigger().props.onClick());
+  await key('Escape');
+  assert.equal(renderer.root.findAllByProps({ role: 'dialog' }).length, 0);
+  await act(async () => trigger().props.onClick());
+  await act(async () => trigger().props.onClick());
+  assert.equal(renderer.root.findAllByProps({ role: 'dialog' }).length, 0);
+});
+
+
+test('locality dropdown dismisses on outside click or focus loss and preserves search focus when clicking options', async t => {
+  const state = setup(t);
+  const inside = {};
+  let focusCount = 0;
+  let scrollCount = 0;
+  const renderer = await state.render('/localities/25', () => ({ contains: (node: unknown) => node === inside, focus: () => focusCount++, scrollIntoView: () => scrollCount++ }));
+  const selector = () => renderer.root.findByType(LocalitySelector);
+  const trigger = () => selector().findAllByType('button')[0];
+  const open = async () => act(async () => trigger().props.onClick());
+  await open();
+  await act(async () => { for (const listener of state.pointers) listener({ target: inside }); });
+  assert.equal(selector().findAllByProps({ role: 'dialog' }).length, 1);
+  await act(async () => { for (const listener of state.pointers) listener({ target: {} }); });
+  assert.equal(selector().findAllByProps({ role: 'dialog' }).length, 0);
+  await open();
+  const root = selector().findByProps({ className: 'locality-selector-control' });
+  await act(async () => root.props.onBlur({ currentTarget: { contains: () => true }, relatedTarget: inside }));
+  assert.equal(selector().findAllByProps({ role: 'dialog' }).length, 1);
+  let prevented = false;
+  selector().findAllByProps({ role: 'option' })[0].props.onMouseDown({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  await act(async () => root.props.onBlur({ currentTarget: { contains: () => false }, relatedTarget: null }));
+  assert.equal(selector().findAllByProps({ role: 'dialog' }).length, 0);
+  await act(async () => trigger().props.onKeyDown({ key: 'ArrowDown', preventDefault() {} }));
+  await act(async () => selector().findByProps({ role: 'combobox' }).props.onKeyDown({ key: 'Enter', preventDefault() {} }));
+  assert.ok(focusCount > 0);
+  assert.ok(scrollCount > 0);
 });

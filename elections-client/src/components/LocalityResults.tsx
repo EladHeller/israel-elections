@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
+import LocalitySelector from './LocalitySelector';
 import { useElectionData } from '../hooks/use-election-data';
 import { useLocalityResults } from '../hooks/use-locality-results';
 import { hasLocalityData } from '../lib/locality-availability';
@@ -14,7 +15,6 @@ export default function LocalityResults() {
   const { electionId = '' } = useParams();
   const navigate = useNavigate();
   const [query, setQuery] = useSearchParams();
-  const [filter, setFilter] = useState('');
   const { availableElections, electionConfig, electionManifest, partyNames, blocs } = useElectionData(electionId, false);
   const counting = electionManifest?.phase === 'counting';
   const { data, error, retry } = useLocalityResults(electionId, counting);
@@ -28,8 +28,8 @@ export default function LocalityResults() {
   const parties = useMemo(() => Object.entries(selected?.votes ?? {}).map(([party, votes]) => ({
     party, votes, mandats: results[party]?.mandats ?? 0,
   })).sort((a, b) => b.votes - a.votes || a.party.localeCompare(b.party, 'he')), [selected, results]);
-  const options = useMemo(() => (data?.localities ?? []).filter(row => row.name.includes(filter.trim()))
-    .sort((a, b) => a.name.localeCompare(b.name, 'he')), [data, filter]);
+  const options = useMemo(() => [...(data?.localities ?? [])]
+    .sort((a, b) => a.name.localeCompare(b.name, 'he')), [data]);
   const partyName = (party: string) => partyNames[party] || electionManifest?.lists.find(list => list.ballotLetter === party)?.name || party;
   const blocTotals = computeBlocTotals(results, blocs);
   const unassignedSeats = parties.reduce((sum, row) => sum + row.mandats, 0)
@@ -40,7 +40,7 @@ export default function LocalityResults() {
   return <div className="screen locality-results">
     <AppHeader statusText="תוצאות לפי יישוב וקלפי" showSimulator isEdited={false}
       currentElection={electionId} availableElections={availableElections} viewMode="localities"
-      setCurrentElection={id => { setFilter(''); navigate(`/${hasLocalityData(id) ? 'localities' : 'results'}/${id}`); }}
+      setCurrentElection={id => { navigate(`/${hasLocalityData(id) ? 'localities' : 'results'}/${id}`); }}
       setViewMode={mode => navigate(mode === 'summary' ? '/summary' : `/${mode}/${electionId}`)} />
     <main>
       <section className="panel">
@@ -50,16 +50,9 @@ export default function LocalityResults() {
           {!data && !error && <p role="status">טוען נתוני יישובים...</p>}
           {data && <>
             <div className="research-controls">
-              <label>חיפוש יישוב<input type="search" value={filter} onChange={event => setFilter(event.target.value)} /></label>
-              <label>יישוב<select value={locality?.id ?? ''} onChange={event => {
-                const next = new URLSearchParams();
-                if (event.target.value) next.set('locality', event.target.value);
-                setQuery(next);
-              }}>
-                <option value="">בחירת יישוב</option>
-                {locality && !options.some(row => row.id === locality.id) && <option value={locality.id}>{locality.name}</option>}
-                {options.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}
-              </select></label>
+              <LocalitySelector key={electionId} value={locality?.id ?? ''} options={options} onChange={value => {
+                setQuery(new URLSearchParams({ locality: value }));
+              }} />
               {locality && stations.length > 1 && <label>קלפי<select value={stationId ?? ''} onChange={event => {
                 if (event.target.value) navigate(localityHref(electionId, stations.find(row => row.id === event.target.value)!));
                 else navigate(localityHref(electionId, locality));
@@ -69,7 +62,6 @@ export default function LocalityResults() {
               </select></label>}
             </div>
             {!data.localities.length && <p>טרם פורסמו תוצאות לפי יישוב.</p>}
-            {!!data.localities.length && !options.length && <p>לא נמצאו יישובים התואמים לחיפוש.</p>}
             {selectedId && !locality && <p role="alert">היישוב שבקישור אינו זמין במערכת בחירות זו.</p>}
             {locality && stationId && !selected && <p role="alert">הקלפי שבקישור אינה זמינה. <Link to={localityHref(electionId, locality)}>לתוצאות היישוב כולו</Link></p>}
             {selected && <>
