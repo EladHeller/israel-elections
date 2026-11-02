@@ -8,6 +8,7 @@ export type QuestionQuery =
   | { kind: 'rank'; party: string; level: 'localities' | 'stations'; order: 'votes' | 'percentage'; limit: number }
   | { kind: 'gap'; party: string; denominator: 'fixed' | 'additional' }
   | { kind: 'seat-gap'; party: string }
+  | { kind: 'seat-loss'; party: string }
   | { kind: 'scenario'; threshold?: number; withoutAgreements?: boolean; transfer?: { from: string; to: string; fraction: number } };
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
 export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig }
@@ -71,6 +72,9 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
   const unsupported = { error: 'לא הצלחתי לפרש את כל השאלה בבטחה. נסו אחת מהדוגמאות, ובדקו שהרשימה התמודדה בשם הזה בבחירות שנבחרו. שאלות המשך וכמה שאלות יחד עדיין אינן נתמכות.' };
   if (/^(?:כמה קולות (?:היו )?חסרים ל?@0 (?:כדי )?(?:לקבל|להשיג) (?:עוד מנדט|מנדט נוסף)|כמה קולות (?:נוספים )?(?:הייתה |היתה )?צריכה @0 (?:כדי )?(?:לקבל|להשיג) (?:עוד מנדט|מנדט נוסף))(?: בתוצאות האמת)?$/.test(text) && parties.length === 1) {
     return { query: { kind: 'seat-gap', party: parties[0] }, explanation: `תוספת הקולות הדרושה ל${label(parties[0])} כדי להגדיל את מספר המנדטים שלה. קולות יתר הרשימות וכללי הבחירות נשארים קבועים; הסך הארצי גדל.` };
+  }
+  if (/^כמה קולות (?:צריכים לרדת|צריך להוריד|צריך להפחית|היו צריכים לרדת) ל?@0 (?:כדי )?(?:שתאבד מנדט|שתאבד מנדט אחד|לאבד מנדט|שירד לה מנדט|שירד מנדט)(?: בתוצאות האמת)?$/.test(text) && parties.length === 1) {
+    return { query: { kind: 'seat-loss', party: parties[0] }, explanation: `הפחתת הקולות הדרושה ל${label(parties[0])} כדי להקטין את מספר המנדטים שלה. הקולות מוסרים מהסך הארצי ואינם מועברים לרשימה אחרת; קולות יתר הרשימות וכללי הבחירות נשארים קבועים.` };
   }
   const rank = /^(?:באיזה|באילו|איפה|מהם|מהן) (?:(\d+) )?(יישוב|ישוב|יישובים|ישובים|קלפי|קלפיות) (?:ה)?@0 (?:קיבלה|קבלה|קיבל) (?:את )?(?:הכי הרבה קולות|את מספר הקולות הגבוה ביותר|מספר הקולות הגבוה ביותר|האחוז הגבוה ביותר|הכי הרבה אחוזים|אחוז הקולות הגבוה ביותר)$/.exec(text);
   if (rank && parties.length === 1) {
@@ -144,10 +148,11 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     return { note: query.denominator === 'fixed' ? 'הסך הארצי קבוע: קולות עוברים מרשימות אחרות. הגעה לאחוז החסימה אינה מבטיחה מנדט כאשר הסף נמוך במיוחד.' : 'הוספת קולות מגדילה גם את המכנה הארצי. אין כאן תחזית לקולות שטרם נספרו.', columns: ['רשימה', 'קולות חסרים'], rows: [[label(query.party), gap]] };
   }
   const baseline = computeScenarioResults(votes, config).realResults;
-  if (query.kind === 'seat-gap') {
+  if (query.kind === 'seat-gap' || query.kind === 'seat-loss') {
     known(query.party);
     const current = baseline[query.party] ?? { votes: votes[query.party].votes, mandats: 0 };
     const [margin] = computeSeatMargins({ [query.party]: current }, votes, config);
+    if (query.kind === 'seat-loss') return { note: 'הפחתת קולות מהרשימה בלבד מקטינה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. ירידה מתחת לאחוז החסימה עלולה להוריד כמה מנדטים יחד; אין כאן תחזית.', columns: ['רשימה', 'קולות להפחתה', 'מנדטים כעת'], rows: [[label(query.party), margin.lose ?? '—', current.mandats]] };
     return { note: 'הוספת קולות חדשים לרשימה בלבד מגדילה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. החיפוש מוגבל לתוספת בגודל כלל הקולות הכשרים הקיימים; אין כאן תחזית.', columns: ['רשימה', 'קולות נוספים', 'מנדטים כעת'], rows: [[label(query.party), margin.gain ?? '—', current.mandats]] };
   }
   if (query.kind === 'results') {

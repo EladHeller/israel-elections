@@ -61,6 +61,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     await ask('מי ינצח?'); assert.match(text(), /לא הצלחתי/); assert.equal(records.at(-1)!.outcome, 'unsupported');
     await ask('כמה קולות היו חסרים לליכוד כדי לקבל מנדט נוסף בתוצאות האמת?');
     assert.match(text(), /הייתה צריכה עוד/); assert.equal(records.at(-1)!.outcome, 'answered');
+    await ask('כמה קולות צריכים לרדת לליכוד כדי שתאבד מנדט?');
+    assert.match(text(), /צריכה לאבד/); assert.equal(records.at(-1)!.outcome, 'answered');
     const example = renderer.root.findAllByType('button').find(button => button.children.includes('באיזה יישוב הליכוד קיבלה הכי הרבה קולות?'))!;
     await act(async () => example.props.onClick()); assert.equal(focused, true);
     assert.equal(input().props.value, 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?');
@@ -92,7 +94,7 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
 
 test('prose includes explicit green gains and red losses without unchanged seat clutter', () => {
   let renderer!: ReturnType<typeof create>;
-  const show = (kind: 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'results', rows: (string | number)[][]) => {
+  const show = (kind: 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'results', rows: (string | number)[][]) => {
     renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [] } })); return JSON.stringify(renderer.toJSON());
   };
   try {
@@ -103,5 +105,7 @@ test('prose includes explicit green gains and red losses without unchanged seat 
     assert.match(show('rank', []), /לא נמצאו/); assert.equal(renderer.root.findAllByType('table').length, 0);
     assert.match(show('seat-gap', [['הציונות הדתית וזהות', 1234, 8]]), /1,234.*מעבר ל־.*8/);
     assert.match(show('seat-gap', [['א', '—', 120]]), /לא נמצאה.*בטווח החיפוש/);
+    assert.match(show('seat-loss', [['א', 1234, 8]]), /צריכה לאבד.*1,234/);
+    assert.match(show('seat-loss', [['א', '—', 0]]), /אין הפחתת קולות/);
   } finally { renderer.unmount(); }
 });

@@ -14,6 +14,37 @@ function query(text: string, ctx = context): QuestionQuery {
 }
 function rejected(text: string, ctx = context) { assert.ok('error' in parse(text, ctx), text); }
 
+test('seat-loss questions remove votes only from the selected list and find the first loss', () => {
+  for (const name of ['הציונות הדתית', 'ציונות הדתית', 'ט', 'ליכוד']) {
+    for (const wording of [`כמה קולות צריכים לרדת ל${name} כדי שתאבד מנדט?`, `כמה קולות צריך להוריד ל${name} כדי שירד לה מנדט`, `כמה קולות היו צריכים לרדת ל${name} כדי לאבד מנדט בתוצאות האמת`]) {
+      assert.deepEqual(query(wording), { kind: 'seat-loss', party: name === 'ליכוד' ? 'מחל' : 'ט' });
+    }
+  }
+  rejected('כמה קולות צריכים לרדת לציונות הדתית כדי שתאבד מנדט ויעברו לליכוד');
+  for (const algorithm of ['baderOffer', 'ceilRound'] as const) {
+    for (const agreements of [[], [['מחל', 'ט']]] as [string, string][][]) {
+      const ctx = { ...context, config: { ...context.config, algorithm, agreements } };
+      const before = structuredClone(ctx);
+      for (const party of ['ט', 'ך']) {
+        const seats = (delta: number) => computeScenarioResults({ ...ctx.votes, [party]: { ...ctx.votes[party], votes: ctx.votes[party].votes - delta } }, ctx.config).realResults[party]?.mandats ?? 0;
+        const baseline = seats(0);
+        let expected = 1;
+        while (expected <= ctx.votes[party].votes && seats(expected) >= baseline) expected++;
+        const answer = execute({ kind: 'seat-loss', party }, ctx);
+        assert.equal(answer.rows[0][1], expected <= ctx.votes[party].votes ? expected : '—');
+        assert.equal(answer.rows[0][2], baseline);
+      }
+      assert.deepEqual(ctx, before);
+    }
+  }
+  assert.throws(() => execute({ kind: 'seat-loss', party: 'missing' }, context), /קיימת/);
+  const edge = { ...context, config: { ...context.config, blockPercentage: 0.3095 } };
+  const answer = execute({ kind: 'seat-loss', party: 'ט' }, edge);
+  assert.equal(answer.rows[0][1], 1);
+  assert.ok(Number(answer.rows[0][2]) > 1);
+  assert.equal(computeScenarioResults({ ...edge.votes, ט: { votes: 309, mandats: 0 } }, edge.config).realResults['ט']?.mandats ?? 0, 0);
+});
+
 test('next-seat questions accept natural Hebrew and return the first added-vote seat gain', () => {
   for (const name of ['הציונות הדתית', 'ציונות הדתית', 'ט']) {
     for (const wording of [`כמה קולות היו חסרים ל${name} כדי לקבל מנדט נוסף בתוצאות האמת?`, `כמה קולות חסרים ל${name} להשיג עוד מנדט`, `כמה קולות נוספים הייתה צריכה ${name} כדי לקבל מנדט נוסף`]) {
