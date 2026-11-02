@@ -1874,3 +1874,15 @@ body {
 .research-level-switcher button { font: inherit; min-height: 44px; padding: .6rem 1rem; }
 .research-level-switcher button[aria-pressed="true"] { background: var(--ink-90); color: var(--bg); }
 .research-level-switcher button:focus-visible { outline: 2px solid var(--ink-70); outline-offset: 3px; }
+
+.automatic-scenarios { margin-block: 1.25rem; }
+.automatic-scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin-block: 1rem; }
+.automatic-scenario { border: 1px solid var(--ink-20, #9996); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.automatic-scenario h3, .automatic-scenario p { margin: 0; }
+.automatic-scenario button { margin-top: auto; align-self: start; }
+.automatic-seat-deltas { list-style: none; padding: 0; margin: .5rem 0; }
+.automatic-seat-deltas li { display: flex; justify-content: space-between; gap: 1rem; }
+.automatic-seat-deltas .gain { color: var(--success, #15803d); }
+.automatic-seat-deltas .lose { color: var(--danger, #dc2626); }
+.automatic-bloc-deltas { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.automatic-scenarios details { font-size: .9rem; }
