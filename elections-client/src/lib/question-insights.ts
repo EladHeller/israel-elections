@@ -84,6 +84,7 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
     }
     if (!changes.length) sentences.push('חלוקת המנדטים נשארת ללא שינוי.');
     const result = answer(sentences, 'הקולות נוספו גם למכנה הארצי. יתר הקולות והסכמי העודפים נשמרו. הגעה לסף אינה מבטיחה מנדט בכל סף אפשרי.');
+    result.scenario = { voteData: changed, config };
     result.rows.push(...changes);
     return result;
   }

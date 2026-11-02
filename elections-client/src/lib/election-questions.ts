@@ -1,4 +1,4 @@
-import type { ElectionConfig, PartyNames, VoteData } from '../types';
+import type { ElectionConfig, PartyNames, ScenarioState, VoteData } from '../types';
 import { executeInsight, parseInsight, type InsightQuery, type PreviousElection } from './question-insights';
 import { computeScenarioResults } from './scenario';
 import { computeSeatMargins } from './analytics';
@@ -19,7 +19,7 @@ export type QuestionQuery =
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
 export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection; electionId?: string; blocs?: BlocsConfig; comparison?: ElectionSnapshot }
 export interface SeatChange { party: string; name: string; before: number; after: number }
-export interface Answer { note: string; columns: string[]; rows: (string | number)[][]; seatChanges?: SeatChange[] }
+export interface Answer { note: string; columns: string[]; rows: (string | number)[][]; seatChanges?: SeatChange[]; scenario?: ScenarioState }
 
 export const normalizeQuestion = (value: string): string => value.normalize('NFKC')
   .replace(/[\u0591-\u05bd\u05bf-\u05c2\u05c4-\u05c5\u05c7]/g, '').replace(/["'״׳?？!,:;]/g, '').replace(/[־–—-]/g, ' ')
@@ -185,24 +185,30 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     const count = votes[query.party].votes;
     if (config.blockPercentage >= 1 && query.denominator === 'additional' && count < total) throw new Error('אי אפשר להגיע ל־100% בהוספת קולות בלבד כאשר יש קולות לרשימות אחרות.');
     const gap = Math.max(0, Math.ceil((config.blockPercentage * total - count) / (query.denominator === 'additional' ? 1 - config.blockPercentage : 1)));
-    return { note: query.denominator === 'fixed' ? 'הסך הארצי קבוע: קולות עוברים מרשימות אחרות. הגעה לאחוז החסימה אינה מבטיחה מנדט כאשר הסף נמוך במיוחד.' : 'הוספת קולות מגדילה גם את המכנה הארצי. אין כאן תחזית לקולות שטרם נספרו.', columns: ['רשימה', 'קולות חסרים'], rows: [[label(query.party), gap]] };
+    const scenario = query.denominator === 'additional' && gap > 0 ? { voteData: structuredClone(votes), config } : undefined;
+    if (scenario) scenario.voteData[query.party].votes += gap;
+    return { scenario, note: query.denominator === 'fixed' ? 'הסך הארצי קבוע: קולות עוברים מרשימות אחרות. הגעה לאחוז החסימה אינה מבטיחה מנדט כאשר הסף נמוך במיוחד.' : 'הוספת קולות מגדילה גם את המכנה הארצי. אין כאן תחזית לקולות שטרם נספרו.', columns: ['רשימה', 'קולות חסרים'], rows: [[label(query.party), gap]] };
   }
   const baseline = computeScenarioResults(votes, config).realResults;
   if (query.kind === 'seat-gap' || query.kind === 'seat-loss') {
     known(query.party);
     const current = baseline[query.party] ?? { votes: votes[query.party].votes, mandats: 0 };
     const [margin] = computeSeatMargins({ [query.party]: current }, votes, config);
-    if (query.kind === 'seat-loss') return { note: 'הפחתת קולות מהרשימה בלבד מקטינה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. ירידה מתחת לאחוז החסימה עלולה להוריד כמה מנדטים יחד; אין כאן תחזית.', columns: ['רשימה', 'קולות להפחתה', 'מנדטים כעת'], rows: [[label(query.party), margin.lose ?? '—', current.mandats]] };
+    const delta = query.kind === 'seat-loss' ? margin.lose : margin.gain;
+    let snapshot: ScenarioState | undefined;
+    if (delta !== null) {
+      snapshot = { voteData: structuredClone(votes), config };
+      snapshot.voteData[query.party].votes += query.kind === 'seat-loss' ? -delta : delta;
+    }
+    if (query.kind === 'seat-loss') return { scenario: snapshot, note: 'הפחתת קולות מהרשימה בלבד מקטינה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. ירידה מתחת לאחוז החסימה עלולה להוריד כמה מנדטים יחד; אין כאן תחזית.', columns: ['רשימה', 'קולות להפחתה', 'מנדטים כעת'], rows: [[label(query.party), margin.lose ?? '—', current.mandats]] };
     let seatChanges: SeatChange[] = [];
-    if (margin.gain !== null) {
-      const changed = structuredClone(votes);
-      changed[query.party].votes += margin.gain;
-      const scenario = computeScenarioResults(changed, config).realResults;
+    if (snapshot) {
+      const scenario = computeScenarioResults(snapshot.voteData, snapshot.config).realResults;
       seatChanges = Object.keys(votes).map(party => ({ party, name: label(party), before: baseline[party]?.mandats ?? 0, after: scenario[party]?.mandats ?? 0 }))
         .filter(change => change.before !== change.after)
         .sort((a, b) => Number(b.party === query.party) - Number(a.party === query.party) || (b.after - b.before) - (a.after - a.before) || a.party.localeCompare(b.party));
     }
-    return { note: 'הוספת קולות חדשים לרשימה בלבד מגדילה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מוצגים כל השינויים במנדטים בתרחיש של התוספת המינימלית שנמצאה. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. החיפוש מוגבל לתוספת בגודל כלל הקולות הכשרים הקיימים; אין כאן תחזית.', columns: ['רשימה', 'קולות נוספים', 'מנדטים כעת'], rows: [[label(query.party), margin.gain ?? '—', current.mandats]], seatChanges };
+    return { note: 'הוספת קולות חדשים לרשימה בלבד מגדילה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מוצגים כל השינויים במנדטים בתרחיש של התוספת המינימלית שנמצאה. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. החיפוש מוגבל לתוספת בגודל כלל הקולות הכשרים הקיימים; אין כאן תחזית.', columns: ['רשימה', 'קולות נוספים', 'מנדטים כעת'], rows: [[label(query.party), margin.gain ?? '—', current.mandats]], seatChanges, scenario: snapshot };
   }
   if (query.kind === 'results') {
     query.parties.forEach(known);
@@ -217,6 +223,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     changed[from].votes -= amount; changed[to].votes += amount;
   }
   if (query.threshold !== undefined && (!Number.isFinite(query.threshold) || query.threshold < 0 || query.threshold > 1)) throw new Error('אחוז החסימה אינו תקין.');
-  const scenario = computeScenarioResults(changed, { ...config, blockPercentage: query.threshold ?? config.blockPercentage, agreements: query.withoutAgreements ? [] : config.agreements }).realResults;
-  return { note: 'תרחיש מחושב, לא תחזית. הסכמים קיימים נשמרים אלא אם ביקשתם להסירם. בתיקו מופעל כלל ההכרעה הדטרמיניסטי של מנוע האתר.', columns: ['רשימה', 'לפני', 'אחרי', 'שינוי'], rows: Object.keys(votes).sort((a, b) => (scenario[b]?.mandats ?? 0) - (scenario[a]?.mandats ?? 0)).map(party => [label(party), baseline[party]?.mandats ?? 0, scenario[party]?.mandats ?? 0, (scenario[party]?.mandats ?? 0) - (baseline[party]?.mandats ?? 0)]) };
+  const scenarioConfig = { ...config, blockPercentage: query.threshold ?? config.blockPercentage, agreements: query.withoutAgreements ? [] : config.agreements };
+  const scenario = computeScenarioResults(changed, scenarioConfig).realResults;
+  return { scenario: { voteData: changed, config: scenarioConfig }, note: 'תרחיש מחושב, לא תחזית. הסכמים קיימים נשמרים אלא אם ביקשתם להסירם. בתיקו מופעל כלל ההכרעה הדטרמיניסטי של מנוע האתר.', columns: ['רשימה', 'לפני', 'אחרי', 'שינוי'], rows: Object.keys(votes).sort((a, b) => (scenario[b]?.mandats ?? 0) - (scenario[a]?.mandats ?? 0)).map(party => [label(party), baseline[party]?.mandats ?? 0, scenario[party]?.mandats ?? 0, (scenario[party]?.mandats ?? 0) - (baseline[party]?.mandats ?? 0)]) };
 }

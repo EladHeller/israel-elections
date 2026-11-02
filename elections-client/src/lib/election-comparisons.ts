@@ -175,7 +175,7 @@ export function executeComparison(query: ComparisonQuery, context: QuestionConte
       if (from !== to) rows.push([`${current.names[id] ?? id} ${to > from ? 'מקבלת' : 'מאבדת'} ${Math.abs(to - from)} מנדטים: מ־${from} ל־${to}.`, to - from]);
     }
     if (rows.length === 1) rows.push(['חלוקת המנדטים נשארת ללא שינוי.']);
-    return { columns: ['תשובה'], rows, note: `${membership(query.target)} קולות יתר הרשימות נשארים קבועים; המכנה הארצי משתנה. בתוך גוש נשמר יחס התמיכה הנוכחי, בעיגול לקולות שלמים בשיטת השאריות הגדולות. שיעור היסטורי משוחזר בקירוב בגלל העיגול. אחוז החסימה, ההסכמים ושיטת חלוקת המנדטים הם של הבחירות שנבחרו. תרחיש חישובי, לא תחזית.` };
+    return { scenario: { voteData: changed, config: current.config }, columns: ['תשובה'], rows, note: `${membership(query.target)} קולות יתר הרשימות נשארים קבועים; המכנה הארצי משתנה. בתוך גוש נשמר יחס התמיכה הנוכחי, בעיגול לקולות שלמים בשיטת השאריות הגדולות. שיעור היסטורי משוחזר בקירוב בגלל העיגול. אחוז החסימה, ההסכמים ושיטת חלוקת המנדטים הם של הבחירות שנבחרו. תרחיש חישובי, לא תחזית.` };
   }
   const beforeSeats = query.measure === 'seats' ? computeScenarioResults(previous!.votes, previous!.config).realResults : {};
   const afterSeats = query.measure === 'seats' ? computeScenarioResults(current.votes, current.config).realResults : {};
