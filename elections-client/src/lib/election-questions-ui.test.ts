@@ -59,6 +59,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     assert.equal(renderer.root.findAllByType('table').length, 0); assert.equal(renderer.root.findAllByType('textarea').length, 0);
     assert.ok(!text().includes('פענוח השאלה') && !text().includes('חישוב התשובה'));
     await ask('מי ינצח?'); assert.match(text(), /לא הצלחתי/); assert.equal(records.at(-1)!.outcome, 'unsupported');
+    await ask('כמה קולות היו חסרים לליכוד כדי לקבל מנדט נוסף בתוצאות האמת?');
+    assert.match(text(), /הייתה צריכה עוד/); assert.equal(records.at(-1)!.outcome, 'answered');
     const example = renderer.root.findAllByType('button').find(button => button.children.includes('באיזה יישוב הליכוד קיבלה הכי הרבה קולות?'))!;
     await act(async () => example.props.onClick()); assert.equal(focused, true);
     assert.equal(input().props.value, 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?');
@@ -90,7 +92,7 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
 
 test('prose includes explicit green gains and red losses without unchanged seat clutter', () => {
   let renderer!: ReturnType<typeof create>;
-  const show = (kind: 'scenario' | 'rank' | 'gap' | 'results', rows: (string | number)[][]) => {
+  const show = (kind: 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'results', rows: (string | number)[][]) => {
     renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [] } })); return JSON.stringify(renderer.toJSON());
   };
   try {
@@ -99,5 +101,7 @@ test('prose includes explicit green gains and red losses without unchanged seat 
     assert.match(show('scenario', [['א', 1, 1, 0]]), /ללא שינוי/); assert.match(show('results', [['א', 1234, '20%', 24], ['ב', '12,345', '30%', 36]]), /1,234/);
     assert.match(show('rank', [['יישוב', 80, '80%']]), /הכשרים במקום/); assert.match(show('gap', [['א', 0]]), /כבר מגיעה/); assert.match(show('gap', [['א', 10]]), /צריכה עוד/);
     assert.match(show('rank', []), /לא נמצאו/); assert.equal(renderer.root.findAllByType('table').length, 0);
+    assert.match(show('seat-gap', [['הציונות הדתית וזהות', 1234, 8]]), /1,234.*מעבר ל־.*8/);
+    assert.match(show('seat-gap', [['א', '—', 120]]), /לא נמצאה.*בטווח החיפוש/);
   } finally { renderer.unmount(); }
 });

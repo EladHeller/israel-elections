@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { executeElectionQuestion as execute, parseElectionQuestion as parse, normalizeQuestion, type QuestionContext, type QuestionQuery } from './election-questions';
 import names from '../data/party-names.json';
 import type { LocalityVotes } from './party-research';
+import { computeScenarioResults } from './scenario';
 
 const context: QuestionContext = { votes: { מחל: { votes: 500, mandats: 0 }, ט: { votes: 310, mandats: 0 }, ך: { votes: 190, mandats: 0 } }, names: { מחל: 'הליכוד', ט: 'הציונות הדתית וזהות', ך: 'עמך ישראל' }, config: { blockPercentage: 0.2, agreements: [['מחל', 'ט']], algorithm: 'baderOffer' } };
 function query(text: string, ctx = context): QuestionQuery {
@@ -12,6 +13,36 @@ function query(text: string, ctx = context): QuestionQuery {
   return result.query;
 }
 function rejected(text: string, ctx = context) { assert.ok('error' in parse(text, ctx), text); }
+
+test('next-seat questions accept natural Hebrew and return the first added-vote seat gain', () => {
+  for (const name of ['הציונות הדתית', 'ציונות הדתית', 'ט']) {
+    for (const wording of [`כמה קולות היו חסרים ל${name} כדי לקבל מנדט נוסף בתוצאות האמת?`, `כמה קולות חסרים ל${name} להשיג עוד מנדט`, `כמה קולות נוספים הייתה צריכה ${name} כדי לקבל מנדט נוסף`]) {
+      assert.deepEqual(query(wording), { kind: 'seat-gap', party: 'ט' });
+    }
+  }
+  rejected('כמה קולות היו חסרים לציונות הדתית כדי לקבל מנדט נוסף בבחירות 25');
+  rejected('כמה קולות היו חסרים לציונות הדתית כדי לקבל מנדט נוסף בלי הסכמי עודפים');
+  for (const algorithm of ['baderOffer', 'ceilRound'] as const) {
+    for (const agreements of [[], [['מחל', 'ט']]] as [string, string][][]) {
+      const ctx = { ...context, config: { ...context.config, algorithm, agreements } };
+      const before = structuredClone(ctx);
+      for (const party of ['ט', 'ך']) {
+        const seats = (delta: number) => computeScenarioResults({ ...ctx.votes, [party]: { ...ctx.votes[party], votes: ctx.votes[party].votes + delta } }, ctx.config).realResults[party]?.mandats ?? 0;
+        const baseline = seats(0);
+        let expected = 1;
+        while (expected <= 1000 && seats(expected) <= baseline) expected++;
+        const answer = execute({ kind: 'seat-gap', party }, ctx);
+        assert.equal(answer.rows[0][1], expected <= 1000 ? expected : '—');
+        assert.equal(answer.rows[0][2], baseline);
+      }
+      assert.deepEqual(ctx, before);
+    }
+  }
+  assert.throws(() => execute({ kind: 'seat-gap', party: 'missing' }, context), /קיימת/);
+  const single = { ...context, votes: { מחל: { votes: 100, mandats: 0 } }, config: { ...context.config, agreements: [] } };
+  assert.equal(execute({ kind: 'seat-gap', party: 'מחל' }, single).rows[0][1], '—');
+  assert.equal(execute({ kind: 'seat-gap', party: 'ט' }, { ...context, config: { ...context.config, blockPercentage: 1 } }).rows[0][1], '—');
+});
 
 test('Hebrew normalization, list names, ballot letters, prefixes and current-election aliases', () => {
   assert.equal(normalizeQuestion('  ש״ס — הַלִּיכוּד?  '), 'שס הליכוד');

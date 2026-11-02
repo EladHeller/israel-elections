@@ -4,6 +4,11 @@ import type { Answer, QuestionQuery } from '../lib/election-questions';
 const count = (value: string | number) => typeof value === 'number' ? value.toLocaleString('he-IL') : value;
 export default function QuestionAnswer({ answer, kind }: { answer: Answer; kind: QuestionQuery['kind'] }) {
   if (!answer.rows.length) return <p>לא נמצאו תוצאות מתאימות בנתונים הזמינים.</p>;
+  if (kind === 'seat-gap') return <>{answer.rows.map((row, index) => <p key={index}>
+    <strong>{row[0]}</strong>{typeof row[1] === 'number'
+      ? <> הייתה צריכה עוד <strong>{count(row[1])} קולות</strong> כדי להגדיל את מספר המנדטים שלה מעבר ל־{count(row[2])}.</>
+      : <>: לא נמצאה תוספת שמגדילה את מספר המנדטים שלה בטווח החיפוש.</>}
+  </p>)}</>;
   if (kind === 'scenario') {
     const changed = answer.rows.filter(row => Number(row[3]) !== 0);
     if (!changed.length) return <p>חלוקת המנדטים נשארת ללא שינוי.</p>;
