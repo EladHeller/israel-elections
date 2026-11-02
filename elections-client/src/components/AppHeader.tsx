@@ -65,7 +65,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               aria-pressed={viewMode === option.value}
               onClick={() => setViewMode(option.value)}
             >
-              {option.label}{option.value === 'questions' && <> <BetaBadge /></>}
+              {option.label}{option.value === 'questions' && <> <BetaBadge compact /></>}
             </button>
           ))}
         </div>
