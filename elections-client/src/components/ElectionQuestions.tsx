@@ -5,9 +5,12 @@ import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
 import BetaBadge from './BetaBadge';
 import { useElectionData } from '../hooks/use-election-data';
+import partyNamesAll from '../data/party-names.json';
+import { insightNeedsPlaces } from '../lib/question-insights';
 import { hasLocalityData, pollingStationSource } from '../lib/locality-availability';
 import { parseLocalities, parsePollingStations } from '../lib/party-research';
 import { executeElectionQuestion, parseElectionQuestion, type Answer, type QuestionQuery } from '../lib/election-questions';
+import type { PreviousElection } from '../lib/question-insights';
 import { recordQuestion, type QuestionOutcome } from '../lib/question-log';
 import { phaseHasResults } from '../lib/election-manifest';
 
@@ -48,15 +51,23 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         outcome = 'unsupported'; setError(parsed.error); return;
       }
       let places;
-      if (parsed.query.kind === 'rank') {
-        const source = parsed.query.level === 'stations' ? pollingStationSource(electionId) : hasLocalityData(electionId) ? `/data/${electionId}/elections.csv` : null;
+      if (parsed.query.kind === 'rank' || parsed.query.kind === 'below-threshold-winners' || insightNeedsPlaces(parsed.query)) {
+        const source = ('level' in parsed.query && parsed.query.level === 'stations') ? pollingStationSource(electionId) : hasLocalityData(electionId) ? `/data/${electionId}/elections.csv` : null;
         if (!source) throw new Error('אין נתוני מקומות לבחירות אלו. אפשר לשאול על התוצאות הארציות או לבחור מערכת אחרת.');
         const response = await fetch(source, { cache: 'no-store', signal: controller.signal });
         if (!response.ok) throw new Error('לא הצלחתי לטעון את נתוני המקומות. אפשר לנסות שוב.');
-        places = (parsed.query.level === 'stations' ? parsePollingStations : parseLocalities)(await response.text());
+        places = (('level' in parsed.query && parsed.query.level === 'stations') ? parsePollingStations : parseLocalities)(await response.text());
+      }
+      let previous: PreviousElection | undefined;
+      if (parsed.query.kind === 'insight' && ['strengthened', 'weakened'].includes(parsed.query.metric)) {
+        const id = String(Number(electionId) - 1);
+        if (!hasLocalityData(id)) throw new Error('אין נתוני יישובים למערכת הבחירות הקודמת.');
+        const response = await fetch(`/data/${id}/elections.csv`, { cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('לא הצלחתי לטעון את נתוני הבחירות הקודמות.');
+        previous = { id, names: (partyNamesAll as Record<string, Record<string, string>>)[id] ?? {}, places: parseLocalities(await response.text()) };
       }
       if (controller.signal.aborted) return;
-      const answer = executeElectionQuestion(parsed.query, context, places);
+      const answer = executeElectionQuestion(parsed.query, { ...context, previous }, places);
       outcome = answer.rows.length ? 'answered' : 'empty';
       setReply({ answer, kind: parsed.query.kind, explanation: parsed.explanation, time: data.results.time });
     } catch (failure) {
@@ -98,7 +109,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
       <div className="question-response" aria-live="polite" aria-busy={busy}>
         {busy && <p role="status">בודק את הנתונים…</p>}
         {error && <p className="question-error" role="alert">{error}</p>}
-        {reply && <article><p className="question-interpretation">{reply.explanation}</p><QuestionAnswer answer={reply.answer} kind={reply.kind} />
+        {reply && <article><p className="question-interpretation">{reply.explanation}</p><QuestionAnswer answer={reply.answer} kind={reply.kind} /><p className="question-answer-note">{reply.answer.note}</p>
           {data.electionManifest?.phase === 'counting' && <p className="question-caption">הספירה נמשכת. <ResultsTimestamp time={reply.time} /></p>}
         </article>}
         {saveFailed && <p className="question-caption" role="status">המענה זמין, אך שמירת השאלה נכשלה.</p>}

@@ -1,14 +1,20 @@
 import type { ElectionConfig, PartyNames, VoteData } from '../types';
+import { executeInsight, parseInsight, type InsightQuery, type PreviousElection } from './question-insights';
 import { computeScenarioResults } from './scenario';
+import { computeSeatMargins } from './analytics';
 import { rankLocalities, type LocalityVotes } from './party-research';
 
 export type QuestionQuery =
+  | InsightQuery
   | { kind: 'results'; parties: string[] }
   | { kind: 'rank'; party: string; level: 'localities' | 'stations'; order: 'votes' | 'percentage'; limit: number }
   | { kind: 'gap'; party: string; denominator: 'fixed' | 'additional' }
+  | { kind: 'seat-gap'; party: string }
+  | { kind: 'seat-loss'; party: string }
+  | { kind: 'below-threshold-winners'; level: 'localities' | 'stations'; measure: 'majority' | 'plurality' }
   | { kind: 'scenario'; threshold?: number; withoutAgreements?: boolean; transfer?: { from: string; to: string; fraction: number } };
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
-export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig }
+export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection }
 export interface Answer { note: string; columns: string[]; rows: (string | number)[][] }
 
 export const normalizeQuestion = (value: string): string => value.normalize('NFKC')
@@ -62,11 +68,29 @@ function resolveParties(text: string, context: QuestionContext): { text: string;
 
 export function parseElectionQuestion(input: string, context: QuestionContext): QuestionParse {
   if (input.length > 600) return { error: 'השאלה ארוכה מדי. נסו שאלה אחת עד 600 תווים.' };
-  const normalized = normalizeQuestion(input).replace(/מפלגת |רשימת |מפלגות |רשימות /g, '').replace(/^איפה /, 'באילו יישובים ');
+  const raw = normalizeQuestion(input).replace(/^איפה /, 'באילו יישובים ');
+  const neutralInsight = raw.startsWith('מי ') ? null : parseInsight(raw, []);
+  if (neutralInsight) return neutralInsight;
+  const normalized = raw.replace(/מפלגת |רשימת |מפלגות |רשימות /g, '');
   const { text, parties, ambiguous } = resolveParties(normalized, context);
   if (ambiguous) return { error: 'שם הרשימה מתאים ליותר מרשימה אחת. השתמשו בשם המלא או באותיות הקלפי.' };
   const label = (id: string) => context.names[id] ?? id;
   const unsupported = { error: 'לא הצלחתי לפרש את כל השאלה בבטחה. נסו אחת מהדוגמאות, ובדקו שהרשימה התמודדה בשם הזה בבחירות שנבחרו. שאלות המשך וכמה שאלות יחד עדיין אינן נתמכות.' };
+  const insight = parseInsight(text, parties);
+  if (insight) return insight;
+  const belowList = '(?:רשימה|מפלגה) שלא עברה את אחוז החסימה(?: הארצי)?';
+  const localWinners = new RegExp(`^(?:באילו|באיזה|איזה|אילו) (קלפיות|קלפי|יישובים|ישובים|יישוב|ישוב) (?:${belowList} (?:קיבלה|קבלה)|(?:קיבלה|קבלה) ${belowList}) (?:את )?(רוב הקולות|הכי הרבה קולות|מספר הקולות הגבוה ביותר|(?:מעל|יותר מ) ?50(?:%| אחוז| אחוזים) מהקולות)$`).exec(text);
+  if (localWinners && parties.length === 0) {
+    const level = localWinners[1].startsWith('קלפ') ? 'stations' : 'localities';
+    const measure = /הכי הרבה|הגבוה ביותר/.test(localWinners[2]) ? 'plurality' : 'majority';
+    return { query: { kind: 'below-threshold-winners', level, measure }, explanation: `כל ${level === 'stations' ? 'הקלפיות' : 'היישובים'} שבהם רשימה שלא עברה את אחוז החסימה הארצי ${measure === 'majority' ? 'קיבלה יותר מ־50% מהקולות הכשרים במקום' : 'קיבלה את מספר הקולות הגבוה ביותר במקום, כולל תיקו שמסומן במפורש'}. אחוז החסימה נבדק מול התוצאות הארציות בבחירות שנבחרו.` };
+  }
+  if (/^(?:כמה קולות (?:היו )?חסרים ל?@0 (?:כדי )?(?:לקבל|להשיג) (?:עוד מנדט|מנדט נוסף)|כמה קולות (?:נוספים )?(?:הייתה |היתה )?צריכה @0 (?:כדי )?(?:לקבל|להשיג) (?:עוד מנדט|מנדט נוסף))(?: בתוצאות האמת)?$/.test(text) && parties.length === 1) {
+    return { query: { kind: 'seat-gap', party: parties[0] }, explanation: `תוספת הקולות הדרושה ל${label(parties[0])} כדי להגדיל את מספר המנדטים שלה. קולות יתר הרשימות וכללי הבחירות נשארים קבועים; הסך הארצי גדל.` };
+  }
+  if (/^כמה קולות (?:צריכים לרדת|צריך להוריד|צריך להפחית|היו צריכים לרדת) ל?@0 (?:כדי )?(?:שתאבד מנדט|שתאבד מנדט אחד|לאבד מנדט|שירד לה מנדט|שירד מנדט)(?: בתוצאות האמת)?$/.test(text) && parties.length === 1) {
+    return { query: { kind: 'seat-loss', party: parties[0] }, explanation: `הפחתת הקולות הדרושה ל${label(parties[0])} כדי להקטין את מספר המנדטים שלה. הקולות מוסרים מהסך הארצי ואינם מועברים לרשימה אחרת; קולות יתר הרשימות וכללי הבחירות נשארים קבועים.` };
+  }
   const rank = /^(?:באיזה|באילו|איפה|מהם|מהן) (?:(\d+) )?(יישוב|ישוב|יישובים|ישובים|קלפי|קלפיות) (?:ה)?@0 (?:קיבלה|קבלה|קיבל) (?:את )?(?:הכי הרבה קולות|את מספר הקולות הגבוה ביותר|מספר הקולות הגבוה ביותר|האחוז הגבוה ביותר|הכי הרבה אחוזים|אחוז הקולות הגבוה ביותר)$/.exec(text);
   if (rank && parties.length === 1) {
     const limit = rank[1] ? Number(rank[1]) : /ים$|יות$/.test(rank[2]) ? 10 : 1;
@@ -123,6 +147,24 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
   const known = (party: string) => {
     if (!Object.hasOwn(votes, party)) throw new Error('הרשימה אינה קיימת בבחירות שנבחרו.');
   };
+  if (query.kind === 'insight') return executeInsight(query, context, places);
+  if (query.kind === 'below-threshold-winners') {
+    if (!places) throw new Error('נתוני היישובים או הקלפיות אינם זמינים לבחירות אלו.');
+    const below = new Set(Object.keys(votes).filter(party => votes[party].votes < config.blockPercentage * total));
+    const winners = places.flatMap(place => {
+      if (place.validVotes <= 0) return [];
+      const entries = Object.entries(place.votes);
+      const highest = entries.reduce((max, [, count]) => Math.max(max, count), 0);
+      const tied = entries.filter(([, count]) => count === highest && count > 0).length > 1;
+      return entries.filter(([party, count]) => below.has(party) && count > 0
+        && (query.measure === 'majority' ? count > place.validVotes / 2 : count === highest))
+        .map(([party, count]) => ({ place, party, count, share: count / place.validVotes, tied }));
+    }).sort((a, b) => b.share - a.share || b.count - a.count || a.place.id.localeCompare(b.place.id) || a.party.localeCompare(b.party));
+    return { note: 'כל התוצאות המתאימות בקובץ הזמין, לפי שיעור התמיכה במקום. רוב פירושו יותר מ־50% מהקולות הכשרים; מקום ראשון יכול לכלול תיקו. המעמד הארצי מחושב מתמונת התוצאות הארציות, וקובץ המקומות נטען בנפרד.', columns: ['מקום', 'רשימה', 'קולות', 'אחוז', 'מיקום'], rows: winners.map(({ place, party, count, share, tied }) => [
+      `${place.name}${place.pollingStation ? ` — קלפי ${place.pollingStation}${place.split !== undefined ? ` / פיצול ${place.split}` : ''}` : ''}`,
+      label(party), count, `${(share * 100).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}%`, tied ? 'תיקו במקום הראשון' : 'מקום ראשון',
+    ]) };
+  }
   if (query.kind === 'rank') {
     known(query.party);
     if (!places) throw new Error('נתוני היישובים או הקלפיות אינם זמינים לבחירות אלו.');
@@ -139,6 +181,13 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     return { note: query.denominator === 'fixed' ? 'הסך הארצי קבוע: קולות עוברים מרשימות אחרות. הגעה לאחוז החסימה אינה מבטיחה מנדט כאשר הסף נמוך במיוחד.' : 'הוספת קולות מגדילה גם את המכנה הארצי. אין כאן תחזית לקולות שטרם נספרו.', columns: ['רשימה', 'קולות חסרים'], rows: [[label(query.party), gap]] };
   }
   const baseline = computeScenarioResults(votes, config).realResults;
+  if (query.kind === 'seat-gap' || query.kind === 'seat-loss') {
+    known(query.party);
+    const current = baseline[query.party] ?? { votes: votes[query.party].votes, mandats: 0 };
+    const [margin] = computeSeatMargins({ [query.party]: current }, votes, config);
+    if (query.kind === 'seat-loss') return { note: 'הפחתת קולות מהרשימה בלבד מקטינה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. ירידה מתחת לאחוז החסימה עלולה להוריד כמה מנדטים יחד; אין כאן תחזית.', columns: ['רשימה', 'קולות להפחתה', 'מנדטים כעת'], rows: [[label(query.party), margin.lose ?? '—', current.mandats]] };
+    return { note: 'הוספת קולות חדשים לרשימה בלבד מגדילה גם את הסך הארצי. קולות יתר הרשימות, אחוז החסימה והסכמי העודפים נשארים קבועים. מחושב במנוע האתר, כולל כלל ההכרעה שלו בתיקו. החיפוש מוגבל לתוספת בגודל כלל הקולות הכשרים הקיימים; אין כאן תחזית.', columns: ['רשימה', 'קולות נוספים', 'מנדטים כעת'], rows: [[label(query.party), margin.gain ?? '—', current.mandats]] };
+  }
   if (query.kind === 'results') {
     query.parties.forEach(known);
     return { note: 'אחוז מתוך כלל הקולות הכשרים. מנדטים מחושבים במנוע האתר לפי כללי הבחירות שנבחרו.', columns: ['רשימה', 'קולות', 'אחוז', 'מנדטים'], rows: query.parties.map(party => [label(party), votes[party].votes, `${(votes[party].votes / total * 100).toFixed(2)}%`, baseline[party]?.mandats ?? 0]) };
