@@ -152,7 +152,11 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      BillingMode: PAY_PER_REQUEST
+      BillingMode: PROVISIONED
+      TableClass: STANDARD
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 2
       SSESpecification:
         SSEEnabled: true
       AttributeDefinitions:
@@ -167,6 +171,9 @@ Resources:
           KeyType: HASH
       GlobalSecondaryIndexes:
         - IndexName: by-outcome-time
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 2
           KeySchema:
             - AttributeName: outcome
               KeyType: HASH
