@@ -1,9 +1,11 @@
 import type { ElectionConfig, PartyNames, VoteData } from '../types';
+import { executeInsight, parseInsight, type InsightQuery, type PreviousElection } from './question-insights';
 import { computeScenarioResults } from './scenario';
 import { computeSeatMargins } from './analytics';
 import { rankLocalities, type LocalityVotes } from './party-research';
 
 export type QuestionQuery =
+  | InsightQuery
   | { kind: 'results'; parties: string[] }
   | { kind: 'rank'; party: string; level: 'localities' | 'stations'; order: 'votes' | 'percentage'; limit: number }
   | { kind: 'gap'; party: string; denominator: 'fixed' | 'additional' }
@@ -12,7 +14,7 @@ export type QuestionQuery =
   | { kind: 'below-threshold-winners'; level: 'localities' | 'stations'; measure: 'majority' | 'plurality' }
   | { kind: 'scenario'; threshold?: number; withoutAgreements?: boolean; transfer?: { from: string; to: string; fraction: number } };
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
-export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig }
+export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection }
 export interface Answer { note: string; columns: string[]; rows: (string | number)[][] }
 
 export const normalizeQuestion = (value: string): string => value.normalize('NFKC')
@@ -66,11 +68,16 @@ function resolveParties(text: string, context: QuestionContext): { text: string;
 
 export function parseElectionQuestion(input: string, context: QuestionContext): QuestionParse {
   if (input.length > 600) return { error: 'השאלה ארוכה מדי. נסו שאלה אחת עד 600 תווים.' };
-  const normalized = normalizeQuestion(input).replace(/מפלגת |רשימת |מפלגות |רשימות /g, '').replace(/^איפה /, 'באילו יישובים ');
+  const raw = normalizeQuestion(input).replace(/^איפה /, 'באילו יישובים ');
+  const neutralInsight = raw.startsWith('מי ') ? null : parseInsight(raw, []);
+  if (neutralInsight) return neutralInsight;
+  const normalized = raw.replace(/מפלגת |רשימת |מפלגות |רשימות /g, '');
   const { text, parties, ambiguous } = resolveParties(normalized, context);
   if (ambiguous) return { error: 'שם הרשימה מתאים ליותר מרשימה אחת. השתמשו בשם המלא או באותיות הקלפי.' };
   const label = (id: string) => context.names[id] ?? id;
   const unsupported = { error: 'לא הצלחתי לפרש את כל השאלה בבטחה. נסו אחת מהדוגמאות, ובדקו שהרשימה התמודדה בשם הזה בבחירות שנבחרו. שאלות המשך וכמה שאלות יחד עדיין אינן נתמכות.' };
+  const insight = parseInsight(text, parties);
+  if (insight) return insight;
   const belowList = '(?:רשימה|מפלגה) שלא עברה את אחוז החסימה(?: הארצי)?';
   const localWinners = new RegExp(`^(?:באילו|באיזה|איזה|אילו) (קלפיות|קלפי|יישובים|ישובים|יישוב|ישוב) (?:${belowList} (?:קיבלה|קבלה)|(?:קיבלה|קבלה) ${belowList}) (?:את )?(רוב הקולות|הכי הרבה קולות|מספר הקולות הגבוה ביותר|(?:מעל|יותר מ) ?50(?:%| אחוז| אחוזים) מהקולות)$`).exec(text);
   if (localWinners && parties.length === 0) {
@@ -140,6 +147,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
   const known = (party: string) => {
     if (!Object.hasOwn(votes, party)) throw new Error('הרשימה אינה קיימת בבחירות שנבחרו.');
   };
+  if (query.kind === 'insight') return executeInsight(query, context, places);
   if (query.kind === 'below-threshold-winners') {
     if (!places) throw new Error('נתוני היישובים או הקלפיות אינם זמינים לבחירות אלו.');
     const below = new Set(Object.keys(votes).filter(party => votes[party].votes < config.blockPercentage * total));
