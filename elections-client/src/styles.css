@@ -1886,3 +1886,21 @@ body {
 .automatic-seat-deltas .lose { color: var(--danger, #dc2626); }
 .automatic-bloc-deltas { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
 .automatic-scenarios details { font-size: .9rem; }
+
+.locality-results main { display: grid; gap: 1.5rem; }
+.locality-table-wrap { overflow-x: auto; }
+.locality-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.locality-table td, .locality-table th { text-align: start; padding: .8rem .5rem; border-bottom: 1px solid var(--ink-20); }
+.locality-table td { white-space: nowrap; }
+.locality-blocs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+.locality-blocs dt { display: flex; align-items: center; gap: .5rem; color: var(--ink-50); }
+.locality-blocs dd { margin: .5rem 0 0; font-size: 1.5rem; font-weight: 700; }
+.research-location-row { cursor: pointer; }
+.research-location-row:hover, .research-location-row:focus-within { background: var(--surface-hover); }
+
+.searchable-select-control { display: flex; flex-direction: column; gap: .5rem; width: 280px; max-width: 100%; }
+.searchable-select-menu { max-height: none; overflow: visible; box-sizing: border-box; }
+.searchable-select-menu input { width: 100%; box-sizing: border-box; margin-bottom: .5rem; font: inherit; border: 1px solid var(--ink-20); border-radius: 9px; background: var(--card); color: var(--ink-90); }
+.searchable-select-options { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
+.searchable-select-options button.is-active { outline: 2px solid var(--ink-50); outline-offset: -2px; }
+.searchable-select-menu p { padding: .5rem; margin: 0; color: var(--ink-50); }

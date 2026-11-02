@@ -1,6 +1,6 @@
 # Crawler health and email alerts
 
-Production CD on `master` deploys `Israel-elections-crawler-monitor` in `il-central-1`, then passes its private status bucket to the EC2 publisher. The EC2 instance and its boot configuration are unchanged by this stack. The usual application release activation runs a health check and supports rollback.
+When prod `CRAWLER_ENABLED=true`, production CD on `master` deploys `Israel-elections-crawler-monitor` in `il-central-1`, then passes its private status bucket to the EC2 publisher. The EC2 instance and its boot configuration are unchanged by this stack. The usual application release activation runs a health check and supports rollback.
 
 ## Enable email
 
@@ -49,3 +49,5 @@ The email is the standard CloudWatch message with alarm name, reason, time and c
 Confirm the subscription, check a fresh `last-success.json`, and check that the alarm settles at OK. To exercise notifications, temporarily stop `election-publisher.timer`, wait for ALARM/email, then restart it and observe three new successful runs and recovery. This intentionally suspends crawling; use an agreed maintenance window. To exercise monitor silence, disable the EventBridge rule and verify the same alarm, then re-enable it. These fault injections are not part of CD.
 
 The monitor uses the AWS SDK v3 included in the pinned Node.js 22 Lambda runtime; local tests use the repository SDK dependencies. The generated inline template contains the tested handler and health logic; there is no separate uploaded artifact. Deployment is a separate CloudFormation update with empty-change-set success. Bucket contents are retained if the monitoring stack is deleted.
+
+For shutdown and next-election restart, see [ec2-crawler.md](ec2-crawler.md#election-shutdown-and-restart). Disabled production CD removes both stacks; the small status bucket is retained.

@@ -36,6 +36,7 @@ import type { AppViewMode, ElectionResultsPayload, PartyResult, ResultsMap, Vote
 import { hasLocalityData } from './lib/locality-availability';
 
 const PartyResearch = lazy(() => import('./components/PartyResearch'));
+const LocalityResults = lazy(() => import('./components/LocalityResults'));
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
@@ -73,6 +74,7 @@ export default function App() {
     <Route caseSensitive path="/results/:electionId" element={<ElectionRoute viewMode="results" />} />
     <Route caseSensitive path="/simulator/:electionId" element={<ElectionRoute viewMode="simulator" />} />
     <Route caseSensitive path="/research/:electionId" element={<Suspense fallback={<p role="status">טוען...</p>}><PartyResearch /></Suspense>} />
+    <Route caseSensitive path="/localities/:electionId" element={<Suspense fallback={<p role="status">טוען...</p>}><LocalityResults /></Suspense>} />
     <Route caseSensitive path="/summary" element={<ElectionRoute viewMode="summary" />} />
     <Route caseSensitive path="*" element={<NotFound />} />
   </Routes>;
