@@ -1,6 +1,7 @@
 import { LambdaClient, UpdateFunctionCodeCommand, waitUntilFunctionUpdatedV2 } from '@aws-sdk/client-lambda';
 import {
   CloudFormationClient,
+  ContinueUpdateRollbackCommand,
   DescribeStacksCommand,
   CreateStackCommand,
   UpdateStackCommand,
@@ -41,6 +42,33 @@ async function getStackOutputs(name: string): Promise<Output[] | undefined> {
   return stack.Stacks?.[0]?.Outputs;
 }
 
+async function recoverFailedRollback(name: string, status?: string) {
+  if (status !== 'UPDATE_ROLLBACK_FAILED') return;
+
+  console.log(`Template ${name} is in UPDATE_ROLLBACK_FAILED; continuing rollback before deployment...`);
+  await cf.send(new ContinueUpdateRollbackCommand({ StackName: name }));
+
+  const deadline = Date.now() + (20 * 60 * 1000);
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    const response = await cf.send(new DescribeStacksCommand({ StackName: name }));
+    const currentStatus = response.Stacks?.[0]?.StackStatus;
+
+    if (currentStatus === 'UPDATE_ROLLBACK_COMPLETE') {
+      console.log(`Template ${name} rollback recovered.`);
+      return;
+    }
+    if (currentStatus === 'UPDATE_ROLLBACK_FAILED') {
+      throw new Error(`Template ${name} rollback failed again; manual resource-level recovery is required.`);
+    }
+    if (currentStatus !== 'UPDATE_ROLLBACK_IN_PROGRESS') {
+      throw new Error(`Template ${name} reached unexpected status ${currentStatus} while recovering rollback.`);
+    }
+  }
+
+  throw new Error(`Timed out waiting for template ${name} rollback recovery.`);
+}
+
 async function runTemplate(
   templatePath: string,
   name: string,
@@ -64,6 +92,7 @@ async function runTemplate(
     }));
     await waitUntilStackCreateComplete({ client: cf, maxWaitTime: 1200 }, { StackName: name });
   } else {
+    await recoverFailedRollback(name, stack.Stacks?.[0]?.StackStatus);
     try {
       await cf.send(new UpdateStackCommand({
         StackName: name,
@@ -234,4 +263,3 @@ main().catch(err => {
   console.error('Deployment failed:', err);
   process.exit(1);
 });
-
