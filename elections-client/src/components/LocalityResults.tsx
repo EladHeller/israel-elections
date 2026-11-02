@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
-import LocalitySelector from './LocalitySelector';
+import SearchableSelect from './SearchableSelect';
 import { useElectionData } from '../hooks/use-election-data';
 import { useLocalityResults } from '../hooks/use-locality-results';
 import { hasLocalityData } from '../lib/locality-availability';
@@ -50,16 +50,15 @@ export default function LocalityResults() {
           {!data && !error && <p role="status">טוען נתוני יישובים...</p>}
           {data && <>
             <div className="research-controls">
-              <LocalitySelector key={electionId} value={locality?.id ?? ''} options={options} onChange={value => {
+              <SearchableSelect label="יישוב" key={electionId} value={locality?.id ?? ''} options={options} onChange={value => {
                 setQuery(new URLSearchParams({ locality: value }));
               }} />
-              {locality && stations.length > 1 && <label>קלפי<select value={stationId ?? ''} onChange={event => {
-                if (event.target.value) navigate(localityHref(electionId, stations.find(row => row.id === event.target.value)!));
-                else navigate(localityHref(electionId, locality));
-              }}>
-                <option value="">כל היישוב</option>
-                {stations.map(row => <option key={row.id} value={row.id}>{stationLabel(row)}</option>)}
-              </select></label>}
+              {locality && stations.length > 1 && <SearchableSelect label="קלפי" key={`${electionId}:${locality.id}`}
+                value={stationId ?? ''} options={[{ id: '', name: 'כל היישוב' }, ...stations.map(row => ({ id: row.id, name: stationLabel(row) }))]}
+                onChange={value => {
+                  if (value) navigate(localityHref(electionId, stations.find(row => row.id === value)!));
+                  else navigate(localityHref(electionId, locality));
+                }} />}
             </div>
             {!data.localities.length && <p>טרם פורסמו תוצאות לפי יישוב.</p>}
             {selectedId && !locality && <p role="alert">היישוב שבקישור אינו זמין במערכת בחירות זו.</p>}

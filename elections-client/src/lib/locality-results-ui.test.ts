@@ -4,7 +4,7 @@ import React from 'react';
 import { act, create } from 'react-test-renderer';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import LocalityResults from '../components/LocalityResults';
-import LocalitySelector from '../components/LocalitySelector';
+import SearchableSelect from '../components/SearchableSelect';
 import PartyResearch from '../components/PartyResearch';
 import AppHeader from '../components/AppHeader';
 import { localityHref } from './locality-results';
@@ -70,12 +70,8 @@ function setup(t: any) {
 }
 
 const change = async (renderer: ReturnType<typeof create>, value: string, label: string) => {
-  if (label === 'יישוב') {
-    await act(async () => { renderer.root.findByType(LocalitySelector).props.onChange(value); await tick(); });
-    return;
-  }
-  const control = renderer.root.findAllByType('label').find(node => node.children.includes(label))!;
-  await act(async () => { control.findByType('select').props.onChange({ target: { value } }); await tick(); });
+  const control = renderer.root.findAllByType(SearchableSelect).find(node => node.props.label === label)!;
+  await act(async () => { control.props.onChange(value); await tick(); });
 };
 
 test('locality page contains votes, percentages, local seats and configured blocs together; links round-trip to the exact split station', async t => {
@@ -111,11 +107,11 @@ test('locality page contains votes, percentages, local seats and configured bloc
   await change(renderer, '', 'קלפי');
   assert.equal(renderer.root.findByType('output').children.join(''), '/localities/25?locality=3000');
   await change(renderer, '2', 'יישוב');
-  assert.equal(renderer.root.findAllByType('select').length, 0, 'single-station localities hide the station selector');
+  assert.equal(renderer.root.findAllByType(SearchableSelect).filter(node => node.props.label === 'קלפי').length, 0, 'single-station localities hide the station selector');
   await change(renderer, '', 'יישוב');
   assert.equal(renderer.root.findAllByType('table').length, 0);
   await state.visit('/localities/25?locality=3000');
-  await act(async () => renderer.root.findByType(LocalitySelector).findByType('button').props.onClick());
+  await act(async () => renderer.root.findAllByType(SearchableSelect).find(node => node.props.label === 'יישוב')!.findByType('button').props.onClick());
   await act(async () => renderer.root.findByProps({ type: 'search' }).props.onChange({ target: { value: 'אינו קיים' } }));
   assert.match(text(renderer), /לא נמצאו/);
   assert.match(text(renderer), /ירושלים/, 'selected locality stays visible in the trigger during filtering');
@@ -129,7 +125,7 @@ test('missing station data is optional, direct invalid links never show another 
   state.setMissing(true);
   const renderer = await state.render('/localities/20?locality=3000');
   assert.equal(renderer.root.findAllByProps({ 'aria-label': 'חלוקת גושים' }).length, 0);
-  assert.equal(renderer.root.findAllByType('select').length, 0);
+  assert.equal(renderer.root.findAllByType(SearchableSelect).filter(node => node.props.label === 'קלפי').length, 0);
   await state.visit('/localities/20?locality=3000&station=missing');
   assert.match(text(renderer), /הקלפי שבקישור אינה זמינה/);
   assert.equal(renderer.root.findAllByType('table').length, 0);
@@ -155,12 +151,12 @@ test('embedded historical station files are aggregated and single station deep l
   const row = parsePollingStations(stations)[2];
   const renderer = await state.render(localityHref('19', row));
   assert.equal(state.calls.filter(url => url.includes('polling-stations')).length, 0);
-  assert.equal(renderer.root.findAllByType('select').length, 0);
+  assert.equal(renderer.root.findAllByType(SearchableSelect).filter(node => node.props.label === 'קלפי').length, 0);
   assert.match(text(renderer), /קלפי 1/);
   assert.equal(renderer.root.findAllByProps({ 'aria-label': 'חלוקת גושים' }).length, 0);
   await state.visit('/localities/19?locality=3000');
   assert.match(text(renderer), /1,000/);
-  assert.equal(renderer.root.findAllByType('select').length, 1);
+  assert.equal(renderer.root.findAllByType(SearchableSelect).filter(node => node.props.label === 'קלפי').length, 1);
 });
 
 test('loading errors can be retried, empty files are explicit, and counting refresh keeps the last valid snapshot', async t => {
@@ -180,7 +176,7 @@ test('loading errors can be retried, empty files are explicit, and counting refr
   assert.equal(renderer.root.findAllByType('table').length, 1);
   state.setFail(false); state.setMissing(true); state.setModified('invalid');
   await act(async () => { for (const refresh of state.intervals) refresh(); await tick(); });
-  assert.equal(renderer.root.findAllByType('select').length, 1, 'a transient missing optional file retains previous stations');
+  assert.equal(renderer.root.findAllByType(SearchableSelect).filter(node => node.props.label === 'קלפי').length, 1, 'a transient missing optional file retains previous stations');
   assert.doesNotMatch(text(renderer), /קובץ הנתונים עודכן/);
   const before = state.calls.length;
   state.document.visibilityState = 'hidden';
@@ -196,7 +192,7 @@ test('slow requests deduplicate, unmount aborts late responses and optional malf
   const state = setup(t);
   state.setStations('not a CSV');
   const renderer = await state.render('/localities/26?locality=3000');
-  assert.equal(renderer.root.findAllByType('select').length, 0);
+  assert.equal(renderer.root.findAllByType(SearchableSelect).filter(node => node.props.label === 'קלפי').length, 0);
   const pending: ((value: Response) => void)[] = [];
   let signal: AbortSignal | null | undefined;
   let calls = 0;
@@ -230,7 +226,7 @@ test('equal local vote totals sort consistently and unassigned seat winners are 
 test('locality dropdown filters inside the popup and supports keyboard and pointer selection', async t => {
   const state = setup(t);
   const renderer = await state.render('/localities/25?locality=3000');
-  const selector = () => renderer.root.findByType(LocalitySelector);
+  const selector = () => renderer.root.findAllByType(SearchableSelect).find(node => node.props.label === 'יישוב')!;
   const trigger = () => selector().findAllByType('button')[0];
   const key = async (value: string) => act(async () => {
     selector().findByProps({ role: 'combobox' }).props.onKeyDown({ key: value, preventDefault() {}, stopPropagation() {} }); await tick();
@@ -261,7 +257,7 @@ test('locality dropdown dismisses on outside click or focus loss and preserves s
   let focusCount = 0;
   let scrollCount = 0;
   const renderer = await state.render('/localities/25', () => ({ contains: (node: unknown) => node === inside, focus: () => focusCount++, scrollIntoView: () => scrollCount++ }));
-  const selector = () => renderer.root.findByType(LocalitySelector);
+  const selector = () => renderer.root.findAllByType(SearchableSelect).find(node => node.props.label === 'יישוב')!;
   const trigger = () => selector().findAllByType('button')[0];
   const open = async () => act(async () => trigger().props.onClick());
   await open();
@@ -270,7 +266,7 @@ test('locality dropdown dismisses on outside click or focus loss and preserves s
   await act(async () => { for (const listener of state.pointers) listener({ target: {} }); });
   assert.equal(selector().findAllByProps({ role: 'dialog' }).length, 0);
   await open();
-  const root = selector().findByProps({ className: 'locality-selector-control' });
+  const root = selector().findByProps({ className: 'searchable-select-control' });
   await act(async () => root.props.onBlur({ currentTarget: { contains: () => true }, relatedTarget: inside }));
   assert.equal(selector().findAllByProps({ role: 'dialog' }).length, 1);
   let prevented = false;
@@ -282,4 +278,36 @@ test('locality dropdown dismisses on outside click or focus loss and preserves s
   await act(async () => selector().findByProps({ role: 'combobox' }).props.onKeyDown({ key: 'Enter', preventDefault() {} }));
   assert.ok(focusCount > 0);
   assert.ok(scrollCount > 0);
+});
+
+test('station dropdown reuses the searchable selector, filters splits and returns to the whole locality', async t => {
+  const state = setup(t);
+  const renderer = await state.render('/localities/25?locality=3000');
+  const selector = () => renderer.root.findAllByType(SearchableSelect).find(node => node.props.label === 'קלפי')!;
+  const trigger = () => selector().findAllByType('button')[0];
+  const search = () => selector().findByProps({ role: 'combobox' });
+  assert.equal(renderer.root.findAllByType(SearchableSelect).length, 2);
+  assert.equal(renderer.root.findAllByType('select').length, 0);
+  assert.equal(renderer.root.findAllByProps({ type: 'search' }).length, 0);
+  await act(async () => trigger().props.onClick());
+  assert.equal(search().props['aria-label'], 'חיפוש קלפי');
+  assert.equal(selector().findAllByProps({ role: 'option' }).length, 3);
+  await act(async () => search().props.onChange({ target: { value: 'פיצול 2' } }));
+  const options = selector().findAllByProps({ role: 'option' });
+  assert.equal(options.length, 1);
+  const station = parsePollingStations(stations)[1];
+  await act(async () => { options[0].props.onClick(); await tick(); });
+  assert.equal(renderer.root.findByType('output').children.join(''), localityHref('25', station));
+  assert.equal(trigger().props['aria-expanded'], false);
+  assert.match(text(renderer), /קלפי 12 \(פיצול 2\)/);
+  await act(async () => trigger().props.onClick());
+  assert.equal(search().props.value, '', 'reopening clears the previous station filter');
+  await act(async () => search().props.onChange({ target: { value: 'לא קיימת' } }));
+  assert.equal(selector().findAllByProps({ role: 'option' }).length, 0);
+  assert.match(text(renderer), /לא נמצאו תוצאות/);
+  assert.match(text(renderer), /פיצול 2/, 'filtering preserves the current station');
+  await act(async () => search().props.onChange({ target: { value: 'כל היישוב' } }));
+  await act(async () => { search().props.onKeyDown({ key: 'Enter', preventDefault() {} }); await tick(); });
+  assert.equal(renderer.root.findByType('output').children.join(''), '/localities/25?locality=3000');
+  assert.equal(trigger().findAllByType('span')[0].children[0], 'כל היישוב');
 });
