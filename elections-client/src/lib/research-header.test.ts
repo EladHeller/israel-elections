@@ -96,11 +96,19 @@ test('header retains navigation, status and action content in research and summa
     assert.equal(renderer.root.findByType(ElectionSelector).props.disabled, true);
     await act(async () => renderer.root.findAllByType('button').find(button => button.children.includes('מחקר מפלגות'))!.props.onClick());
     assert.deepEqual(chosen, ['research']);
+    const questionsTab = renderer.root.findByProps({ role: 'group' }).findAllByType('button')
+      .find(button => button.children.includes('שאלות על הבחירות'))!;
+    assert.equal(questionsTab.props['aria-pressed'], false);
+    assert.equal(questionsTab.findByProps({ className: 'beta-badge' }).children[0], 'בטא');
+    await act(async () => questionsTab.props.onClick());
+    assert.deepEqual(chosen, ['research', 'questions']);
     await act(async () => renderer.update(React.createElement(AppHeader, {
       statusText: '', showSimulator: true, isEdited: false, currentElection: null,
       setCurrentElection() {}, availableElections: [], viewMode: 'results', setViewMode() {},
     })));
-    assert.equal(renderer.root.findByType('a').props.href, '/questions');
+    assert.equal(renderer.root.findAllByType('a').length, 0);
+    assert.ok(renderer.root.findByProps({ role: 'group' }).findAllByType('button')
+      .some(button => button.children.includes('שאלות על הבחירות')));
   } finally {
     renderer.unmount();
     if (original) Object.defineProperty(globalThis, 'document', original); else Reflect.deleteProperty(globalThis, 'document');

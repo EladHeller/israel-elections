@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ElectionQuestions from '../components/ElectionQuestions';
 import QuestionAnswer from '../components/QuestionAnswer';
 import ElectionSelector from '../components/ElectionSelector';
+import AppHeader from '../components/AppHeader';
 import manifests from '../data/elections-manifests.json';
 import partyNames from '../data/party-names.json';
 import type { QuestionAttempt } from './question-log';
@@ -51,8 +52,13 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
   };
   try {
     await mount('/questions'); assert.equal(requests.length, 0);
+    assert.equal(renderer.root.findByType(AppHeader).props.viewMode, 'questions');
+    assert.equal(renderer.root.findByProps({ role: 'group' }).findAllByType('button')
+      .find(button => button.children.includes('שאלות על הבחירות'))!.props['aria-pressed'], true);
+    assert.equal(renderer.root.findAllByType(ElectionSelector).length, 1);
     await act(async () => renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }));
     await act(async () => renderer.root.findByType(ElectionSelector).props.onChange('26'));
+    assert.equal(renderer.root.findByType(AppHeader).props.currentElection, '26');
     await ask(''); assert.equal(records.length, 0);
     await ask('מה היה קורה אם לא היה אחוז חסימה');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.ok(renderer.root.findByType(QuestionAnswer));
