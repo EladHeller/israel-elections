@@ -35,6 +35,8 @@ import { selectViewData, viewUsesScenario } from './lib/view-mode';
 import type { AppViewMode, ElectionResultsPayload, PartyResult, ResultsMap, VoteData } from './types';
 import { hasLocalityData } from './lib/locality-availability';
 
+const ElectionQuestions = lazy(() => import('./components/ElectionQuestions'));
+
 const PartyResearch = lazy(() => import('./components/PartyResearch'));
 const LocalityResults = lazy(() => import('./components/LocalityResults'));
 
@@ -75,6 +77,8 @@ export default function App() {
     <Route caseSensitive path="/simulator/:electionId" element={<ElectionRoute viewMode="simulator" />} />
     <Route caseSensitive path="/research/:electionId" element={<Suspense fallback={<p role="status">טוען...</p>}><PartyResearch /></Suspense>} />
     <Route caseSensitive path="/localities/:electionId" element={<Suspense fallback={<p role="status">טוען...</p>}><LocalityResults /></Suspense>} />
+    <Route caseSensitive path="/questions" element={<Suspense fallback={<p role="status">טוען…</p>}><ElectionQuestions /></Suspense>} />
+    <Route caseSensitive path="/questions/:electionId" element={<Suspense fallback={<p role="status">טוען…</p>}><ElectionQuestions /></Suspense>} />
     <Route caseSensitive path="/summary" element={<ElectionRoute viewMode="summary" />} />
     <Route caseSensitive path="*" element={<NotFound />} />
   </Routes>;

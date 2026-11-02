@@ -96,6 +96,11 @@ test('header retains navigation, status and action content in research and summa
     assert.equal(renderer.root.findByType(ElectionSelector).props.disabled, true);
     await act(async () => renderer.root.findAllByType('button').find(button => button.children.includes('מחקר מפלגות'))!.props.onClick());
     assert.deepEqual(chosen, ['research']);
+    await act(async () => renderer.update(React.createElement(AppHeader, {
+      statusText: '', showSimulator: true, isEdited: false, currentElection: null,
+      setCurrentElection() {}, availableElections: [], viewMode: 'results', setViewMode() {},
+    })));
+    assert.equal(renderer.root.findByType('a').props.href, '/questions');
   } finally {
     renderer.unmount();
     if (original) Object.defineProperty(globalThis, 'document', original); else Reflect.deleteProperty(globalThis, 'document');
