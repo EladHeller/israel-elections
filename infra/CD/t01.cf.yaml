@@ -288,6 +288,8 @@ Resources:
       Target: !Join [/, [integrations, !Ref ScenarioApiIntegration]]
 
   ScenarioApiStage:
+    DependsOn:
+      - QuestionLogRoute
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId: !Ref ScenarioApi
