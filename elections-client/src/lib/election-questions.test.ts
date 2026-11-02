@@ -121,6 +121,31 @@ test('next-seat questions accept natural Hebrew and return the first added-vote 
   assert.equal(execute({ kind: 'seat-gap', party: 'ט' }, { ...context, config: { ...context.config, blockPercentage: 1 } }).rows[0][1], '—');
 });
 
+test('short next-seat questions resolve list aliases and use the existing seat calculation', () => {
+  for (const name of ['ליכוד', 'הליכוד', 'מחל', 'רשימת הליכוד', 'הציונות הדתית']) {
+    const party = name === 'הציונות הדתית' ? 'ט' : 'מחל';
+    for (const tense of ['חסרים', 'היו חסרים']) {
+      for (const target of ['למנדט נוסף', 'לעוד מנדט', 'למנדט הבא']) {
+        const parsed = query(`כמה קולות ${tense} ל${name} ${target}?`);
+        assert.deepEqual(parsed, { kind: 'seat-gap', party });
+        assert.deepEqual(execute(parsed, context), execute({ kind: 'seat-gap', party }, context));
+      }
+    }
+  }
+  const parsed = query('כמה קולות חסרים לליכוד למנדט נוסף');
+  const answer = execute(parsed, context);
+  const delta = Number(answer.rows[0][1]);
+  const seats = (added: number) => computeScenarioResults({ ...context.votes, מחל: { ...context.votes['מחל'], votes: context.votes['מחל'].votes + added } }, context.config).realResults['מחל'].mandats;
+  assert.ok(delta > 0);
+  assert.ok(seats(delta) > seats(0));
+  assert.equal(seats(delta - 1), seats(0));
+  assert.deepEqual(query('כמה קולות היו חסרים לליכוד למנדט נוסף בתוצאות האמת'), parsed);
+  for (const suffix of ['בלי הסכמי עודפים', 'בבחירות 25', 'בירושלים', 'וכמה לשס', 'אם אחוז החסימה ישתנה']) {
+    rejected(`כמה קולות חסרים לליכוד למנדט נוסף ${suffix}`);
+  }
+  rejected('כמה קולות חסרים לליכוד למנדט שני');
+});
+
 test('Hebrew normalization, list names, ballot letters, prefixes and current-election aliases', () => {
   assert.equal(normalizeQuestion('  ש״ס — הַלִּיכוּד?  '), 'שס הליכוד');
   for (const name of ['הליכוד', 'ליכוד', 'מחל', 'מפלגת הליכוד', 'רשימת הליכוד']) {
