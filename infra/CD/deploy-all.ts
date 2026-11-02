@@ -2,6 +2,7 @@ import { LambdaClient, UpdateFunctionCodeCommand, waitUntilFunctionUpdatedV2 } f
 import {
   CloudFormationClient,
   ContinueUpdateRollbackCommand,
+  DescribeStackEventsCommand,
   DescribeStacksCommand,
   CreateStackCommand,
   UpdateStackCommand,
@@ -45,8 +46,23 @@ async function getStackOutputs(name: string): Promise<Output[] | undefined> {
 async function recoverFailedRollback(name: string, status?: string) {
   if (status !== 'UPDATE_ROLLBACK_FAILED') return;
 
+  const events = await cf.send(new DescribeStackEventsCommand({ StackName: name }));
+  const questionRouteStageFailure = events.StackEvents?.some(event =>
+    event.LogicalResourceId === 'ScenarioApiStage'
+      && event.ResourceStatus === 'UPDATE_FAILED'
+      && event.ResourceStatusReason?.includes('POST /api/questions')
+      && event.ResourceStatusReason?.includes('Route')
+  );
+  const resourcesToSkip = questionRouteStageFailure ? ['ScenarioApiStage'] : undefined;
+
   console.log(`Template ${name} is in UPDATE_ROLLBACK_FAILED; continuing rollback before deployment...`);
-  await cf.send(new ContinueUpdateRollbackCommand({ StackName: name }));
+  if (resourcesToSkip) {
+    console.log('Known question-route rollback failure detected; skipping ScenarioApiStage during rollback recovery.');
+  }
+  await cf.send(new ContinueUpdateRollbackCommand({
+    StackName: name,
+    ResourcesToSkip: resourcesToSkip,
+  }));
 
   const deadline = Date.now() + (20 * 60 * 1000);
   while (Date.now() < deadline) {
