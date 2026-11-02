@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
 import { act, create } from 'react-test-renderer';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import ElectionQuestions from '../components/ElectionQuestions';
 import QuestionAnswer from '../components/QuestionAnswer';
 import ElectionSelector from '../components/ElectionSelector';
@@ -10,6 +10,8 @@ import AppHeader from '../components/AppHeader';
 import manifests from '../data/elections-manifests.json';
 import partyNames from '../data/party-names.json';
 import type { QuestionAttempt } from './question-log';
+
+const NavigationTarget = () => React.createElement('p', { id: 'navigation-target' }, useLocation().pathname);
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const snapshot = { time: '2026-11-02T10:00:00Z', voteData: { מחל: { votes: 500, mandats: 0 }, ך: { votes: 100, mandats: 0 } }, realResults: {} };
@@ -42,7 +44,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     await act(async () => {
       renderer = create(React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(Routes, {},
         React.createElement(Route, { path: '/questions', element: React.createElement(ElectionQuestions) }),
-        React.createElement(Route, { path: '/questions/:electionId', element: React.createElement(ElectionQuestions) })))); await tick();
+        React.createElement(Route, { path: '/questions/:electionId', element: React.createElement(ElectionQuestions) }),
+        React.createElement(Route, { path: '*', element: React.createElement(NavigationTarget) })))); await tick();
     });
   };
   const input = () => renderer.root.findByProps({ id: 'election-question' });
@@ -88,6 +91,17 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
       delete (partyNames['26'] as Record<string, string>)['מחל']; await mount('/questions/26'); await ask('כמה קולות קיבלה מחל'); assert.ok(renderer.root.findByType(QuestionAnswer));
       manifests['26'] = { ...originalManifest, phase: 'voting' }; await mount('/questions/26'); assert.match(text(), /אין עדיין תוצאות/);
     } finally { manifests['26'] = originalManifest; partyNames['26']['מחל'] = originalName; }
+    for (const [label, target] of [['תוצאות', '/results/25'], ['סימולטור', '/simulator/25'], ['מחקר מפלגות', '/research/25'], ['יישובים', '/localities/25'], ['כל הכנסות', '/summary']]) {
+      await mount('/questions/25');
+      await act(async () => renderer.root.findAllByType('button').find(button => button.children.includes(label))!.props.onClick());
+      assert.equal(renderer.root.findByProps({ id: 'navigation-target' }).children[0], target);
+    }
+    for (const [label, target] of [['שאלות על הבחירות', ''], ['תוצאות', '/'], ['כל הכנסות', '/summary']]) {
+      await mount('/questions');
+      await act(async () => renderer.root.findAllByType('button').find(button => button.children.includes(label))!.props.onClick());
+      if (target) assert.equal(renderer.root.findByProps({ id: 'navigation-target' }).children[0], target);
+      else assert.ok(renderer.root.findByType(ElectionQuestions));
+    }
   } finally {
     await act(async () => renderer?.unmount()); globalThis.fetch = originals.fetch;
     Object.defineProperty(globalThis, 'window', { configurable: true, value: originals.window }); Object.defineProperty(globalThis, 'document', { configurable: true, value: originals.document });
