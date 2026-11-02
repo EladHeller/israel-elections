@@ -14,6 +14,52 @@ function query(text: string, ctx = context): QuestionQuery {
 }
 function rejected(text: string, ctx = context) { assert.ok('error' in parse(text, ctx), text); }
 
+test('below-threshold local winners distinguish strict majorities from first place including ties', () => {
+  for (const unit of ['קלפיות', 'קלפי', 'יישובים', 'ישובים']) {
+    for (const list of ['מפלגה', 'רשימה']) {
+      for (const metric of ['רוב הקולות', 'הכי הרבה קולות', 'מספר הקולות הגבוה ביותר', 'מעל 50% מהקולות', 'יותר מ־50 אחוז מהקולות']) {
+        const expected = { kind: 'below-threshold-winners', level: unit.startsWith('קלפ') ? 'stations' : 'localities', measure: /הכי הרבה|הגבוה/.test(metric) ? 'plurality' : 'majority' };
+        assert.deepEqual(query(`באילו ${unit} ${list} שלא עברה את אחוז החסימה קיבלה את ${metric}?`), expected);
+        assert.deepEqual(query(`איזה ${unit} קיבלה ${list} שלא עברה את אחוז החסימה הארצי ${metric}`), expected);
+      }
+    }
+  }
+  rejected('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות מעל 100 כשרים');
+  const places: LocalityVotes[] = [
+    { id: '1', name: 'רוב', pollingStation: '3', split: 0, validVotes: 100, votes: { ך: 60, מחל: 40 } },
+    { id: '2', name: 'חצי', validVotes: 100, votes: { ך: 50, מחל: 30, ט: 20 } },
+    { id: '3', name: 'מוביל', pollingStation: '2', validVotes: 100, votes: { ך: 40, מחל: 35, ט: 25 } },
+    { id: '4', name: 'תיקו', validVotes: 100, votes: { ך: 45, מחל: 45, ט: 10 } },
+    { id: '5', name: 'עברה', validVotes: 100, votes: { מחל: 70, ך: 30 } },
+    { id: '6', name: 'ללא כשרים', validVotes: 0, votes: {} },
+    { id: '7', name: 'ללא קולות', validVotes: 100, votes: {} },
+    { id: '8', name: 'לא מוכרת', validVotes: 100, votes: { לאמוכרת: 70, ך: 30 } },
+  ];
+  const majority = query('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות');
+  const plurality = query('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה הכי הרבה קולות');
+  const before = structuredClone(places);
+  assert.deepEqual(execute(majority, context, places).rows, [['רוב — קלפי 3 / פיצול 0', 'עמך ישראל', 60, '60.00%', 'מקום ראשון']]);
+  const rows = execute(plurality, context, places).rows;
+  assert.equal(rows.length, 4);
+  assert.deepEqual(rows.find(row => row[0] === 'תיקו'), ['תיקו', 'עמך ישראל', 45, '45.00%', 'תיקו במקום הראשון']);
+  assert.ok(rows.some(row => row[0] === 'מוביל — קלפי 2'));
+  assert.equal(execute(plurality, { ...context, config: { ...context.config, blockPercentage: 0.19 } }, places).rows.length, 0);
+  assert.equal(execute(majority, context, []).rows.length, 0);
+  assert.throws(() => execute(majority, context), /זמינים/);
+  assert.equal(execute(majority, { ...context, names: {} }, places).rows[0][1], 'ך');
+  const tiedPlaces: LocalityVotes[] = [
+    { id: 'b', name: 'ב', validVotes: 100, votes: { ך: 45, ט: 45, מחל: 10 } },
+    { id: 'a', name: 'א', validVotes: 100, votes: { ך: 45, ט: 45, מחל: 10 } },
+    { id: 'c', name: 'ג', validVotes: 200, votes: { ך: 90, מחל: 110 } },
+    { id: 'd', name: 'ד', validVotes: 200, votes: { ך: 90, ט: 90, מחל: 20 } },
+  ];
+  const bothBelow = { ...context, config: { ...context.config, blockPercentage: 0.35 } };
+  const tiedRows = execute(plurality, bothBelow, tiedPlaces).rows;
+  assert.equal(tiedRows.length, 6);
+  assert.deepEqual(tiedRows.map(row => row[0]), ['ד', 'ד', 'א', 'א', 'ב', 'ב']);
+  assert.deepEqual(places, before);
+});
+
 test('seat-loss questions remove votes only from the selected list and find the first loss', () => {
   for (const name of ['הציונות הדתית', 'ציונות הדתית', 'ט', 'ליכוד']) {
     for (const wording of [`כמה קולות צריכים לרדת ל${name} כדי שתאבד מנדט?`, `כמה קולות צריך להוריד ל${name} כדי שירד לה מנדט`, `כמה קולות היו צריכים לרדת ל${name} כדי לאבד מנדט בתוצאות האמת`]) {

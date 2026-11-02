@@ -48,7 +48,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         outcome = 'unsupported'; setError(parsed.error); return;
       }
       let places;
-      if (parsed.query.kind === 'rank') {
+      if (parsed.query.kind === 'rank' || parsed.query.kind === 'below-threshold-winners') {
         const source = parsed.query.level === 'stations' ? pollingStationSource(electionId) : hasLocalityData(electionId) ? `/data/${electionId}/elections.csv` : null;
         if (!source) throw new Error('אין נתוני מקומות לבחירות אלו. אפשר לשאול על התוצאות הארציות או לבחור מערכת אחרת.');
         const response = await fetch(source, { cache: 'no-store', signal: controller.signal });

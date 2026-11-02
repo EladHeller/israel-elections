@@ -63,6 +63,11 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     assert.match(text(), /הייתה צריכה עוד/); assert.equal(records.at(-1)!.outcome, 'answered');
     await ask('כמה קולות צריכים לרדת לליכוד כדי שתאבד מנדט?');
     assert.match(text(), /צריכה לאבד/); assert.equal(records.at(-1)!.outcome, 'answered');
+    await ask('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות');
+    assert.match(text(), /לא נמצאו/); assert.equal(records.at(-1)!.outcome, 'empty');
+    assert.ok(requests.includes('/data/26/polling-stations.csv'));
+    await ask('באילו יישובים רשימה שלא עברה את אחוז החסימה קיבלה הכי הרבה קולות');
+    assert.match(text(), /לא נמצאו/); assert.ok(requests.includes('/data/26/elections.csv'));
     const example = renderer.root.findAllByType('button').find(button => button.children.includes('באיזה יישוב הליכוד קיבלה הכי הרבה קולות?'))!;
     await act(async () => example.props.onClick()); assert.equal(focused, true);
     assert.equal(input().props.value, 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?');
@@ -94,7 +99,7 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
 
 test('prose includes explicit green gains and red losses without unchanged seat clutter', () => {
   let renderer!: ReturnType<typeof create>;
-  const show = (kind: 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'results', rows: (string | number)[][]) => {
+  const show = (kind: 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'below-threshold-winners' | 'results', rows: (string | number)[][]) => {
     renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [] } })); return JSON.stringify(renderer.toJSON());
   };
   try {
@@ -107,5 +112,6 @@ test('prose includes explicit green gains and red losses without unchanged seat 
     assert.match(show('seat-gap', [['א', '—', 120]]), /לא נמצאה.*בטווח החיפוש/);
     assert.match(show('seat-loss', [['א', 1234, 8]]), /צריכה לאבד.*1,234/);
     assert.match(show('seat-loss', [['א', '—', 0]]), /אין הפחתת קולות/);
+    assert.match(show('below-threshold-winners', [['מקום — קלפי 1', 'עמך ישראל', 45, '45.00%', 'תיקו במקום הראשון']]), /עמך ישראל.*45.*תיקו במקום הראשון/);
   } finally { renderer.unmount(); }
 });
