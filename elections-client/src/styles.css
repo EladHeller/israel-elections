@@ -1904,3 +1904,17 @@ body {
 .searchable-select-options { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
 .searchable-select-options button.is-active { outline: 2px solid var(--ink-50); outline-offset: -2px; }
 .searchable-select-menu p { padding: .5rem; margin: 0; color: var(--ink-50); }
+
+.election-questions { max-width: 960px; margin-inline: auto; }
+.election-questions .header { display: flex; justify-content: space-between; align-items: center; }
+.election-questions form { display: grid; gap: 12px; margin-block: 24px; }
+.election-questions textarea { box-sizing: border-box; width: 100%; font: inherit; padding: 14px; border: 1px solid var(--control-border); border-radius: 12px; background: var(--bg); color: var(--ink-90); resize: vertical; }
+.election-questions button { white-space: normal; }
+.election-questions details { margin-block: 16px; }
+.election-questions summary { cursor: pointer; }
+.question-examples { display: grid; gap: 8px; margin-block: 12px; }
+.question-examples button { text-align: start; }
+.question-table { overflow-x: auto; }
+.question-table table { width: 100%; border-collapse: collapse; }
+.question-table th, .question-table td { padding: 12px; text-align: start; border-bottom: 1px solid var(--control-border); }
+.election-questions pre { overflow-x: auto; text-align: left; }
