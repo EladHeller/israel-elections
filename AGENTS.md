@@ -56,3 +56,9 @@ When updating `elections-client/src/data/party-names.json`, ensure that party na
 - Lambda and client artifacts are uploaded to S3 and served via CloudFront; deploys also invalidate CDN caches.
 - Verify AWS credentials before running any `infra/CD/*` scripts.
 - CD targets two environments: `dev` for `develop` and `prod` for `master` (see `.github/workflows/deploy.yml`).
+
+## UI rules (required for every client change)
+- Never ship browser-default buttons or dropdowns. Reuse `ElectionSelector`, `SearchableSelect`, and the shared `ui-button` variants in `src/styles.css`; extend the shared design before introducing a one-off control.
+- Never underline links, including hover, visited and focus states. Use color, a quiet surface or an icon, and preserve a visible keyboard focus ring.
+- Apply shared light/dark tokens, disabled/hover/focus states, RTL and mobile sizing. Meaning must not depend on color alone.
+- Read [UI guidelines](docs/ui-guidelines.md) before adding or changing controls. Verify rendered light/dark themes and mobile width when browser tooling is available; disclose unavailable visual QA.
