@@ -1,9 +1,10 @@
 import { normalizeQuestion, parseElectionQuestion, resolveParties, type QuestionContext } from './election-questions';
+import type { QuestionNumber } from './question-number';
 import type { LocalityVotes } from './party-research';
 
 export interface QuestionPlaces { localities: LocalityVotes[]; stations: LocalityVotes[] }
 export interface EntityOption { id: string; name: string; text: string }
-export interface QuestionEntity { start: number; end: number; kind: 'party' | 'locality' | 'station'; id: string; label: string; options: EntityOption[] }
+export interface QuestionEntity { start: number; end: number; kind: 'party' | 'locality' | 'station' | 'number'; numeric?: QuestionNumber; id: string; label: string; options: EntityOption[] }
 export const emptyQuestionPlaces: QuestionPlaces = { localities: [], stations: [] };
 
 // Offsets refer to the original UTF-16 string, including quotes, niqqud and clitics.
@@ -71,6 +72,22 @@ export function questionEntities(input: string, context: QuestionContext, places
       if (!resolved.ambiguous && resolved.parties[0] === option.id) add(mapped.starts[start], mapped.ends[start + name.length - 1], 'party', option, parties);
     }
   }
+  for (const match of mapped.text.matchAll(/\d+(?:\.\d+)?%?/g)) {
+    const at = match.index!;
+    const start = mapped.starts[at]; const end = mapped.ends[at + match[0].length - 1];
+    if (entities.some(entity => start < entity.end && end > entity.start)) continue;
+    const before = mapped.text.slice(0, at); const after = mapped.text.slice(at + match[0].length);
+    const percent = match[0].endsWith('%') || /^ (?:אחוז|אחוזים)(?: |$)/.test(after);
+    const numeric: QuestionNumber = { percent, suffix: match[0].endsWith('%') ? '%' : '', min: 0,
+      max: percent ? 100 : Number.MAX_SAFE_INTEGER, positive: percent && /^ מהקולות/.test(after), label: percent ? 'אחוז' : 'מספר' };
+    if (!percent) {
+      if (/^(?:באילו|באיזה|איזה|אילו) $/.test(before)) { numeric.min = 1; numeric.max = 100; numeric.label = 'מספר תוצאות'; }
+      else if (before.endsWith('עם לפחות ')) numeric.label = 'מינימום קולות';
+      else if (context.electionId && /(?:כנסת|בחירות) $/.test(before)) { numeric.min = 1; numeric.max = Math.max(1, Number(context.electionId) - 1); numeric.label = 'כנסת להשוואה'; }
+      else { numeric.label = 'מספר קולות'; if (!('error' in parsed) && parsed.query.kind === 'scenario' && parsed.query.voteChange) numeric.min = 1; }
+    }
+    entities.push({ start, end, kind: 'number', numeric, id: `number-${start}`, label: input.slice(start, end), options: [] });
+  }
   const chosen = new Set(entities.filter(entity => entity.kind === 'party').map(entity => entity.id));
   return entities.sort((a, b) => a.start - b.start).map(entity => entity.kind !== 'party' ? entity : {
     ...entity, options: entity.options.filter(option => option.id === entity.id || !chosen.has(option.id))
@@ -78,6 +95,7 @@ export function questionEntities(input: string, context: QuestionContext, places
 }
 
 export function replaceQuestionEntity(input: string, entity: QuestionEntity, next: string, context: QuestionContext): string {
+  if (entity.kind === 'number') return input.slice(0, entity.start) + next + input.slice(entity.end);
   const option = entity.options.find(option => option.id === next);
   if (!option) return input;
   let suffix = input.slice(entity.end);

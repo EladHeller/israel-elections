@@ -4,6 +4,7 @@ import React from 'react';
 import { act, create } from 'react-test-renderer';
 import QuestionInput from '../components/QuestionInput';
 import SearchableSelect from '../components/SearchableSelect';
+import QuestionNumberChip from '../components/QuestionNumberChip';
 import type { QuestionContext } from './election-questions';
 
 import { createQuestionCompletions } from './question-completions';
@@ -125,6 +126,19 @@ test('tokenized completion keeps focus, opens suggestions, and name-loading fail
     act(() => renderer.root.findByType('input').props.onFocus());
     act(() => renderer.root.findAllByProps({ role: 'option' })[0].props.onClick());
     act(() => renderer.root.findAllByProps({ role: 'option' })[0].props.onClick());
+    assert.ok(renderer.root.findByProps({ className: 'question-tokenized' }));
+  } finally { act(() => renderer.unmount()); }
+});
+
+
+test('a number chip updates only its numeric span and stays in structured editing mode', () => {
+  let renderer!: ReturnType<typeof create>; let value = 'מה היה קורה אם רשימה א הייתה מקבלת 500 פחות קולות';
+  const props = () => ({ value, context, busy: false, disabled: false, onChange: (next: string) => { value = next; renderer.update(React.createElement(QuestionInput, props())); } });
+  act(() => { renderer = create(React.createElement(QuestionInput, props())); });
+  try {
+    assert.equal(renderer.root.findByType(QuestionNumberChip).props.value, '500');
+    act(() => renderer.root.findByType(QuestionNumberChip).props.onChange('1,000'));
+    assert.equal(value, 'מה היה קורה אם רשימה א הייתה מקבלת 1,000 פחות קולות');
     assert.ok(renderer.root.findByProps({ className: 'question-tokenized' }));
   } finally { act(() => renderer.unmount()); }
 });

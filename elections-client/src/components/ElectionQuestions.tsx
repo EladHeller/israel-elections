@@ -27,7 +27,7 @@ export default function ElectionQuestions() {
   const { electionId = '' } = useParams();
   const [params] = useSearchParams();
   const initialQuestion = params.get('q') ?? '';
-  return <QuestionScreen key={`${electionId}:${initialQuestion}`} electionId={electionId} initialQuestion={initialQuestion} />;
+  return <QuestionScreen key={electionId} electionId={electionId} initialQuestion={initialQuestion} />;
 }
 function QuestionScreen({ electionId, initialQuestion }: { electionId: string; initialQuestion: string }) {
   const navigate = useNavigate();
@@ -40,6 +40,7 @@ function QuestionScreen({ electionId, initialQuestion }: { electionId: string; i
   }, [data.results, data.partyNames, data.electionManifest, data.electionConfig, data.blocs, electionId, exampleSeed]);
   const [question, setQuestion] = useState(() => initialQuestion.slice(0, 600));
   const autoStarted = useRef(false);
+  const previousLinkedQuestion = useRef(initialQuestion);
   const places = useQuestionPlaces(data.results ? electionId : undefined, question.includes('בקלפי'));
   const [reply, setReply] = useState<Reply | null>(null);
   const [error, setError] = useState<string | null>(initialQuestion.length > 600 ? 'השאלה בקישור ארוכה מדי. אפשר לערוך שאלה של עד 600 תווים ולשלוח אותה.' : null);
@@ -52,6 +53,14 @@ function QuestionScreen({ electionId, initialQuestion }: { electionId: string; i
     config: data.electionConfig, electionId, blocs: data.blocs,
   } : undefined, [data.results, data.electionManifest, data.partyNames, data.electionConfig, data.blocs, electionId]);
   useEffect(() => () => active.current?.abort(), []);
+  useEffect(() => {
+    if (previousLinkedQuestion.current === initialQuestion) return;
+    previousLinkedQuestion.current = initialQuestion;
+    autoStarted.current = false;
+    active.current?.abort(); setBusy(false);
+    setQuestion(initialQuestion.slice(0, 600)); setReply(null); setSaveFailed(false);
+    setError(initialQuestion.length > 600 ? 'השאלה בקישור ארוכה מדי. אפשר לערוך שאלה של עד 600 תווים ולשלוח אותה.' : null);
+  }, [initialQuestion]);
   const changeQuestion = (value: string) => {
     autoStarted.current = true;
     active.current?.abort(); setBusy(false);
@@ -138,7 +147,12 @@ function QuestionScreen({ electionId, initialQuestion }: { electionId: string; i
       {data.error && <p role="alert">טעינת נתוני הבחירות נכשלה. אפשר לבחור שוב או לרענן את העמוד.</p>}
       {data.refreshError && <p role="status">{data.refreshError}</p>}
       {validElection && !data.results && !data.error && <p role="status">{data.electionManifest && !['counting', 'final'].includes(data.electionManifest.phase) ? 'אין עדיין תוצאות לבחירות אלו.' : 'טוען תוצאות…'}</p>}
-      <form className="question-form" onSubmit={event => { event.preventDefault(); void ask(question); }}>
+      <form className="question-form" onSubmit={event => {
+        event.preventDefault();
+        const submitted = question.trim();
+        if (submitted && initialQuestion !== submitted) navigate(questionHref(electionId, submitted));
+        else void ask(submitted);
+      }}>
         <label htmlFor="election-question">השאלה שלכם</label>
         <QuestionInput value={question} onChange={changeQuestion} busy={busy} disabled={!validElection || !data.results}
           context={completionContext} places={places} placesLoading={places.loading} placesError={places.error} retryPlaces={places.retry} />

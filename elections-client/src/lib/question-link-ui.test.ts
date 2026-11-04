@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
 import { act, create } from 'react-test-renderer';
-import { MemoryRouter, Route, Routes, useNavigate, type NavigateFunction } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate, useLocation, type NavigateFunction } from 'react-router-dom';
 import ElectionQuestions from '../components/ElectionQuestions';
 import ElectionSelector from '../components/ElectionSelector';
 import QuestionShare from '../components/QuestionShare';
@@ -18,14 +18,15 @@ const csv = 'שם ישוב,סמל ישוב,מספר קלפי,כשרים,מחל,�
 
 test('question URLs wait for data, run once, handle query navigation and cancel superseded requests', async () => {
   const original = { fetch: globalThis.fetch, window: globalThis.window, document: globalThis.document };
-  const records: QuestionAttempt[] = []; let mode = 'normal'; const pending: (() => void)[] = [];
-  let navigate!: NavigateFunction; let renderer!: ReturnType<typeof create>;
-  const Navigation = () => { navigate = useNavigate(); return null; };
+  const records: QuestionAttempt[] = []; let mode = 'normal'; let resultLoads = 0; const pending: (() => void)[] = [];
+  let currentSearch = ''; let navigate!: NavigateFunction; let renderer!: ReturnType<typeof create>;
+  const Navigation = () => { navigate = useNavigate(); currentSearch = useLocation().search; return null; };
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: () => 1, clearInterval() {}, location: { origin: 'https://example.test' } } });
   Object.defineProperty(globalThis, 'document', { configurable: true, value: { visibilityState: 'visible', documentElement: { dataset: { theme: 'light' } }, addEventListener() {}, removeEventListener() {}, getElementById: () => ({ focus() {} }) } });
   globalThis.fetch = async (url, options) => {
     const path = String(url);
     if (path === '/api/questions') { records.push(JSON.parse(String(options!.body))); return new Response('', { status: 201 }); }
+    if (path.endsWith('/26/allResults.json')) resultLoads++;
     if (mode === 'data' && path.endsWith('/26/allResults.json')) await new Promise<void>(resolve => pending.push(resolve));
     if (path.endsWith('.csv')) {
       if (mode === 'places') await new Promise<void>(resolve => pending.push(resolve));
@@ -60,7 +61,25 @@ test('question URLs wait for data, run once, handle query navigation and cancel 
     assert.equal(records.length, 2); assert.equal(records.at(-1)!.question, 'כמה קולות קיבלה הליכוד');
     await mount(questionHref('26', 'שאלה שאינה נתמכת'));
     assert.equal(records[0].outcome, 'unsupported');
+    await act(async () => { navigate(questionHref('26', 'א'.repeat(601))); await tick(); }); await settle();
+    assert.equal(records.length, 1); assert.equal(input().props.value.length, 600);
+    assert.match(JSON.stringify(renderer.toJSON()), /השאלה בקישור ארוכה מדי/);
     await mount('/questions/26?q=%20%20'); assert.equal(records.length, 0);
+    await act(async () => { renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }); await tick(); });
+    assert.equal(records.length, 0, 'blank submission leaves the URL and answer alone');
+    const loadsBeforeSubmissions = resultLoads;
+    await act(async () => input().props.onChange({ target: { value: 'כמה קולות קיבלה הליכוד' } }));
+    assert.equal(new URLSearchParams(currentSearch).get('q'), '  ', 'editing does not alter the submitted URL');
+    await act(async () => { renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }); await tick(); }); await settle();
+    assert.equal(new URLSearchParams(currentSearch).get('q'), 'כמה קולות קיבלה הליכוד');
+    assert.equal(records.length, 1, 'new submission executes only once');
+    await act(async () => { renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }); await tick(); }); await settle();
+    assert.equal(records.length, 2, 'explicit repeated submission recalculates once');
+    await act(async () => { navigate(-1); await tick(); }); await settle();
+    assert.equal(input().props.value, '  '); assert.equal(records.length, 2);
+    await act(async () => { navigate(1); await tick(); }); await settle();
+    assert.equal(records.length, 3); assert.equal(input().props.value, 'כמה קולות קיבלה הליכוד');
+    assert.equal(resultLoads, loadsBeforeSubmissions, 'question navigation retains loaded election results');
     await mount(questionHref('26', 'א'.repeat(601)));
     assert.equal(input().props.value.length, 600); assert.equal(records.length, 0);
     assert.match(JSON.stringify(renderer.toJSON()), /השאלה בקישור ארוכה מדי/);
