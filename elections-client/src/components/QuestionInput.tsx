@@ -33,7 +33,8 @@ export default function QuestionInput({ value, onChange, context, busy, disabled
           if (event.key === 'Escape') { event.preventDefault(); setOpen(false); setActive(-1); }
           if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && suggestions.options.length) {
             event.preventDefault(); setOpen(true);
-            setActive((index + (event.key === 'ArrowDown' ? 1 : -1) + suggestions.options.length) % suggestions.options.length);
+            setActive(index < 0 ? (event.key === 'ArrowDown' ? 0 : suggestions.options.length - 1)
+              : (index + (event.key === 'ArrowDown' ? 1 : -1) + suggestions.options.length) % suggestions.options.length);
           }
           if (event.key === 'Enter' && expanded && index >= 0) {
             event.preventDefault(); choose(suggestions.options[index].value);

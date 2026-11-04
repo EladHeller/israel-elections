@@ -26,6 +26,7 @@ test('completions follow edited text, election data and valid-vote threshold, no
   assert.equal(complete('מה היה קורה אם רשימה ראשונה מקבלת את כל הקולות של').options.length, 2);
   assert.equal(questionCompletions('', { ...context, electionId: '1' }).options.some(x => /יישוב|קלפי/.test(x.label)), false);
   assert.equal(questionCompletions('', { ...context, votes: {} }).options.length, 0);
+  assert.equal(questionCompletions('', { ...context, electionId: undefined }).options.some(x => /יישוב|קלפי/.test(x.label)), false);
   const edge = { ...context, votes: { א: { votes: 9675, mandats: 0 }, ב: { votes: 325, mandats: 0 } } };
   assert.equal(questionCompletions('כמה קולות חסרים לרשימה שנייה', edge).options[0].label, 'למנדט נוסף');
 });

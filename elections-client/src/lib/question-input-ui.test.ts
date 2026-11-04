@@ -46,3 +46,40 @@ test('completion keeps one editable textbox, supports pointer, arrows, Escape an
     assert.equal(input().props.disabled, true);
   } finally { act(() => renderer.unmount()); }
 });
+
+test('dropdown toggle, focus, pointer selection and submit preserve native form behavior', () => {
+  let renderer!: ReturnType<typeof create>;
+  let value = ''; let focused = 0; let prevented = false;
+  const change = (next: string) => { value = next; render(); };
+  const render = (extra: { context?: QuestionContext; busy?: boolean; disabled?: boolean } = {}) => renderer.update(
+    React.createElement(QuestionInput, { value, onChange: change, context, busy: false, disabled: false, ...extra }));
+  act(() => { renderer = create(React.createElement(QuestionInput, { value, onChange: change, context, busy: false, disabled: false }),
+    { createNodeMock: element => element.type === 'input' ? { focus() { focused++; } } : { scrollIntoView() {} } }); });
+  const input = () => renderer.root.findByType('input');
+  const toggle = () => renderer.root.findByProps({ className: 'ui-button ui-button-quiet question-suggest-toggle' });
+  const options = () => renderer.root.findAllByProps({ role: 'option' });
+  const key = (key: string) => act(() => input().props.onKeyDown({ key, preventDefault() {} }));
+  try {
+    act(() => toggle().props.onClick()); assert.equal(options().length, 5); assert.equal(focused, 1);
+    act(() => toggle().props.onClick()); assert.equal(options().length, 0);
+    act(() => input().props.onClick()); assert.equal(options().length, 5);
+    key('ArrowUp'); assert.match(input().props['aria-activedescendant'], /option-4$/);
+    key('ArrowDown'); key('ArrowDown'); key('ArrowUp');
+    act(() => options()[0].props.onMouseDown({ preventDefault() { prevented = true; } }));
+    assert.equal(prevented, true);
+    const root = renderer.root.findByProps({ className: 'question-composer' });
+    act(() => root.props.onBlur({ currentTarget: { contains: () => true }, relatedTarget: {} }));
+    assert.equal(options().length, 5, 'moving focus within the composer keeps suggestions');
+    act(() => renderer.root.findByProps({ type: 'submit' }).props.onClick());
+    assert.equal(options().length, 0);
+    act(() => render({ busy: true })); assert.equal(renderer.root.findByProps({ type: 'submit' }).props.disabled, true);
+    act(() => render({ context: undefined })); assert.equal(toggle().props.disabled, true);
+    act(() => input().props.onFocus()); assert.equal(options().length, 0);
+    act(() => render());
+    key('Escape'); key('ArrowUp');
+    act(() => render({ context: { ...context, electionId: '1' } }));
+    assert.equal(input().props['aria-activedescendant'], undefined, 'stale selection is cleared when available options shrink');
+    act(() => render({ context: undefined })); key('ArrowDown');
+    act(() => render({ disabled: true })); assert.equal(input().props['aria-expanded'], false);
+  } finally { act(() => renderer.unmount()); }
+});
