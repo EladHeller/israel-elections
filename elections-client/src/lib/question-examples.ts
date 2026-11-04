@@ -34,6 +34,12 @@ export function buildQuestionExamples(context: QuestionContext, allLists = false
     ...leading.map(id => `מה היה קורה אם ${label(id)} לא הייתה מקבלת קולות בכלל?`),
     ...(leading.length > 1 ? [`מה היה קורה אם כל הקולות של ${label(leading[1])} היו עוברים ל${label(leading[0])}?`,
       `מה היה קורה אם 10% מהקולות של ${label(leading[0])} היו עוברים ל${label(leading[1])}?`] : [])]);
+  add('ירידה בקולות', leading.flatMap(id => {
+    const exampleAmount = Math.min(5000, votes[id].votes, total - 1);
+    const amounts = allLists ? [...new Set([exampleAmount, 1000, 5000, 10000, 50000])] : [exampleAmount];
+    return amounts.filter(amount => amount > 0 && amount <= votes[id].votes && amount < total)
+      .map(amount => `מה היה קורה אם ${label(id)} הייתה מקבלת ${amount.toLocaleString('en-US')} פחות קולות?`);
+  }));
   if (hasLocalityData(electionId)) {
     add('יישובים', [
       ...leading.flatMap(id => [`באיזה יישוב ${label(id)} קיבלה הכי הרבה קולות?`, `באילו 10 יישובים ${label(id)} קיבלה את האחוז הגבוה ביותר?`, `בכמה יישובים ${label(id)} קיבלה קולות?`]),

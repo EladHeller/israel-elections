@@ -88,7 +88,8 @@ test('expanded paths cover supported measures, geography, comparisons and every 
   assert.ok(questions.some(q => q.includes('רשימה שלישית') && q.startsWith('כמה קולות נוספים')));
   assert.ok(questions.some(q => q.startsWith('בכמה אחוזים עלתה הליכוד')));
   assert.ok(questions.some(q => q.includes('הליכוד התחזקה')));
-  assert.ok(complete('מה היה קורה אם הליכוד').options.some(option => option.value.includes('אותו')));
+  assert.ok(complete('מה היה קורה אם הליכוד').options.some(option => option.value.includes('הייתה מקבלת')));
+  assert.ok(complete('מה היה קורה אם הליכוד הייתה מקבלת').options.some(option => option.value.includes('אותו')));
 });
 
 
