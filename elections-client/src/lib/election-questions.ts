@@ -56,7 +56,7 @@ export function resolveParties(text: string, context: QuestionContext): { text: 
     if (alias.startsWith('ה') && alias.length > 2) for (const id of ids) add(alias.slice(1), id);
   }
   if (!candidates.size) return { text, parties, ambiguous };
-  const syntaxWords = new Set(['מה', 'אם', 'לא', 'כל', 'את', 'של', 'בלי', 'ללא', 'היה', 'היו', 'קולות', 'אחוז', 'החסימה']);
+  const syntaxWords = new Set(['מה', 'אם', 'לא', 'כל', 'את', 'של', 'בין', 'בלי', 'ללא', 'היה', 'היו', 'קולות', 'אחוז', 'החסימה']);
   const alternatives = [...candidates.keys()].sort((a, b) => b.length - a.length)
     .map(alias => alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const pattern = new RegExp(`(^| )(?:(${alternatives})|([ובל])(${alternatives}))(?=$| )`, 'g');
