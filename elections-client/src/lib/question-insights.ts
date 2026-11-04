@@ -6,7 +6,7 @@ import type { PartyNames } from '../types';
 import { computeScenarioResults } from './scenario';
 
 export type InsightMetric = 'closest' | 'similarity' | 'turnout-high' | 'turnout-low' | 'eligible-high' | 'winner' | 'national-winner' | 'local-results' | 'strengthened' | 'weakened' | 'threshold-entry' | 'wasted' | 'coverage';
-export type InsightQuery = { kind: 'insight'; metric: InsightMetric; level: 'localities' | 'stations'; party?: string; place?: string; station?: string; limit: number; minimum: number; byVotes: boolean };
+export type InsightQuery = { kind: 'insight'; metric: InsightMetric; level: 'localities' | 'stations'; party?: string; place?: string; station?: string; split?: number; limit: number; minimum: number; byVotes: boolean };
 export interface PreviousElection { id: string; names: PartyNames; places: LocalityVotes[] }
 const units = '(יישובים|ישובים|קלפיות|יישוב|ישוב|קלפי)';
 const isStation = (text: string) => /קלפי/.test(text);
@@ -33,12 +33,12 @@ export function parseInsight(text: string, parties: string[]): QuestionParse | n
   if (/^מה (?:היה קורה )?(?:אם|אילו) @0 (?:הייתה עוברת|היתה עוברת|עברה) את אחוז החסימה$/.test(text) && parties.length === 1) return make('threshold-entry', { party: parties[0] });
   if (/^(?:בכמה יישובים|בכמה ישובים) @0 (?:קיבלה|קבלה) קולות$/.test(text) && parties.length === 1) return make('coverage', { party: parties[0] });
   if (/^(?:מי|איזו (?:מפלגה|רשימה)|איזה (?:מפלגה|רשימה)) (?:קיבלה|קבלה|קיבל) (?:את )?הכי הרבה קולות(?: בארץ| בבחירות)?$/.test(text) && !parties.length) return make('national-winner', { minimum: 0 });
-  const local = /^כמה קולות (?:קיבלה|קבלה|קיבל|קבלו|קיבלו) @0 ב(?:יישוב |ישוב |עיר )?([^@]+?)(?: בקלפי (\d+(?:\.\d+)?))?$/.exec(text);
-  if (local && parties.length === 1 && !/(?:בחירות|כנסת|וגם|וכמה|לעומת|בהשוואה)/.test(local[1])) return make('local-results', { party: parties[0], place: local[1], station: local[2], level: local[2] ? 'stations' : 'localities', minimum: 0 });
+  const local = /^כמה קולות (?:קיבלה|קבלה|קיבל|קבלו|קיבלו) @0 ב(?:יישוב |ישוב |עיר )?([^@]+?)(?: בקלפי (\d+(?:\.\d+)?)(?: פיצול (\d+))?)?$/.exec(text);
+  if (local && parties.length === 1 && !/(?:בחירות|כנסת|וגם|וכמה|לעומת|בהשוואה)/.test(local[1])) return make('local-results', { party: parties[0], place: local[1], station: local[2], ...(local[3] === undefined ? {} : { split: Number(local[3]) }), level: local[2] ? 'stations' : 'localities', minimum: 0 });
   const eligible = /^(?:באיזו|באיזה|באילו) (קלפי|קלפיות|יישוב|ישוב|יישובים|ישובים) יש הכי הרבה בעלי זכות (?:הצבעה|בחירה)$/.exec(text);
   if (eligible && !parties.length) return make('eligible-high', { level: isStation(text) ? 'stations' : 'localities', minimum: 0, limit: /ים$|יות$/.test(eligible[1]) ? 10 : 1 });
-  const winner = /^(?:מי|איזו (?:מפלגה|רשימה)|איזה (?:מפלגה|רשימה)) (?:ניצחה|ניצח|(?:קיבלה|קבלה|קיבל) (?:את )?הכי הרבה קולות) ב(?:יישוב |ישוב )?(.+?)(?: בקלפי (\d+(?:\.\d+)?))?(?: ובכמה קולות)?$/.exec(text);
-  if (winner && !parties.length && !/@/.test(text)) return make('winner', { place: winner[1], station: winner[2], level: winner[2] ? 'stations' : 'localities', minimum: 0 });
+  const winner = /^(?:מי|איזו (?:מפלגה|רשימה)|איזה (?:מפלגה|רשימה)) (?:ניצחה|ניצח|(?:קיבלה|קבלה|קיבל) (?:את )?הכי הרבה קולות) ב(?:יישוב |ישוב )?(.+?)(?: בקלפי (\d+(?:\.\d+)?)(?: פיצול (\d+))?)?(?: ובכמה קולות)?$/.exec(text);
+  if (winner && !parties.length && !/@/.test(text)) return make('winner', { place: winner[1], station: winner[2], ...(winner[3] === undefined ? {} : { split: Number(winner[3]) }), level: winner[2] ? 'stations' : 'localities', minimum: 0 });
   let base = text;
   let minimum = 100;
   let limit = 10;
@@ -112,7 +112,7 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
   if (query.metric === 'winner' || query.metric === 'local-results') {
     const requested = normalizeQuestion(query.place!);
     const placeAliases: Record<string, string> = { 'תל אביב': 'תל אביב יפו' };
-    const stationMatches = (place: LocalityVotes) => query.station === undefined || Number(place.pollingStation) === Number(query.station);
+    const stationMatches = (place: LocalityVotes) => (query.station === undefined || Number(place.pollingStation) === Number(query.station)) && (query.split === undefined || place.split === query.split);
     const exact = places.filter(place => normalizeQuestion(place.name) === requested && stationMatches(place));
     const matches = exact.length ? exact : places.filter(place => normalizeQuestion(place.name) === placeAliases[requested] && stationMatches(place));
     if (!matches.length) throw new Error('המקום לא נמצא. כתבו שם יישוב מפורש כפי שהוא מופיע באתר; אין זיהוי אוטומטי של היישוב שלכם.');

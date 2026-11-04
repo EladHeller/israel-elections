@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import React from 'react';
 import { act, create } from 'react-test-renderer';
 import QuestionInput from '../components/QuestionInput';
+import SearchableSelect from '../components/SearchableSelect';
 import type { QuestionContext } from './election-questions';
 
 import { createQuestionCompletions } from './question-completions';
@@ -85,5 +86,45 @@ test('dropdown toggle, focus, pointer selection and submit preserve native form 
     assert.equal(input().props['aria-activedescendant'], undefined, 'stale selection is cleared when available options shrink');
     act(() => render({ context: undefined })); key('ArrowDown');
     act(() => render({ disabled: true })); assert.equal(input().props['aria-expanded'], false);
+  } finally { act(() => renderer.unmount()); }
+});
+
+test('names are editable inline chips, with a full text escape hatch and Enter submission', () => {
+  let renderer!: ReturnType<typeof create>; let value = 'כמה קולות קיבלה רשימה א'; let submissions = 0;
+  const props = () => ({ value, context, busy: false, disabled: false, onChange: (next: string) => { value = next; renderer.update(React.createElement(QuestionInput, props())); } });
+  act(() => { renderer = create(React.createElement(QuestionInput, props()), { createNodeMock: element => element.type === 'input'
+    ? { focus() {}, form: { requestSubmit() { submissions++; } } } : { focus() {}, scrollIntoView() {} } }); });
+  try {
+    const select = renderer.root.findByType(SearchableSelect);
+    assert.equal(select.props.variant, 'chip'); assert.equal(select.props.value, 'א');
+    act(() => select.props.onChange('ב'));
+    assert.equal(value, 'כמה קולות קיבלה רשימה ב');
+    const preview = renderer.root.findByProps({ className: 'question-tokenized' });
+    const target = {};
+    act(() => preview.props.onKeyDown({ key: 'Enter', target, currentTarget: target, preventDefault() {} }));
+    assert.equal(submissions, 1);
+    act(() => renderer.root.findByProps({ className: 'ui-button ui-button-quiet question-edit-text' }).props.onClick());
+    assert.equal(renderer.root.findByType('input').props.hidden, false);
+    act(() => renderer.root.findByType('input').props.onChange({ target: { value: 'שאלה אחרת' } }));
+    assert.equal(value, 'שאלה אחרת');
+    assert.equal(renderer.root.findAllByType(SearchableSelect).length, 0);
+  } finally { act(() => renderer.unmount()); }
+});
+
+test('tokenized completion keeps focus, opens suggestions, and name-loading failures can retry', () => {
+  let renderer!: ReturnType<typeof create>; let value = 'כמה קולות קיבלה רשימה א'; let retried = false;
+  const props = () => ({ value, context, busy: false, disabled: false, placesError: true, retryPlaces: () => { retried = true; },
+    onChange: (next: string) => { value = next; renderer.update(React.createElement(QuestionInput, props())); } });
+  act(() => { renderer = create(React.createElement(QuestionInput, props()), { createNodeMock: () => ({ focus() {}, scrollIntoView() {} }) }); });
+  try {
+    act(() => renderer.root.findAllByType('button').find(button => button.children.includes('ניסיון נוסף'))!.props.onClick());
+    assert.equal(retried, true);
+    const toggle = renderer.root.findByProps({ className: 'ui-button ui-button-quiet question-suggest-toggle' });
+    act(() => toggle.props.onClick());
+    act(() => renderer.update(React.createElement(QuestionInput, { ...props(), value: '' })));
+    act(() => renderer.root.findByType('input').props.onFocus());
+    act(() => renderer.root.findAllByProps({ role: 'option' })[0].props.onClick());
+    act(() => renderer.root.findAllByProps({ role: 'option' })[0].props.onClick());
+    assert.ok(renderer.root.findByProps({ className: 'question-tokenized' }));
   } finally { act(() => renderer.unmount()); }
 });

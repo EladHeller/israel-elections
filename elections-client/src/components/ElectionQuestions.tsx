@@ -5,6 +5,7 @@ import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
 import QuestionInput from './QuestionInput';
 import BetaBadge from './BetaBadge';
+import { useQuestionPlaces } from '../hooks/use-question-places';
 import { useElectionData } from '../hooks/use-election-data';
 import partyNamesAll from '../data/party-names.json';
 import { insightNeedsPlaces } from '../lib/question-insights';
@@ -34,6 +35,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     return selectQuestionExamples(data.results ? buildQuestionExamples({ votes: data.results.voteData, names, config: data.electionConfig, electionId, blocs: data.blocs }) : [], exampleSeed);
   }, [data.results, data.partyNames, data.electionManifest, data.electionConfig, data.blocs, electionId, exampleSeed]);
   const [question, setQuestion] = useState('');
+  const places = useQuestionPlaces(data.results ? electionId : undefined, question.includes('בקלפי'));
   const [reply, setReply] = useState<Reply | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -128,7 +130,7 @@ function QuestionScreen({ electionId }: { electionId: string }) {
       <form className="question-form" onSubmit={event => { void ask(event); }}>
         <label htmlFor="election-question">השאלה שלכם</label>
         <QuestionInput value={question} onChange={changeQuestion} busy={busy} disabled={!validElection || !data.results}
-          context={completionContext} />
+          context={completionContext} places={places} placesLoading={places.loading} placesError={places.error} retryPlaces={places.retry} />
       </form>
       {examples.featured.length > 0 && <section className="question-suggestions" aria-label="שאלות לדוגמה">
         <div className="question-examples"><span>למשל</span>{examples.featured.map(exampleButton)}</div>

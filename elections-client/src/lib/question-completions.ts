@@ -1,5 +1,6 @@
 import { normalizeQuestion, parseElectionQuestion, type QuestionContext } from './election-questions';
 import { buildQuestionExamples } from './question-examples';
+import { placeCompletions, emptyQuestionPlaces, type QuestionPlaces } from './question-entities';
 import { completionCatalog } from './question-completion-catalog';
 import { hasLocalityData, pollingStationSource } from './locality-availability';
 
@@ -7,7 +8,7 @@ export interface QuestionCompletion { label: string; value: string; detail?: str
 interface Branch { prefix: string; label: string; children: QuestionCompletion[] }
 
 /** Derive suggestions from the current text, so editing or pasting never leaves stale wizard state. */
-export function createQuestionCompletions(context: QuestionContext) {
+export function createQuestionCompletions(context: QuestionContext, places: QuestionPlaces = emptyQuestionPlaces) {
   const total = Object.values(context.votes).reduce((sum, entry) => sum + entry.votes, 0);
   if (total <= 0) return (_input: string) => ({ label: '', options: [] as QuestionCompletion[] });
   const parties = Object.keys(context.votes).sort((a, b) => context.votes[b].votes - context.votes[a].votes);
@@ -57,6 +58,14 @@ export function createQuestionCompletions(context: QuestionContext) {
       add(base, 'לפי מספר קולות או שיעור התמיכה?', leaves(base, ['קיבלה הכי הרבה קולות', 'קיבלה את אחוז הקולות הגבוה ביותר']));
     }
   }
+  if (hasLocalityData(context.electionId ?? null) && places.localities.length) {
+    root('איזו רשימה קיבלה הכי הרבה קולות ביישוב', 'איזו רשימה קיבלה הכי הרבה קולות ביישוב ');
+    root('מי ניצחה ביישוב', 'מי ניצחה ביישוב ');
+    for (const id of parties) {
+      const prefix = `כמה קולות קיבלה ${token(id)}`;
+      add(prefix, 'אפשר להתמקד ביישוב', [{ label: 'ביישוב מסוים', value: `${prefix} ביישוב ` }]);
+    }
+  }
   root('מה היה קורה אם');
   const scenario = 'מה היה קורה אם';
   const scenarios = leaves(scenario, ['לא היה אחוז חסימה', 'לא היו הסכמי עודפים', 'אחוז החסימה היה 1%', 'אחוז החסימה היה 2%', 'אחוז החסימה היה 5%']);
@@ -91,6 +100,8 @@ export function createQuestionCompletions(context: QuestionContext) {
   })).sort((a, b) => b.prefix.length - a.prefix.length);
   const fallback = prepared.find(branch => branch.prefix === '')!;
   return (input: string): { label: string; options: QuestionCompletion[] } => {
+    const geographic = placeCompletions(input, context, places);
+    if (geographic) return geographic;
     const normalized = normalizeQuestion(input);
     const branch = prepared.find(({ base, prefix }) => normalized === base || normalized.startsWith(`${base} `)
       || (prefix.endsWith(' ל') && normalized.startsWith(base))) ?? fallback;
