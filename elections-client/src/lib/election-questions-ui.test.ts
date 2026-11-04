@@ -70,6 +70,13 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     await act(async () => renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }));
     await act(async () => renderer.root.findByType(ElectionSelector).props.onChange('26'));
     assert.equal(renderer.root.findByType(AppHeader).props.currentElection, '26');
+    const suggestions = renderer.root.findByProps({ className: 'question-suggestions' });
+    const featured = suggestions.findAllByProps({ className: 'question-examples' })[0];
+    assert.equal(featured.findAllByType('button').length, 4);
+    assert.equal(suggestions.findByType('details').props.open, undefined);
+    const originalExamples = featured.findAllByType('button').map(button => button.children.join(''));
+    await act(async () => input().props.onChange({ target: { value: 'טיוטה' } }));
+    assert.deepEqual(featured.findAllByType('button').map(button => button.children.join('')), originalExamples);
     await ask(''); assert.equal(records.length, 0);
     await ask('מה היה קורה אם לא היה אחוז חסימה');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.ok(renderer.root.findByType(QuestionAnswer));
