@@ -26,7 +26,7 @@ export function parseInsight(text: string, parties: string[]): QuestionParse | n
       : metric === 'national-winner' ? 'הרשימה שקיבלה הכי הרבה קולות בתוצאות הארציות, כולל תיקו.'
       : metric === 'local-results' ? 'קולות הרשימה ואחוזה מתוך הקולות הכשרים ביישוב או בקלפי שבשאלה.'
       : metric === 'eligible-high' ? 'דירוג לפי מספר בעלי זכות ההצבעה, ללא סינון לפי מספר הקולות הכשרים.'
-      : 'חישוב מתוך קובץ המקומות הזמין. בדירוגים נכללים כברירת מחדל מקומות עם לפחות 100 קולות כשרים; אפשר לציין מינימום אחר. התוצאות אינן תחזית.',
+      : 'בדירוגים נכללים כברירת מחדל מקומות עם לפחות 100 קולות כשרים; אפשר לציין מינימום אחר. התוצאות אינן תחזית.',
     };
   };
   if (/^כמה קולות (?:לא עברו את אחוז החסימה|הלכו לרשימות שלא עברו את אחוז החסימה|התבזבזו)$/.test(text) && !parties.length) return make('wasted');
@@ -136,7 +136,7 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
   const eligible = places.filter(place => place.validVotes > 0 && place.validVotes >= query.minimum);
   if (query.metric === 'coverage') {
     const supported = places.filter(place => (place.votes[query.party!] ?? 0) > 0).length;
-    return answer([`${label(query.party!)} קיבלה קולות ב־${count(supported)} מתוך ${count(places.length)} היישובים שבקובץ.`], 'כל היישובים בקובץ נכללים, ללא מינימום גודל.');
+    return answer([`${label(query.party!)} קיבלה קולות ב־${count(supported)} מתוך ${count(places.length)} היישובים.`], 'כל היישובים נכללים, ללא מינימום גודל.');
   }
   if (query.metric === 'strengthened' || query.metric === 'weakened') {
     const previous = context.previous;
