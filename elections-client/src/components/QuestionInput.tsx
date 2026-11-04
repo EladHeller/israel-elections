@@ -3,6 +3,7 @@ import type { QuestionContext } from '../lib/election-questions';
 import { createQuestionCompletions } from '../lib/question-completions';
 import { emptyQuestionPlaces, questionEntities, replaceQuestionEntity, type QuestionPlaces } from '../lib/question-entities';
 import SearchableSelect from './SearchableSelect';
+import QuestionNumberChip from './QuestionNumberChip';
 
 interface Props { value: string; onChange: (value: string) => void; context?: QuestionContext; busy: boolean; disabled: boolean;
   places?: QuestionPlaces; placesLoading?: boolean; placesError?: boolean; retryPlaces?: () => void }
@@ -50,7 +51,8 @@ export default function QuestionInput({ value, onChange, context, busy, disabled
   let offset = 0;
   for (const entity of entities) {
     parts.push(<span key={`text-${entity.start}`}>{value.slice(offset, entity.start)}</span>);
-    parts.push(<SearchableSelect key={`${entity.kind}-${entity.start}`} variant="chip"
+    parts.push(entity.kind === 'number' ? <QuestionNumberChip key={`number-${entity.start}`} value={entity.label} config={entity.numeric!}
+      onChange={next => { setOpen(false); setActive(-1); onChange(replaceQuestionEntity(value, entity, next, context!)); }} /> : <SearchableSelect key={`${entity.kind}-${entity.start}`} variant="chip"
       label={entity.kind === 'party' ? 'רשימה' : entity.kind === 'locality' ? 'יישוב' : 'קלפי'} value={entity.id} options={entity.options}
       onChange={next => { setOpen(false); setActive(-1); onChange(replaceQuestionEntity(value, entity, next, context!)); }} />);
     offset = entity.end;

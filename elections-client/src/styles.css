@@ -2017,3 +2017,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .question-composer .ui-button-primary { background: var(--ink-70); color: var(--card); border-color: var(--ink-70); }
 .question-share { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-block: 0 1rem; color: var(--ink-70); }
 .question-share input { display: block; width: min(100%, 36rem); padding: .5rem; margin-top: .4rem; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); color: var(--ink-90); font: inherit; }
+.question-number-editor { padding: 1rem; }
+.question-number-editor input { min-height: 44px; padding: .6rem; margin-block: .5rem; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); color: var(--ink-90); }
+.question-number-actions { display: flex; gap: .5rem; }
+.question-number-actions button { width: auto; }

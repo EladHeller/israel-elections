@@ -196,6 +196,9 @@ rankings. Missing station files leave locality research available.
 `/questions/:electionId?q=<URL-encoded question>` opens the question and answers it
 once the selected election's results are ready. For example:
 `/questions/26?q=מה%20היה%20קורה%20אם%20רעם%20הייתה%20מקבלת%2010000%20פחות%20קולות`.
+Submitting a question also updates the URL; browser Back/Forward restores the
+linked question and answer without reloading election results. Submitting the same
+question again recalculates it without creating another history entry.
 The questions screen can copy a link for its current text. Opening `/questions?q=...`
 prefills the text and waits for an election selection. Editing before data arrive
 cancels automatic submission; changing the linked question cancels stale work.
