@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
+import QuestionInput from './QuestionInput';
 import BetaBadge from './BetaBadge';
 import { useElectionData } from '../hooks/use-election-data';
 import partyNamesAll from '../data/party-names.json';
@@ -38,6 +39,11 @@ function QuestionScreen({ electionId }: { electionId: string }) {
   const [busy, setBusy] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const active = useRef<AbortController | null>(null);
+  const completionContext = useMemo(() => data.results ? {
+    votes: data.results.voteData,
+    names: { ...Object.fromEntries((data.electionManifest?.lists ?? []).map(list => [list.ballotLetter, list.name])), ...data.partyNames },
+    config: data.electionConfig, electionId, blocs: data.blocs,
+  } : undefined, [data.results, data.electionManifest, data.partyNames, data.electionConfig, data.blocs, electionId]);
   useEffect(() => () => active.current?.abort(), []);
   const changeQuestion = (value: string) => {
     active.current?.abort(); setBusy(false);
@@ -121,8 +127,8 @@ function QuestionScreen({ electionId }: { electionId: string }) {
       {validElection && !data.results && !data.error && <p role="status">{data.electionManifest && !['counting', 'final'].includes(data.electionManifest.phase) ? 'אין עדיין תוצאות לבחירות אלו.' : 'טוען תוצאות…'}</p>}
       <form className="question-form" onSubmit={event => { void ask(event); }}>
         <label htmlFor="election-question">השאלה שלכם</label>
-        <div className="question-input-row"><input id="election-question" type="text" maxLength={600} autoComplete="off" value={question} disabled={!data.results} onChange={event => changeQuestion(event.target.value)} placeholder="מה היה קורה אם לא היה אחוז חסימה?" />
-          <button type="submit" className="ui-button ui-button-primary" disabled={!validElection || !data.results || !question.trim() || busy} aria-label="שליחת השאלה">{busy ? 'מחשב…' : 'שאלו'}</button></div>
+        <QuestionInput value={question} onChange={changeQuestion} busy={busy} disabled={!validElection || !data.results}
+          context={completionContext} />
       </form>
       {examples.featured.length > 0 && <section className="question-suggestions" aria-label="שאלות לדוגמה">
         <div className="question-examples"><span>למשל</span>{examples.featured.map(exampleButton)}</div>
