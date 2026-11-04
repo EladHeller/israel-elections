@@ -111,14 +111,38 @@ test('next-seat questions accept natural Hebrew and return the first added-vote 
         const answer = execute({ kind: 'seat-gap', party }, ctx);
         assert.equal(answer.rows[0][1], expected <= 1000 ? expected : '—');
         assert.equal(answer.rows[0][2], baseline);
+        const original = computeScenarioResults(ctx.votes, ctx.config).realResults;
+        const changed = computeScenarioResults({ ...ctx.votes, [party]: { ...ctx.votes[party], votes: ctx.votes[party].votes + expected } }, ctx.config).realResults;
+        const expectedChanges = Object.keys(ctx.votes).filter(id => (original[id]?.mandats ?? 0) !== (changed[id]?.mandats ?? 0))
+          .map(id => ({ party: id, name: ctx.names[id], before: original[id]?.mandats ?? 0, after: changed[id]?.mandats ?? 0 }));
+        assert.deepEqual([...answer.seatChanges!].sort((a, b) => a.party.localeCompare(b.party)), expectedChanges.sort((a, b) => a.party.localeCompare(b.party)));
+        assert.equal(answer.seatChanges![0].party, party);
+        assert.equal(answer.seatChanges!.reduce((sum, change) => sum + change.after - change.before, 0), 0);
+        assert.ok(answer.seatChanges!.some(change => change.after < change.before));
       }
       assert.deepEqual(ctx, before);
     }
   }
   assert.throws(() => execute({ kind: 'seat-gap', party: 'missing' }, context), /קיימת/);
   const single = { ...context, votes: { מחל: { votes: 100, mandats: 0 } }, config: { ...context.config, agreements: [] } };
-  assert.equal(execute({ kind: 'seat-gap', party: 'מחל' }, single).rows[0][1], '—');
+  const noGain = execute({ kind: 'seat-gap', party: 'מחל' }, single);
+  assert.equal(noGain.rows[0][1], '—');
+  assert.deepEqual(noGain.seatChanges, []);
   assert.equal(execute({ kind: 'seat-gap', party: 'ט' }, { ...context, config: { ...context.config, blockPercentage: 1 } }).rows[0][1], '—');
+});
+
+test('next-seat impact includes threshold cascades and lists losing all their seats', () => {
+  const ctx = { ...context, config: { ...context.config, blockPercentage: 0.31 } };
+  const original = structuredClone(ctx);
+  const answer = execute({ kind: 'seat-gap', party: 'ך' }, ctx);
+  const lost = answer.seatChanges!.find(change => change.party === 'ט')!;
+  assert.ok(lost.before > 0);
+  assert.equal(lost.after, 0);
+  const gained = answer.seatChanges!.find(change => change.party === 'ך')!;
+  assert.equal(gained.before, 0);
+  assert.ok(gained.after > 1);
+  assert.equal(answer.seatChanges!.reduce((sum, change) => sum + change.after - change.before, 0), 0);
+  assert.deepEqual(ctx, original);
 });
 
 test('short next-seat questions resolve list aliases and use the existing seat calculation', () => {
