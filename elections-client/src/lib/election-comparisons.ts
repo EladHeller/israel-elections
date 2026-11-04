@@ -42,7 +42,7 @@ const electionWords: Record<string, string> = {
 };
 function sourceElection(value: string, context: QuestionContext): string | null {
   value = value.replace(/^ב(?=בחירות|כנסת|הכנסת)/, '').replace(/^(בחירות הקודמות)$/, 'הבחירות הקודמות').replace(/ ה (\d+)$/, ' $1');
-  if (value === 'הבחירות הקודמות' || value === 'הכנסת הקודמת' || value === 'כנסת קודמת' || value === 'פעם שעברה' || value === 'הפעם הקודמת') {
+  if (value === 'הבחירות הקודמות' || value === 'הבחירות האחרונות' || value === 'הכנסת הקודמת' || value === 'כנסת קודמת' || value === 'פעם שעברה' || value === 'הפעם הקודמת') {
     const id = Number(context.electionId) - 1;
     return Number.isSafeInteger(id) && id > 0 ? String(id) : null;
   }
@@ -60,6 +60,9 @@ function measureOf(text: string): ChangeMeasure {
 }
 
 export function parseComparison(text: string, context: QuestionContext): QuestionParse | null {
+  // Normalize only complete comparison clauses; do not discard qualifiers.
+  text = text.replace(/^כמה (קולות|אחוזים) (?:עלתה|עלה|עלו|גדלה|גדל|גדלו) (.+?) (מ(?:הבחירות|הכנסת) .+)$/, 'בכמה $1 עלתה $2 $3')
+    .replace(/^כמה (קולות|אחוזים) (?:קבלו|קיבלו|קיבלה|קבלה|קיבל) (.+?) יותר (מ(?:הבחירות|הכנסת) .+)$/, 'בכמה $1 עלתה $2 $3');
   const finish = (query: ComparisonQuery): QuestionParse => ({ query, explanation: query.kind === 'comparison'
     ? `השוואה ארצית בין בחירות ${query.source} לבחירות ${context.electionId}. שיעורי התמיכה מחושבים מהקולות הכשרים בכל מערכת בנפרד.`
     : `תרחיש ארצי: ${query.mode === 'zero' ? 'הסרת קולות היעד מהסך הארצי' : `החלפת ${query.mode === 'votes' ? 'מספר הקולות' : 'שיעור התמיכה'} של היעד בערך מבחירות ${query.source}`}. קולות יתר הרשימות וכללי הבחירות הנבחרות נשארים קבועים.` });
@@ -85,8 +88,8 @@ export function parseComparison(text: string, context: QuestionContext): Questio
   if (/יישוב|ישוב|קלפי/.test(match[1])) return null;
   const source = sourceElection(match[2], context);
   const metric = '(?:אחוזים(?: יחסיים)?|נקודות אחוז|קולות|מנדטים)';
-  const single = new RegExp(`^בכמה(?: ${metric})? (?:עלתה|עלה|ירדה|ירד|התחזקה|התחזק|נחלשה|נחלש) (.+)$`).exec(match[1])
-    ?? new RegExp(`^בכמה(?: ${metric})? (.+?) (?:עלתה|עלה|ירדה|ירד|התחזקה|התחזק|נחלשה|נחלש|עלו|ירדו|התחזקו|נחלשו)$`).exec(match[1]);
+  const single = new RegExp(`^בכמה(?: ${metric})? (?:עלתה|עלה|עלו|גדלה|גדל|גדלו|ירדה|ירד|התחזקה|התחזק|נחלשה|נחלש) (.+)$`).exec(match[1])
+    ?? new RegExp(`^בכמה(?: ${metric})? (.+?) (?:עלתה|עלה|גדלה|גדל|גדלו|ירדה|ירד|התחזקה|התחזק|נחלשה|נחלש|עלו|ירדו|התחזקו|נחלשו)$`).exec(match[1]);
   const ranking = new RegExp(`^(?:איזו רשימה|איזה רשימה|מי) (?:עלתה|עלה|ירדה|ירד|התחזקה|התחזק|נחלשה|נחלש) הכי הרבה(?: ב(?:${metric}|אחוז הקולות))?$`).test(match[1]);
   if (!single && !ranking) return null;
   if (!source) return badSource;

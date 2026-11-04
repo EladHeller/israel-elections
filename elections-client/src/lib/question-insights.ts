@@ -4,7 +4,7 @@ import type { LocalityVotes } from './party-research';
 import type { PartyNames } from '../types';
 import { computeScenarioResults } from './scenario';
 
-export type InsightMetric = 'closest' | 'similarity' | 'turnout-high' | 'turnout-low' | 'winner' | 'strengthened' | 'weakened' | 'threshold-entry' | 'wasted' | 'coverage';
+export type InsightMetric = 'closest' | 'similarity' | 'turnout-high' | 'turnout-low' | 'eligible-high' | 'winner' | 'national-winner' | 'local-results' | 'strengthened' | 'weakened' | 'threshold-entry' | 'wasted' | 'coverage';
 export type InsightQuery = { kind: 'insight'; metric: InsightMetric; level: 'localities' | 'stations'; party?: string; place?: string; station?: string; limit: number; minimum: number; byVotes: boolean };
 export interface PreviousElection { id: string; names: PartyNames; places: LocalityVotes[] }
 const units = '(יישובים|ישובים|קלפיות|יישוב|ישוב|קלפי)';
@@ -22,12 +22,20 @@ export function parseInsight(text: string, parties: string[]): QuestionParse | n
       : metric === 'wasted' ? 'קולות לרשימות שלא הגיעו לאחוז החסימה הארצי, מתוך כלל הקולות הכשרים.'
       : metric === 'coverage' ? 'ספירת כל היישובים שבהם הרשימה קיבלה לפחות קול אחד.'
       : metric === 'winner' ? 'הרשימה שקיבלה הכי הרבה קולות במקום שבשאלה, כולל תיקו שמסומן במפורש.'
+      : metric === 'national-winner' ? 'הרשימה שקיבלה הכי הרבה קולות בתוצאות הארציות, כולל תיקו.'
+      : metric === 'local-results' ? 'קולות הרשימה ואחוזה מתוך הקולות הכשרים ביישוב או בקלפי שבשאלה.'
+      : metric === 'eligible-high' ? 'דירוג לפי מספר בעלי זכות ההצבעה, ללא סינון לפי מספר הקולות הכשרים.'
       : 'חישוב מתוך קובץ המקומות הזמין. בדירוגים נכללים כברירת מחדל מקומות עם לפחות 100 קולות כשרים; אפשר לציין מינימום אחר. התוצאות אינן תחזית.',
     };
   };
   if (/^כמה קולות (?:לא עברו את אחוז החסימה|הלכו לרשימות שלא עברו את אחוז החסימה|התבזבזו)$/.test(text) && !parties.length) return make('wasted');
   if (/^מה (?:היה קורה )?(?:אם|אילו) @0 (?:הייתה עוברת|היתה עוברת|עברה) את אחוז החסימה$/.test(text) && parties.length === 1) return make('threshold-entry', { party: parties[0] });
   if (/^(?:בכמה יישובים|בכמה ישובים) @0 (?:קיבלה|קבלה) קולות$/.test(text) && parties.length === 1) return make('coverage', { party: parties[0] });
+  if (/^(?:מי|איזו (?:מפלגה|רשימה)|איזה (?:מפלגה|רשימה)) (?:קיבלה|קבלה|קיבל) (?:את )?הכי הרבה קולות(?: בארץ| בבחירות)?$/.test(text) && !parties.length) return make('national-winner', { minimum: 0 });
+  const local = /^כמה קולות (?:קיבלה|קבלה|קיבל|קבלו|קיבלו) @0 ב(?:יישוב |ישוב |עיר )?([^@]+?)(?: בקלפי (\d+(?:\.\d+)?))?$/.exec(text);
+  if (local && parties.length === 1 && !/(?:בחירות|כנסת|וגם|וכמה|לעומת|בהשוואה)/.test(local[1])) return make('local-results', { party: parties[0], place: local[1], station: local[2], level: local[2] ? 'stations' : 'localities', minimum: 0 });
+  const eligible = /^(?:באיזו|באיזה|באילו) (קלפי|קלפיות|יישוב|ישוב|יישובים|ישובים) יש הכי הרבה בעלי זכות (?:הצבעה|בחירה)$/.exec(text);
+  if (eligible && !parties.length) return make('eligible-high', { level: isStation(text) ? 'stations' : 'localities', minimum: 0, limit: /ים$|יות$/.test(eligible[1]) ? 10 : 1 });
   const winner = /^(?:מי|איזו (?:מפלגה|רשימה)|איזה (?:מפלגה|רשימה)) (?:ניצחה|ניצח|(?:קיבלה|קבלה|קיבל) (?:את )?הכי הרבה קולות) ב(?:יישוב |ישוב )?(.+?)(?: בקלפי (\d+(?:\.\d+)?))?(?: ובכמה קולות)?$/.exec(text);
   if (winner && !parties.length && !/@/.test(text)) return make('winner', { place: winner[1], station: winner[2], level: winner[2] ? 'stations' : 'localities', minimum: 0 });
   let base = text;
@@ -51,7 +59,7 @@ export function parseInsight(text: string, parties: string[]): QuestionParse | n
   return null;
 }
 
-export const insightNeedsPlaces = (query: QuestionQuery) => query.kind === 'insight' && !['threshold-entry', 'wasted'].includes(query.metric);
+export const insightNeedsPlaces = (query: QuestionQuery) => query.kind === 'insight' && !['threshold-entry', 'wasted', 'national-winner'].includes(query.metric);
 
 export function executeInsight(query: InsightQuery, context: QuestionContext, places?: LocalityVotes[]): Answer {
   const { votes, names, config } = context;
@@ -59,6 +67,11 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
   const total = Object.values(votes).reduce((sum, entry) => sum + entry.votes, 0);
   const answer = (sentences: string[], note: string): Answer => ({ rows: sentences.map(sentence => [sentence]), columns: ['תשובה'], note });
   if (query.party !== undefined && !Object.hasOwn(votes, query.party)) throw new Error('הרשימה אינה קיימת בבחירות שנבחרו.');
+  if (query.metric === 'national-winner') {
+    const highest = Math.max(...Object.values(votes).map(entry => entry.votes));
+    const winners = Object.keys(votes).filter(id => votes[id].votes === highest).sort();
+    return answer([`${winners.map(label).join(' ו')} ${winners.length > 1 ? 'בתיקו במקום הראשון' : 'במקום הראשון'} בארץ, עם ${count(highest)} קולות (${pct(100 * highest / total)}).`], 'דירוג לפי מספר הקולות הארצי, ללא סינון לפי אחוז החסימה.');
+  }
   if (query.metric === 'wasted') {
     const below = Object.values(votes).filter(entry => entry.votes < config.blockPercentage * total).reduce((sum, entry) => sum + entry.votes, 0);
     return answer([`${count(below)} קולות, שהם ${pct(100 * below / total)} מהקולות הכשרים, ניתנו לרשימות שלא הגיעו לאחוז החסימה.`], 'רשימה שהגיעה בדיוק לסף אינה נכללת.');
@@ -89,10 +102,26 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
     return result;
   }
   if (!places) throw new Error('נתוני היישובים או הקלפיות אינם זמינים לבחירות אלו.');
-  if (query.metric === 'winner') {
-    const matches = places.filter(place => normalizeQuestion(place.name) === normalizeQuestion(query.place!) && (query.station === undefined || Number(place.pollingStation) === Number(query.station)));
+  if (query.metric === 'eligible-high') {
+    const valid = places.filter(place => Number.isSafeInteger(place.eligibleVoters) && place.eligibleVoters! > 0);
+    if (places.length && !valid.length) throw new Error('אין נתוני בעלי זכות הצבעה תקינים לדירוג.');
+    const rows = valid.sort((a, b) => b.eligibleVoters! - a.eligibleVoters! || a.id.localeCompare(b.id) || placeLabel(a).localeCompare(placeLabel(b))).slice(0, query.limit);
+    return answer(rows.map(place => `${placeLabel(place)}: ${count(place.eligibleVoters!)} בעלי זכות הצבעה.`), 'מיון לפי מספר בעלי זכות ההצבעה, ולא לפי שיעור ההצבעה. מקומות ללא נתון חיובי ושלם אינם נכללים; בתיקו המיון לפי מזהה המקום.');
+  }
+  if (query.metric === 'winner' || query.metric === 'local-results') {
+    const requested = normalizeQuestion(query.place!);
+    const placeAliases: Record<string, string> = { 'תל אביב': 'תל אביב יפו' };
+    const stationMatches = (place: LocalityVotes) => query.station === undefined || Number(place.pollingStation) === Number(query.station);
+    const exact = places.filter(place => normalizeQuestion(place.name) === requested && stationMatches(place));
+    const matches = exact.length ? exact : places.filter(place => normalizeQuestion(place.name) === placeAliases[requested] && stationMatches(place));
     if (!matches.length) throw new Error('המקום לא נמצא. כתבו שם יישוב מפורש כפי שהוא מופיע באתר; אין זיהוי אוטומטי של היישוב שלכם.');
-    if (query.station === undefined && matches.length > 1) throw new Error('שם היישוב אינו חד משמעי. יש לבחור יישוב מדויק.');
+    if (matches.length > 1) throw new Error('המקום אינו חד משמעי. יש לבחור יישוב או קלפי מדויקים, כולל פיצול אם קיים.');
+    if (query.metric === 'local-results') {
+      const place = matches[0];
+      if (place.validVotes <= 0) throw new Error('אין קולות כשרים במקום לחישוב אחוז התמיכה.');
+      const received = place.votes[query.party!] ?? 0;
+      return answer([`${placeLabel(place)}: ${label(query.party!)} קיבלה ${count(received)} קולות, שהם ${pct(100 * received / place.validVotes)} מהקולות הכשרים במקום.`], 'הנתונים מתייחסים למקום שנבחר בלבד; שם היישוב חייב להתאים לשם המופיע באתר.');
+    }
     return answer(matches.flatMap(place => {
       const ranked = Object.entries(place.votes).filter(([, value]) => value > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
       if (!ranked.length || place.validVotes <= 0) return [];
