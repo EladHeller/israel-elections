@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import ResultsTimestamp from './ResultsTimestamp';
@@ -16,8 +16,8 @@ import { phaseHasResults } from '../lib/election-manifest';
 import { questionAnswerLinks } from '../lib/question-answer-links';
 import { questionScenarioHref } from '../lib/question-scenario';
 import { loadComparisonElection } from '../lib/comparison-data';
+import { buildQuestionExamples, selectQuestionExamples } from '../lib/question-examples';
 
-const examples = ['מה היה קורה אם לא היה אחוז חסימה?', 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?', 'כמה קולות היו חסרים לעמך ישראל לעבור את אחוז החסימה?'];
 type Reply = { links: AnswerLink[]; answer: Answer; kind: QuestionQuery['kind']; explanation: string; time?: string; scenarioHref?: string; scenarioLinkFailed?: boolean };
 export default function ElectionQuestions() {
   const { electionId = '' } = useParams();
@@ -26,6 +26,12 @@ export default function ElectionQuestions() {
 function QuestionScreen({ electionId }: { electionId: string }) {
   const navigate = useNavigate();
   const data = useElectionData(electionId, !!electionId);
+  const [exampleSeed] = useState(() => Math.floor(Math.random() * 4294967296));
+  const examples = useMemo(() => {
+    const names = { ...data.partyNames };
+    for (const list of data.electionManifest?.lists ?? []) names[list.ballotLetter] ??= list.name;
+    return selectQuestionExamples(data.results ? buildQuestionExamples({ votes: data.results.voteData, names, config: data.electionConfig, electionId, blocs: data.blocs }) : [], exampleSeed);
+  }, [data.results, data.partyNames, data.electionManifest, data.electionConfig, data.blocs, electionId, exampleSeed]);
   const [question, setQuestion] = useState('');
   const [reply, setReply] = useState<Reply | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +43,10 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     active.current?.abort(); setBusy(false);
     setQuestion(value); setReply(null); setError(null); setSaveFailed(false);
   };
+  const chooseExample = (example: string) => {
+    changeQuestion(example); document.getElementById('election-question')?.focus();
+  };
+  const exampleButton = (example: string) => <button type="button" className="ui-button ui-button-quiet" key={example} onClick={() => chooseExample(example)}>{example}</button>;
   const ask = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!data.results || !question.trim()) return;
@@ -114,7 +124,15 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         <div className="question-input-row"><input id="election-question" type="text" maxLength={600} autoComplete="off" value={question} disabled={!data.results} onChange={event => changeQuestion(event.target.value)} placeholder="מה היה קורה אם לא היה אחוז חסימה?" />
           <button type="submit" className="ui-button ui-button-primary" disabled={!validElection || !data.results || !question.trim() || busy} aria-label="שליחת השאלה">{busy ? 'מחשב…' : 'שאלו'}</button></div>
       </form>
-      <div className="question-examples" aria-label="שאלות לדוגמה"><span>למשל</span>{examples.map(example => <button type="button" className="ui-button ui-button-quiet" key={example} onClick={() => { changeQuestion(example); document.getElementById('election-question')?.focus(); }}>{example}</button>)}</div>
+      {examples.featured.length > 0 && <section className="question-suggestions" aria-label="שאלות לדוגמה">
+        <div className="question-examples"><span>למשל</span>{examples.featured.map(exampleButton)}</div>
+        {examples.remaining.length > 0 && <details className="question-example-catalog">
+          <summary>עוד שאלות לדוגמה <span>({examples.remaining.reduce((sum, group) => sum + group.questions.length, 0)})</span></summary>
+          {examples.remaining.map(group => <section key={group.title} className="question-example-group">
+            <h2>{group.title}</h2><div className="question-examples">{group.questions.map(exampleButton)}</div>
+          </section>)}
+        </details>}
+      </section>}
       <p className="question-caption">השאלות נשמרות לשיפור המענה, ללא צירוף פרטים מזהים על השואל, ונגישות רק לבעל האתר.</p>
       <div className="question-response" aria-live="polite" aria-busy={busy}>
         {busy && <p role="status">בודק את הנתונים…</p>}
