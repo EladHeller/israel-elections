@@ -5,6 +5,8 @@ import { act, create } from 'react-test-renderer';
 import QuestionInput from '../components/QuestionInput';
 import type { QuestionContext } from './election-questions';
 
+import { createQuestionCompletions } from './question-completions';
+
 const context: QuestionContext = { electionId: '26', votes: { א: { votes: 999, mandats: 0 }, ב: { votes: 1, mandats: 0 } }, names: { א: 'רשימה א', ב: 'רשימה ב' }, config: { algorithm: 'baderOffer', agreements: [], blockPercentage: .0325 } };
 
 test('completion keeps one editable textbox, supports pointer, arrows, Escape and free Enter', () => {
@@ -13,6 +15,7 @@ test('completion keeps one editable textbox, supports pointer, arrows, Escape an
   const change = (next: string) => { value = next; update(); };
   act(() => { renderer = create(React.createElement(QuestionInput, { value, onChange: change, context, busy: false, disabled: false }),
     { createNodeMock: element => element.type === 'input' ? { focus() { focused++; } } : { scrollIntoView() {} } }); });
+  const rootCount = createQuestionCompletions(context)('').options.length;
   const input = () => renderer.root.findByType('input');
   const options = () => renderer.root.findAllByProps({ role: 'option' });
   const key = (key: string, composing = false) => {
@@ -22,7 +25,7 @@ test('completion keeps one editable textbox, supports pointer, arrows, Escape an
   };
   try {
     act(() => input().props.onFocus());
-    assert.equal(options().length, 5);
+    assert.equal(options().length, rootCount);
     assert.equal(input().props['aria-expanded'], true);
     assert.equal(key('Enter'), false, 'Enter does not select an unhighlighted suggestion');
     assert.equal(key('ArrowDown'), true); assert.ok(input().props['aria-activedescendant']);
@@ -55,21 +58,22 @@ test('dropdown toggle, focus, pointer selection and submit preserve native form 
     React.createElement(QuestionInput, { value, onChange: change, context, busy: false, disabled: false, ...extra }));
   act(() => { renderer = create(React.createElement(QuestionInput, { value, onChange: change, context, busy: false, disabled: false }),
     { createNodeMock: element => element.type === 'input' ? { focus() { focused++; } } : { scrollIntoView() {} } }); });
+  const rootCount = createQuestionCompletions(context)('').options.length;
   const input = () => renderer.root.findByType('input');
   const toggle = () => renderer.root.findByProps({ className: 'ui-button ui-button-quiet question-suggest-toggle' });
   const options = () => renderer.root.findAllByProps({ role: 'option' });
   const key = (key: string) => act(() => input().props.onKeyDown({ key, preventDefault() {} }));
   try {
-    act(() => toggle().props.onClick()); assert.equal(options().length, 5); assert.equal(focused, 1);
+    act(() => toggle().props.onClick()); assert.equal(options().length, rootCount); assert.equal(focused, 1);
     act(() => toggle().props.onClick()); assert.equal(options().length, 0);
-    act(() => input().props.onClick()); assert.equal(options().length, 5);
-    key('ArrowUp'); assert.match(input().props['aria-activedescendant'], /option-4$/);
+    act(() => input().props.onClick()); assert.equal(options().length, rootCount);
+    key('ArrowUp'); assert.ok(input().props['aria-activedescendant'].endsWith(`option-${rootCount - 1}`));
     key('ArrowDown'); key('ArrowDown'); key('ArrowUp');
     act(() => options()[0].props.onMouseDown({ preventDefault() { prevented = true; } }));
     assert.equal(prevented, true);
     const root = renderer.root.findByProps({ className: 'question-composer' });
     act(() => root.props.onBlur({ currentTarget: { contains: () => true }, relatedTarget: {} }));
-    assert.equal(options().length, 5, 'moving focus within the composer keeps suggestions');
+    assert.equal(options().length, rootCount, 'moving focus within the composer keeps suggestions');
     act(() => renderer.root.findByProps({ type: 'submit' }).props.onClick());
     assert.equal(options().length, 0);
     act(() => render({ busy: true })); assert.equal(renderer.root.findByProps({ type: 'submit' }).props.disabled, true);

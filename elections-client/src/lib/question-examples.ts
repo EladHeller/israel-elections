@@ -8,14 +8,14 @@ import type { PartyNames } from '../types';
 export interface QuestionExampleGroup { title: string; questions: string[] }
 
 /** Use only current lists and available data sources; no extra network requests. */
-export function buildQuestionExamples(context: QuestionContext): QuestionExampleGroup[] {
+export function buildQuestionExamples(context: QuestionContext, allLists = false): QuestionExampleGroup[] {
   const { votes, names, electionId = '', config } = context;
-  const parties = Object.keys(votes).filter(id => votes[id].votes > 0)
+  const parties = Object.keys(votes).filter(id => allLists || votes[id].votes > 0)
     .sort((a, b) => votes[b].votes - votes[a].votes || a.localeCompare(b));
   if (!parties.length) return [];
   const total = parties.reduce((sum, id) => sum + votes[id].votes, 0);
-  const leading = parties.slice(0, 3);
-  const below = parties.find(id => votes[id].votes < total * config.blockPercentage);
+  const leading = allLists ? parties : parties.slice(0, 3);
+  const below = parties.filter(id => votes[id].votes < total * config.blockPercentage).slice(0, allLists ? parties.length : 1);
   const label = (id: string) => names[id] ?? id;
   const groups: QuestionExampleGroup[] = [];
   const add = (title: string, questions: string[]) => groups.push({ title, questions });
@@ -23,11 +23,11 @@ export function buildQuestionExamples(context: QuestionContext): QuestionExample
     ...leading.flatMap(id => [`כמה קולות קיבלה ${label(id)}?`, `כמה מנדטים קיבלה ${label(id)}?`, `כמה אחוזים קיבלה ${label(id)}?`]),
     ...(leading.length > 1 ? [`השווה בין ${label(leading[0])} ל${label(leading[1])}?`] : [])]);
   add('מנדטים ואחוז החסימה', [
-    ...leading.flatMap(id => [`כמה קולות חסרים ל${label(id)} למנדט נוסף?`,
+    ...leading.filter(id => votes[id].votes >= total * config.blockPercentage).flatMap(id => [`כמה קולות חסרים ל${label(id)} למנדט נוסף?`,
       ...(votes[id].mandats > 0 ? [`כמה קולות צריכים לרדת ל${label(id)} כדי שתאבד מנדט?`] : [])]),
-    ...(below ? [`כמה קולות היו חסרים ל${label(below)} לעבור את אחוז החסימה?`,
-      `כמה קולות נוספים הייתה צריכה ${label(below)} כדי לעבור את אחוז החסימה?`,
-      `מה היה קורה אם ${label(below)} הייתה עוברת את אחוז החסימה?`] : [])]);
+    ...below.flatMap(id => [`כמה קולות היו חסרים ל${label(id)} לעבור את אחוז החסימה?`,
+      `כמה קולות נוספים הייתה צריכה ${label(id)} כדי לעבור את אחוז החסימה?`,
+      `מה היה קורה אם ${label(id)} הייתה עוברת את אחוז החסימה?`])]);
   add('תרחישים', ['מה היה קורה אם לא היה אחוז חסימה?', 'מה היה קורה אם אחוז החסימה היה 1%?',
     'מה היה קורה אם אחוז החסימה היה 5%?',
     ...(config.agreements.length ? ['מה היה קורה אם לא היו הסכמי עודפים?', 'מה היה קורה אם לא היה אחוז חסימה וגם לא היו הסכמי עודפים?'] : []),
