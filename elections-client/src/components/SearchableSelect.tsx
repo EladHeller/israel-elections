@@ -5,9 +5,10 @@ interface Props {
   value: string;
   options: { id: string; name: string }[];
   onChange: (value: string) => void;
+  variant?: 'chip';
 }
 
-export default function SearchableSelect({ label, value, options, onChange }: Props) {
+export default function SearchableSelect({ label, value, options, onChange, variant }: Props) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -33,7 +34,7 @@ export default function SearchableSelect({ label, value, options, onChange }: Pr
 
   useEffect(() => { activeOption.current?.scrollIntoView({ block: 'nearest' }); }, [open, activeIndex, search]);
 
-  return <div className="searchable-select-control" ref={root} onBlur={event => {
+  return <div className={`searchable-select-control${variant === 'chip' ? ' question-entity-chip' : ''}`}  ref={root} onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
   }}>
     <span id={`${id}-label`}>{label}</span>
