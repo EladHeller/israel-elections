@@ -28,7 +28,7 @@ export const normalizeQuestion = (value: string): string => value.normalize('NFK
 // Aliases are only attached when they occur in this election's actual list name.
 // Historical factions inside joint lists are not inferred. Explicit current-list
 // shorthand is shown back to the user using the full list name before calculation.
-const listAliases: Record<string, string[]> = { 'הציונות הדתית וזהות': ['הציונות הדתית'], 'נעם לישראל': ['נועם', 'נעם'], 'המילואימניקים והכלכלית': ['הכלכלית', 'כלכלית'], 'הכלכלית החדשה': ['הכלכלית', 'כלכלית'] };
+const listAliases: Record<string, string[]> = { 'רע"ם': ['רעמ'], 'הציונות הדתית וזהות': ['הציונות הדתית'], 'נעם לישראל': ['נועם', 'נעם'], 'המילואימניקים והכלכלית': ['הכלכלית', 'כלכלית'], 'הכלכלית החדשה': ['הכלכלית', 'כלכלית'] };
 const aliases = ['הליכוד', 'ליכוד', 'שס', 'יהדות התורה', 'יש עתיד', 'ישראל ביתנו', 'הציונות הדתית', 'עמך ישראל', 'נועם', 'נעם', 'הדמוקרטים', 'כחול לבן', 'רעם', 'הרשימה המשותפת'];
 export function resolveParties(text: string, context: QuestionContext): { text: string; parties: string[]; ambiguous: boolean } {
   const candidates = new Map<string, Set<string>>();
@@ -72,7 +72,8 @@ export function resolveParties(text: string, context: QuestionContext): { text: 
 
 export function parseElectionQuestion(input: string, context: QuestionContext): QuestionParse {
   if (input.length > 600) return { error: 'השאלה ארוכה מדי. נסו שאלה אחת עד 600 תווים.' };
-  const raw = normalizeQuestion(input).replace(/^איפה /, 'באילו יישובים ');
+  const raw = normalizeQuestion(input).replace(/^איפה /, 'באילו יישובים ')
+    .replace(/^מה היה קורב אם /, 'מה היה קורה אם ');
   const comparison = parseComparison(raw, context);
   if (comparison) return comparison;
   const neutralInsight = raw.startsWith('מי ') ? null : parseInsight(raw, []);
@@ -94,10 +95,11 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
   if (/^(?:כמה קולות (?:היו )?חסרים ל?@0 (?:(?:כדי )?(?:לקבל|להשיג) (?:עוד מנדט|מנדט נוסף)|ל(?:מנדט נוסף|עוד מנדט|מנדט הבא))|עוד כמה קולות @0 (?:הייתה|היתה|היה) (?:מקבלת|מקבל) (?:עוד מנדט|מנדט נוסף)|כמה קולות (?:נוספים )?(?:הייתה |היתה )?צריכה @0 (?:כדי )?(?:לקבל|להשיג) (?:עוד מנדט|מנדט נוסף))(?: בתוצאות האמת)?$/.test(text) && parties.length === 1) {
     return { query: { kind: 'seat-gap', party: parties[0] }, explanation: `תוספת הקולות הדרושה ל${label(parties[0])} כדי להגדיל את מספר המנדטים שלה. קולות יתר הרשימות וכללי הבחירות נשארים קבועים; הסך הארצי גדל.` };
   }
-  if (/^כמה קולות (?:צריכים לרדת|צריך להוריד|צריך להפחית|היו צריכים לרדת) ל?@0 (?:כדי )?(?:שתאבד מנדט|שתאבד מנדט אחד|לאבד מנדט|שירד לה מנדט|שירד מנדט)(?: בתוצאות האמת)?$/.test(text) && parties.length === 1) {
+  if (/^כמה קולות (?:יורדים|צריכים לרדת|צריך להוריד|צריך להפחית|היו צריכים לרדת) ל?@0 (?:כדי )?(?:שהיא תאבד מנדט(?: אחד)?|שתאבד מנדט|שתאבד מנדט אחד|לאבד מנדט|שירד לה מנדט|שירד מנדט)(?: בתוצאות האמת)?$/.test(text) && parties.length === 1) {
     return { query: { kind: 'seat-loss', party: parties[0] }, explanation: `הפחתת הקולות הדרושה ל${label(parties[0])} כדי להקטין את מספר המנדטים שלה. הקולות מוסרים מהסך הארצי ואינם מועברים לרשימה אחרת; קולות יתר הרשימות וכללי הבחירות נשארים קבועים.` };
   }
-  const rank = /^(?:באיזה|באיזו|באילו|איפה|מהם|מהן) (?:(\d+) )?(יישוב|ישוב|יישובים|ישובים|עיר|ערים|קלפי|קלפיות) (?:(?:ה)?@0 (?:קיבלה|קבלה|קיבל)|(?:קיבלה|קבלה|קיבל) (?:ה)?@0) (?:את )?(?:הכי הרבה קולות|מספר הקולות הגבוה ביותר|האחוז הגבוה ביותר|הכי הרבה אחוזים|אחוז הקולות הגבוה ביותר|(?:אחוז|אחוז הקולות) (?:הכי גבוה|הגבוה ביותר)(?: מהקולות)?)$/.exec(text);
+  const rankText = text.replace(/ הצביעו הכי הרבה ל@0$/, ' @0 קיבלה הכי הרבה קולות');
+  const rank = /^(?:באיזה|באיזו|באילו|איפה|מהם|מהן) (?:(\d+) )?(יישוב|ישוב|יישובים|ישובים|עיר|ערים|קלפי|קלפיות) (?:(?:ה)?@0 (?:קיבלה|קבלה|קיבל|קבלו|קיבלו)|(?:קיבלה|קבלה|קיבל|קבלו|קיבלו) (?:ה)?@0) (?:את )?(?:הכי הרבה קולות|מספר הקולות הגבוה ביותר|האחוז הגבוה ביותר|הכי הרבה אחוזים|אחוז הקולות הגבוה ביותר|(?:אחוז|אחוז הקולות) (?:הכי גבוה|הגבוה ביותר)(?: מהקולות)?)$/.exec(rankText);
   if (rank && parties.length === 1) {
     const limit = rank[1] ? Number(rank[1]) : /ים$|יות$/.test(rank[2]) ? 10 : 1;
     if (limit < 1 || limit > 100) return { error: 'אפשר להציג בין 1 ל־100 תוצאות.' };
@@ -122,7 +124,7 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
       if (/^(?:לא היה אחוז חסימה|בלי אחוז חסימה|ללא אחוז חסימה)$/.test(remainder) && query.threshold === undefined) {
         query.threshold = 0; descriptions.push('ללא אחוז חסימה'); continue;
       }
-      const threshold = /^אחוז החסימה (?:היה|יהיה) (\d+(?:\.\d+)?)\s*(?:%|אחוז|אחוזים)$/.exec(remainder);
+      const threshold = /^אחוז החסימה (?:(?:היה|יהיה)(?: על)?|על) (\d+(?:\.\d+)?)\s*(?:%|אחוז|אחוזים)$/.exec(remainder);
       if (threshold && query.threshold === undefined) {
         const value = Number(threshold[1]);
         if (value > 100) return { error: 'אחוז החסימה חייב להיות בין 0 ל־100.' };
@@ -131,6 +133,8 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
       if (/^(?:בלי|ללא|לא היו) הסכמי עודפים$/.test(remainder) && !query.withoutAgreements) {
         query.withoutAgreements = true; descriptions.push('ללא הסכמי עודפים'); continue;
       }
+      const outgoing = /^(כל הקולות|הקולות|\d+(?:\.\d+)?% מהקולות) של @([01]) היו עוברים ל@([01])$/.exec(remainder);
+      if (outgoing) remainder = `@${outgoing[3]} מקבלת ${outgoing[1]} של @${outgoing[2]}`;
       const transfer = /^@([01]) (?:הייתה מקבלת|היתה מקבלת|מקבלת|תקבל) (?:את )?(כל הקולות|הקולות|\d+(?:\.\d+)?% מהקולות) של @([01])$/.exec(remainder);
       if (transfer && parties.length === 2 && !query.transfer && transfer[1] !== transfer[3]) {
         const fraction = transfer[2].includes('%') ? Number.parseFloat(transfer[2]) / 100 : 1;

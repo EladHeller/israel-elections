@@ -95,6 +95,9 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
       ['באיזה עיר קיבל הליכוד הכי הרבה קולות', '/data/26/elections.csv'],
       ['באיזו קלפי קיבל הליכוד אחוז הכי גבוה מהקולות', '/data/26/polling-stations.csv'],
       ['איזו מפלגה קבלה הכי הרבה קולות במקום', '/data/26/elections.csv'],
+      ['כמה קולות קבלה הליכוד במקום', '/data/26/elections.csv'],
+      ['כמה קולות קיבלה הליכוד במקום בקלפי 1', '/data/26/polling-stations.csv'],
+      ['באיזו קלפי יש הכי הרבה בעלי זכות הצבעה', '/data/26/polling-stations.csv'],
     ]) {
       const start: number = requests.length;
       await ask(wording);
@@ -103,6 +106,11 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
       assert.equal(scenarioLink(), undefined);
       assert.ok(renderer.root.findByType(QuestionAnswer));
     }
+    const nationalRequests = requests.length;
+    await ask('איזו רשימה קבלה הכי הרבה קולות');
+    assert.equal(records.at(-1)!.outcome, 'answered');
+    assert.match(text(), /במקום הראשון בארץ/);
+    assert.ok(!requests.slice(nationalRequests).some(path => path.endsWith('.csv')));
     await ask('מה היה קורה אם הליכוד הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /חלוקת המנדטים נשארת ללא שינוי/);
     await ask('מה היה קורה אם הליכוד לא הייתה מקבלת קולות בכלל');
