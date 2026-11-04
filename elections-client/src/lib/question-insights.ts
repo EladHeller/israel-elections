@@ -1,3 +1,4 @@
+import { localityHref } from './locality-results';
 import type { Answer, QuestionContext, QuestionParse, QuestionQuery } from './election-questions';
 import { normalizeQuestion } from './election-questions';
 import type { LocalityVotes } from './party-research';
@@ -65,7 +66,7 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
   const { votes, names, config } = context;
   const label = (id: string) => names[id] ?? id;
   const total = Object.values(votes).reduce((sum, entry) => sum + entry.votes, 0);
-  const answer = (sentences: string[], note: string): Answer => ({ rows: sentences.map(sentence => [sentence]), columns: ['תשובה'], note });
+  const answer = (sentences: string[], note: string, locations: LocalityVotes[] = []): Answer => ({ rows: sentences.map(sentence => [sentence]), columns: ['תשובה'], note, rowLinks: locations.map(place => context.electionId ? [{ href: localityHref(context.electionId, place), label: 'תוצאות המקום' }] : []) });
   if (query.party !== undefined && !Object.hasOwn(votes, query.party)) throw new Error('הרשימה אינה קיימת בבחירות שנבחרו.');
   if (query.metric === 'national-winner') {
     const highest = Math.max(...Object.values(votes).map(entry => entry.votes));
@@ -106,7 +107,7 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
     const valid = places.filter(place => Number.isSafeInteger(place.eligibleVoters) && place.eligibleVoters! > 0);
     if (places.length && !valid.length) throw new Error('אין נתוני בעלי זכות הצבעה תקינים לדירוג.');
     const rows = valid.sort((a, b) => b.eligibleVoters! - a.eligibleVoters! || a.id.localeCompare(b.id) || placeLabel(a).localeCompare(placeLabel(b))).slice(0, query.limit);
-    return answer(rows.map(place => `${placeLabel(place)}: ${count(place.eligibleVoters!)} בעלי זכות הצבעה.`), 'מיון לפי מספר בעלי זכות ההצבעה, ולא לפי שיעור ההצבעה. מקומות ללא נתון חיובי ושלם אינם נכללים; בתיקו המיון לפי מזהה המקום.');
+    return answer(rows.map(place => `${placeLabel(place)}: ${count(place.eligibleVoters!)} בעלי זכות הצבעה.`), 'מיון לפי מספר בעלי זכות ההצבעה, ולא לפי שיעור ההצבעה. מקומות ללא נתון חיובי ושלם אינם נכללים; בתיקו המיון לפי מזהה המקום.', rows);
   }
   if (query.metric === 'winner' || query.metric === 'local-results') {
     const requested = normalizeQuestion(query.place!);
@@ -120,15 +121,17 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
       const place = matches[0];
       if (place.validVotes <= 0) throw new Error('אין קולות כשרים במקום לחישוב אחוז התמיכה.');
       const received = place.votes[query.party!] ?? 0;
-      return answer([`${placeLabel(place)}: ${label(query.party!)} קיבלה ${count(received)} קולות, שהם ${pct(100 * received / place.validVotes)} מהקולות הכשרים במקום.`], 'הנתונים מתייחסים למקום שנבחר בלבד; שם היישוב חייב להתאים לשם המופיע באתר.');
+      return answer([`${placeLabel(place)}: ${label(query.party!)} קיבלה ${count(received)} קולות, שהם ${pct(100 * received / place.validVotes)} מהקולות הכשרים במקום.`], 'הנתונים מתייחסים למקום שנבחר בלבד; שם היישוב חייב להתאים לשם המופיע באתר.', [place]);
     }
+    const locations: LocalityVotes[] = [];
     return answer(matches.flatMap(place => {
       const ranked = Object.entries(place.votes).filter(([, value]) => value > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
       if (!ranked.length || place.validVotes <= 0) return [];
+      locations.push(place);
       const highest = ranked[0][1]; const winners = ranked.filter(([, value]) => value === highest);
       const gap = highest - (ranked[1]?.[1] ?? 0);
       return [`${placeLabel(place)}: ${winners.map(([id]) => label(id)).join(' ו')} ${winners.length > 1 ? 'בתיקו במקום הראשון' : 'במקום הראשון'}, עם ${count(highest)} קולות (${pct(100 * highest / place.validVotes)}). הפער מהמקום השני: ${count(gap)} קולות.`];
-    }), 'פער מחושב מול הרשימה השנייה, ובתיקו הפער אפס.');
+    }), 'פער מחושב מול הרשימה השנייה, ובתיקו הפער אפס.', locations);
   }
   const eligible = places.filter(place => place.validVotes > 0 && place.validVotes >= query.minimum);
   if (query.metric === 'coverage') {
@@ -149,13 +152,13 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
       const delta = query.byVotes ? after - before : 100 * (after / place.validVotes - before / old.validVotes);
       return (query.metric === 'strengthened' ? delta > 0 : delta < 0) ? [{ place, delta }] : [];
     }).sort((a, b) => (query.metric === 'strengthened' ? b.delta - a.delta : a.delta - b.delta) || a.place.id.localeCompare(b.place.id)).slice(0, query.limit);
-    return answer(changes.map(({ place, delta }) => `${placeLabel(place)}: ${label(query.party!)} ${delta > 0 ? 'עלתה' : 'ירדה'} ב־${query.byVotes ? count(Math.abs(delta)) + ' קולות' : Math.abs(delta).toFixed(2) + ' נקודות אחוז'}.`), `השוואה לבחירות ${previous.id}, לפי שם רשימה זהה וסמל יישוב ושם זהים בלבד. שינוי בהרכב רשימה או בגבולות היישוב אינו מזוהה; לא כל היישובים בהכרח נכללים.`);
+    return answer(changes.map(({ place, delta }) => `${placeLabel(place)}: ${label(query.party!)} ${delta > 0 ? 'עלתה' : 'ירדה'} ב־${query.byVotes ? count(Math.abs(delta)) + ' קולות' : Math.abs(delta).toFixed(2) + ' נקודות אחוז'}.`), `השוואה לבחירות ${previous.id}, לפי שם רשימה זהה וסמל יישוב ושם זהים בלבד. שינוי בהרכב רשימה או בגבולות היישוב אינו מזוהה; לא כל היישובים בהכרח נכללים.`, changes.map(row => row.place));
   }
   if (query.metric === 'turnout-high' || query.metric === 'turnout-low') {
     const valid = eligible.filter(place => Number.isSafeInteger(place.eligibleVoters) && place.eligibleVoters! > 0 && Number.isSafeInteger(place.voters) && place.voters! >= place.validVotes && place.voters! <= place.eligibleVoters!);
     if (eligible.length && !valid.length) throw new Error('אין נתוני בעלי זכות בחירה ומצביעים תקינים לחישוב שיעור הצבעה.');
     const rows = valid.map(place => ({ place, rate: 100 * place.voters! / place.eligibleVoters! })).sort((a, b) => (query.metric === 'turnout-high' ? b.rate - a.rate : a.rate - b.rate) || a.place.id.localeCompare(b.place.id)).slice(0, query.limit);
-    return answer(rows.map(({ place, rate }) => `${placeLabel(place)}: שיעור הצבעה ${pct(rate)}, ${count(place.voters!)} מצביעים מתוך ${count(place.eligibleVoters!)} בעלי זכות בחירה.`), `שיעור הצבעה כולל קולות פסולים. מינימום ${query.minimum} כשרים. מקומות עם נתוני מצביעים או בעלי זכות בחירה חסרים או סותרים אינם נכללים.`);
+    return answer(rows.map(({ place, rate }) => `${placeLabel(place)}: שיעור הצבעה ${pct(rate)}, ${count(place.voters!)} מצביעים מתוך ${count(place.eligibleVoters!)} בעלי זכות בחירה.`), `שיעור הצבעה כולל קולות פסולים. מינימום ${query.minimum} כשרים. מקומות עם נתוני מצביעים או בעלי זכות בחירה חסרים או סותרים אינם נכללים.`, rows.map(row => row.place));
   }
   const ranked = eligible.flatMap(place => {
     if (query.metric === 'closest') {
@@ -170,5 +173,5 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
     const similarity = Math.max(0, 100 * (1 - distance / 2));
     return [{ place, score: distance, sentence: `${placeLabel(place)}: ציון דמיון ${pct(similarity)} לתוצאה הארצית.` }];
   }).sort((a, b) => a.score - b.score || a.place.id.localeCompare(b.place.id)).slice(0, query.limit);
-  return answer(ranked.map(row => row.sentence), query.metric === 'closest' ? `הפער בין שתי המובילות, ממוין לפי ${query.byVotes ? 'מספר קולות' : 'אחוז מהקולות הכשרים'}. מינימום ${query.minimum} כשרים. תיקו נכלל; מקום עם רשימה אחת שקיבלה קולות אינו נכלל.` : `ציון הדמיון הוא 100 כפול אחד פחות חצי מסכום ההפרשים המוחלטים בין שיעורי כל הרשימות במקום ובארץ. 100% מציין התפלגות זהה. מינימום ${query.minimum} כשרים. זהו מדד חישובי, לא מדד רשמי.`);
+  return answer(ranked.map(row => row.sentence), query.metric === 'closest' ? `הפער בין שתי המובילות, ממוין לפי ${query.byVotes ? 'מספר קולות' : 'אחוז מהקולות הכשרים'}. מינימום ${query.minimum} כשרים. תיקו נכלל; מקום עם רשימה אחת שקיבלה קולות אינו נכלל.` : `ציון הדמיון הוא 100 כפול אחד פחות חצי מסכום ההפרשים המוחלטים בין שיעורי כל הרשימות במקום ובארץ. 100% מציין התפלגות זהה. מינימום ${query.minimum} כשרים. זהו מדד חישובי, לא מדד רשמי.`, ranked.map(row => row.place));
 }
