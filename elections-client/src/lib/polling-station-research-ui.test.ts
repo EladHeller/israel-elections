@@ -139,6 +139,9 @@ test('station counting refresh preserves data on failure and discovers a newly p
 });
 
 test('availability checks deduplicate in-flight probes and ignore responses after unmount', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const state = setup(t);
   let complete!: (response: Response) => void;
   let signal: AbortSignal;

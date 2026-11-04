@@ -8,7 +8,6 @@ import AllElectionsSummary from '../components/AllElectionsSummary';
 import configs from '../data/elections-config.json';
 import manifests from '../data/elections-manifests.json';
 import totals from '../data/elections-valid.json';
-import { getCsvResults } from '../../../election-results-listener/csv-data';
 import { calcVotesResults } from './calc';
 import { shouldRefreshLiveResults } from './live-results';
 import type { ElectionConfig, ElectionResultsPayload } from '../types';
@@ -27,9 +26,9 @@ test('Knesset 26 final snapshots and summary agree with both official CSV files'
     const csv = readFileSync(`elections-client/public/data/26/${file}`, 'utf8');
     const rows = parse(csv, { bom: true, columns: true }) as Record<string, string>[];
     const parties = new Set(manifests['26'].lists.map(list => list.ballotLetter));
-    const parsed = getCsvResults(csv, Object.keys(rows[0]).filter(key => !parties.has(key)));
-    assert.equal(parsed.countedVotes, config.totalVotes, file);
-    assert.deepEqual(parsed.voteData, snapshot.voteData, file);
+    const voteData = Object.fromEntries([...parties].map(party => [party, { votes: rows.reduce((sum, row) => sum + Number(row[party]), 0) }]));
+    assert.equal(rows.reduce((sum, row) => sum + Number(row['מצביעים']), 0), config.totalVotes, file);
+    assert.deepEqual(voteData, snapshot.voteData, file);
     assert.equal(rows.reduce((sum, row) => sum + Number(row['בזב']), 0), config.eligibleVoters, file);
   }
   const valid = Object.values(snapshot.voteData).reduce((sum, party) => sum + party.votes, 0);
