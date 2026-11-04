@@ -1,6 +1,6 @@
 import type { ElectionResultsPayload } from '../types';
 
-export const LATEST_ELECTION_ID = 25;
+export const LATEST_ELECTION_ID = 26;
 
 export const detectAvailableElections = async (
   max: number = LATEST_ELECTION_ID,

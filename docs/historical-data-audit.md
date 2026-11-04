@@ -150,3 +150,22 @@ The election has no published counted results at audit time, so vote totals cann
 - Checked every static historical listener input against the corresponding published snapshot.
 - Recalculated every summary entry from detailed votes and the official represented-list set.
 - All resulting valid-vote sums match the Wikipedia list-row sums.
+
+## Knesset 26 final results — 4 November 2026
+
+Replaced the pre-count snapshot with final data from the Central Elections Committee:
+[localities CSV](https://media26.bechirot.gov.il/files/expc.csv) and
+[polling stations CSV](https://media26.bechirot.gov.il/files/expb.csv).
+The locality file's Last-Modified header was 4 November 2026, 09:42:15 UTC.
+Both files independently agree on all 38 list totals and the national totals:
+
+- Eligible voters: 7,331,981.
+- Ballots cast: 5,717,397; turnout: 77.98% (rounded from 77.97888456%).
+- Valid ballots: 5,691,426; invalid ballots: 25,971.
+- Votes below the 3.25% threshold: 306,478 (5.38% of valid ballots).
+- 1,225 locality rows and 12,929 polling station rows.
+- Seats: מחל 27, דרך 21, רק 12, ודם 11, אמת 8, עם 8, ל 7, ב 7, ג 7, שס 6, ט 6.
+
+The manifest and client configuration now mark the election as final. The summary
+uses the same final totals. Deployment publishes these versioned final snapshots;
+create-only protection continues to apply before finalization.

@@ -18,7 +18,10 @@ const NavigationTarget = () => React.createElement('p', { id: 'navigation-target
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const snapshot = { time: '2026-11-02T10:00:00Z', voteData: { ...Object.fromEntries(configs['26'].agreements.flat().map(party => [party, { votes: 0, mandats: 0 }])), מחל: { votes: 500, mandats: 0 }, ך: { votes: 100, mandats: 0 } }, realResults: {} };
 const csv = 'סמל ישוב,שם ישוב,מספר קלפי,בזב,מצביעים,כשרים,מחל,ך\n1,מקום,1,200,110,100,80,20';
-test('Enter submits directly, renders prose, records outcomes and ignores stale requests', async () => {
+test('Enter submits directly, renders prose, records outcomes and ignores stale requests', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const originals = { fetch: globalThis.fetch, window: globalThis.window, document: globalThis.document };
   let focused = false;
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: () => 1, clearInterval() {} } });
@@ -70,6 +73,13 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     await act(async () => renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }));
     await act(async () => renderer.root.findByType(ElectionSelector).props.onChange('26'));
     assert.equal(renderer.root.findByType(AppHeader).props.currentElection, '26');
+    const suggestions = renderer.root.findByProps({ className: 'question-suggestions' });
+    const featured = suggestions.findAllByProps({ className: 'question-examples' })[0];
+    assert.equal(featured.findAllByType('button').length, 4);
+    assert.equal(suggestions.findByType('details').props.open, undefined);
+    const originalExamples = featured.findAllByType('button').map(button => button.children.join(''));
+    await act(async () => input().props.onChange({ target: { value: 'טיוטה' } }));
+    assert.deepEqual(featured.findAllByType('button').map(button => button.children.join('')), originalExamples);
     await ask(''); assert.equal(records.length, 0);
     await ask('מה היה קורה אם לא היה אחוז חסימה');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.ok(renderer.root.findByType(QuestionAnswer));

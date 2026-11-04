@@ -4,12 +4,14 @@ import manifests from '../data/elections-manifests.json';
 import initialResults from '../../public/data/26/allResults.json';
 import { getCountingParties } from './counting-parties';
 
-test('the initial snapshot and all 38 registered lists include Blue and White and Ahi', () => {
+test('the final vote snapshot and all 38 registered lists include Blue and White and Ahi', () => {
   assert.equal(manifests['26'].lists.length, 38);
   assert.ok(manifests['26'].lists.some(list => list.ballotLetter === 'כן' && list.name === 'כחול לבן'));
   assert.ok(manifests['26'].lists.some(list => list.ballotLetter === 'צבי' && list.name === 'אחי'));
-  for (const field of ['voteData', 'realResults', 'withoutAgreements', 'beforeBaderOffer'] as const) {
-    assert.deepEqual(Object.keys(initialResults[field]).sort(), manifests['26'].lists.map(list => list.ballotLetter).sort());
+  assert.deepEqual(Object.keys(initialResults.voteData).sort(), manifests['26'].lists.map(list => list.ballotLetter).sort());
+  for (const party of ['כן', 'צבי'] as const) {
+    assert.equal(initialResults.voteData[party].votes, 0);
+    assert.ok(!(party in initialResults.realResults), 'zero-vote lists receive no seats');
   }
 });
 

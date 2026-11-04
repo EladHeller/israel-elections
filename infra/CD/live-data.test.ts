@@ -43,7 +43,7 @@ test('live initialization fails rather than silently continuing on an S3 permiss
   await assert.rejects(upload('dev', 'data/26/allResults.json', 'package.json', undefined, true), denied);
 });
 
-test('deployment protects only the current live output and still updates its source CSV and historical data', async () => {
+for (const phase of ['counting', 'final']) test(`deployment protects live data during ${phase} and publishes versioned final snapshots`, async () => {
   const source = await readFile('infra/CD/deploy-all.ts', 'utf8');
   const uploadSource = source.slice(source.indexOf('async function uploadFiles('), source.indexOf('\nfunction scenarioApiDomain('));
   const js = ts.transpileModule(uploadSource, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -51,6 +51,7 @@ test('deployment protects only the current live output and still updates its sou
   const calls: unknown[][] = [];
   const invalidations: unknown[] = [];
   const run = runInNewContext(`${js}\nuploadFiles`, {
+    electionManifests: { '26': { phase } },
     console: { log() {} }, bucketCodeName: 'code', clientCodeName: 'client', currElections: '26',
     getAllDirsFiles: async () => keys.map(key => ({ file: `./elections-client/dist/${key}` })),
     upload: async (...args: unknown[]) => { calls.push(args); return !args[4]; },
@@ -61,9 +62,9 @@ test('deployment protects only the current live output and still updates its sou
   for (const key of keys) {
     const call = calls.find(args => args[1] === key)!;
     assert.ok(call, key);
-    assert.equal(call[4], key === 'data/26/allResults.json' || key === 'data/26/elections.csv' || key === 'data/26/polling-stations.csv', key);
+    assert.equal(call[4], phase !== 'final' && (key === 'data/26/allResults.json' || key === 'data/26/elections.csv' || key === 'data/26/polling-stations.csv'), key);
   }
   const paths = (invalidations[0] as { input: { InvalidationBatch: { Paths: { Items: string[] } } } }).input.InvalidationBatch.Paths.Items;
   assert.ok(paths.includes('/test-data/live-results.csv'));
-  assert.ok(!paths.includes('/data/26/allResults.json'));
+  assert.equal(paths.includes('/data/26/allResults.json'), phase === 'final');
 });

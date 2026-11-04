@@ -4,6 +4,7 @@ import React from 'react';
 import { act, create } from 'react-test-renderer';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import PartyResearch from '../components/PartyResearch';
+import manifests from '../data/elections-manifests.json';
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const cities = 'שם ישוב,סמל ישוב,כשרים,מחל,אמת\nעיר,1,500,300,200';
@@ -59,7 +60,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   assert.equal(renderer.root.findAllByType('thead')[0].findAllByType('th').length, 5);
   assert.match(content(renderer), /פיצול 1/);
   assert.match(content(renderer), /בכל קלפי/);
-  assert.equal(content(renderer).includes('קובץ נתוני הקלפיות עודכן'), election === '26');
+  assert.equal(content(renderer).includes('קובץ נתוני הקלפיות עודכן'), false, 'final elections omit file timestamps');
   assert.equal(renderer.root.findByType('select').props.value, 'אמת');
   if (election === '26') assert.ok(requests.includes('GET /data/26/polling-stations.csv'));
   else assert.ok(requests.every(request => request === 'GET /data/19/elections.csv'));
@@ -105,6 +106,9 @@ for (const unavailable of ['missing', 'html', 'network']) test(`optional station
 });
 
 test('station counting refresh preserves data on failure and discovers a newly published archive', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const state = setup(t);
   let exists = false;
   let fail = false;
@@ -135,6 +139,9 @@ test('station counting refresh preserves data on failure and discovers a newly p
 });
 
 test('availability checks deduplicate in-flight probes and ignore responses after unmount', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const state = setup(t);
   let complete!: (response: Response) => void;
   let signal: AbortSignal;
