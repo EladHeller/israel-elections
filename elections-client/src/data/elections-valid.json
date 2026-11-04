@@ -98,5 +98,9 @@
   "25": {
     "validVotes": 4764742,
     "belowThresholdVotes": 417400
+  },
+  "26": {
+    "validVotes": 5691426,
+    "belowThresholdVotes": 306478
   }
 }

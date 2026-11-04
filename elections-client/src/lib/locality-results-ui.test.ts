@@ -160,6 +160,9 @@ test('embedded historical station files are aggregated and single station deep l
 });
 
 test('loading errors can be retried, empty files are explicit, and counting refresh keeps the last valid snapshot', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const state = setup(t);
   state.setFail(true);
   const renderer = await state.render('/localities/26?locality=3000');
@@ -189,6 +192,9 @@ test('loading errors can be retried, empty files are explicit, and counting refr
 });
 
 test('slow requests deduplicate, unmount aborts late responses and optional malformed CSV stays hidden', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const state = setup(t);
   state.setStations('not a CSV');
   const renderer = await state.render('/localities/26?locality=3000');

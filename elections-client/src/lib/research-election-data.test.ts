@@ -9,7 +9,10 @@ import type { ElectionManifest } from '../types';
 import { useElectionData, type UseElectionDataResult } from '../hooks/use-election-data';
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
-test('election hook supports metadata-only research and retains the last official snapshot on refresh failures', async () => {
+test('election hook supports metadata-only research and retains the last official snapshot on refresh failures', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const originalFetch = globalThis.fetch;
   const originalWindow = globalThis.window;
   const originalDocument = globalThis.document;
@@ -106,7 +109,10 @@ test('election metadata falls back safely when optional historical configuration
   }
 });
 
-test('official data refresh ignores hidden tabs, overlapping requests and requests completed after unmount', async () => {
+test('official data refresh ignores hidden tabs, overlapping requests and requests completed after unmount', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const fetch = globalThis.fetch;
   const window = globalThis.window;
   const document = globalThis.document;

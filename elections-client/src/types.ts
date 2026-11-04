@@ -20,6 +20,7 @@ export interface ElectionConfig {
   agreements: [string, string][];
   algorithm: Algorithm;
   turnoutPercentage?: number;
+  eligibleVoters?: number;
   totalVotes?: number;
   finalResults?: boolean;
 }

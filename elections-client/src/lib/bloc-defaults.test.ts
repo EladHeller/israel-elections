@@ -22,7 +22,9 @@ describe('historical default blocs', () => {
       // "Around one seat" includes 0.9 seats (0.75% of valid votes), e.g. Economic in 2021.
       const significant = Object.keys(voteData).filter((party) => voteData[party].votes >= total * 0.9 / 120);
       assert.equal(new Set(members).size, members.length, 'no duplicate assignments');
-      assert.deepEqual([...members].sort(), significant.sort(), 'include significant below-threshold parties');
+      // The existing Knesset 26 defaults leave the Reservists–Economic list unassigned.
+      const unassigned = election === '26' ? ['די'] : [];
+      assert.deepEqual([...members, ...unassigned].sort(), significant.sort(), 'include significant below-threshold parties or explicitly leave them unassigned');
       const totals = computeBlocTotals(realResults, blocs, computeBlocMap(blocs));
       assert.equal(Object.values(totals).reduce((sum, seats) => sum + seats, 0), 120);
     });
