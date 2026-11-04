@@ -95,3 +95,12 @@ test('scenario routes and election data use the intended CDN lifetimes', () => {
   assert.match(behaviors[6], /DefaultTTL: 86400\n/);
   assert.match(behaviors[6], /MaxTTL: 31536000\n/);
 });
+
+test('direct question links preserve encoded question text through CloudFront', () => {
+  const text = 'מה היה קורה אם רעם הייתה מקבלת 10000 פחות קולות';
+  const querystring = { q: { value: encodeURIComponent(text) } };
+  const request = { uri: '/questions/26', method: 'GET', querystring };
+  assert.equal(handler({ request }).uri, '/index.html');
+  assert.deepEqual(request.querystring, querystring);
+  assert.equal(decodeURIComponent(request.querystring.q.value), text);
+});
