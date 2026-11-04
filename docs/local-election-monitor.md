@@ -2,6 +2,10 @@
 
 The official election-results host challenges requests from cloud/datacenter networks. This monitor runs the existing `csvMonitor()` code on a Mac so the CSV fetch uses the Mac's normal internet connection, while publishing through the same S3 and CloudFront path as the Lambda.
 
+Each poll publishes the city/nationwide CSV first, then fetches the configured `pollingStationsCsvUrl` (`expb.csv` for election 26) and updates `data/26/polling-stations.csv`, its timestamped archive and CloudFront cache when changed. Station updates run even when city results are unchanged. A station fetch or validation failure marks the poll as failed, while any city results already published remain available. Elections without a station URL keep city-only polling.
+
+After pulling monitor changes, restart the running LaunchAgent (or rerun the installer) to load the new code.
+
 ## Install
 
 From the repository root:

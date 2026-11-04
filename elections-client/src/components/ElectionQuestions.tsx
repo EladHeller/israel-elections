@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
@@ -9,14 +9,16 @@ import partyNamesAll from '../data/party-names.json';
 import { insightNeedsPlaces } from '../lib/question-insights';
 import { hasLocalityData, pollingStationSource } from '../lib/locality-availability';
 import { parseLocalities, parsePollingStations } from '../lib/party-research';
-import { executeElectionQuestion, parseElectionQuestion, type Answer, type QuestionQuery } from '../lib/election-questions';
+import { executeElectionQuestion, parseElectionQuestion, type Answer, type AnswerLink, type QuestionQuery } from '../lib/election-questions';
 import type { PreviousElection } from '../lib/question-insights';
 import { recordQuestion, type QuestionOutcome } from '../lib/question-log';
 import { phaseHasResults } from '../lib/election-manifest';
+import { questionAnswerLinks } from '../lib/question-answer-links';
+import { questionScenarioHref } from '../lib/question-scenario';
 import { loadComparisonElection } from '../lib/comparison-data';
 
 const examples = ['מה היה קורה אם לא היה אחוז חסימה?', 'באיזה יישוב הליכוד קיבלה הכי הרבה קולות?', 'כמה קולות היו חסרים לעמך ישראל לעבור את אחוז החסימה?'];
-type Reply = { answer: Answer; kind: QuestionQuery['kind']; explanation: string; time?: string };
+type Reply = { links: AnswerLink[]; answer: Answer; kind: QuestionQuery['kind']; explanation: string; time?: string; scenarioHref?: string; scenarioLinkFailed?: boolean };
 export default function ElectionQuestions() {
   const { electionId = '' } = useParams();
   return <QuestionScreen key={electionId} electionId={electionId} />;
@@ -72,7 +74,12 @@ function QuestionScreen({ electionId }: { electionId: string }) {
       if (controller.signal.aborted) return;
       const answer = executeElectionQuestion(parsed.query, { ...context, previous, comparison }, places);
       outcome = answer.rows.length ? 'answered' : 'empty';
-      setReply({ answer, kind: parsed.query.kind, explanation: parsed.explanation, time: data.results.time });
+      let scenarioHref: string | undefined;
+      let scenarioLinkFailed = false;
+      try { scenarioHref = await questionScenarioHref(answer, context, electionId); }
+      catch { scenarioLinkFailed = true; }
+      if (controller.signal.aborted) return;
+      setReply({ answer, links: questionAnswerLinks(parsed.query, answer, context, electionId), scenarioHref, scenarioLinkFailed, kind: parsed.query.kind, explanation: parsed.explanation, time: data.results.time });
     } catch (failure) {
       if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'החישוב נכשל. אפשר לנסות שוב.');
     } finally {
@@ -113,6 +120,9 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         {busy && <p role="status">בודק את הנתונים…</p>}
         {error && <p className="question-error" role="alert">{error}</p>}
         {reply && <article><p className="question-interpretation">{reply.explanation}</p><QuestionAnswer answer={reply.answer} kind={reply.kind} /><p className="question-answer-note">{reply.answer.note}</p>
+          {!reply.scenarioHref && reply.links.length > 0 && <div className="question-answer-links">{reply.links.map(link => <Link key={link.href} className="ui-link ui-button ui-button-quiet" to={link.href}>{link.label}</Link>)}</div>}
+          {reply.scenarioHref && <Link className="ui-link ui-button ui-button-quiet" to={reply.scenarioHref}>פתיחת התרחיש בסימולטור</Link>}
+          {reply.scenarioLinkFailed && <p className="question-caption" role="status">התשובה זמינה, אך יצירת הקישור לסימולטור נכשלה. אפשר לשלוח שוב את השאלה.</p>}
           {data.electionManifest?.phase === 'counting' && <p className="question-caption">הספירה נמשכת. <ResultsTimestamp time={reply.time} /></p>}
         </article>}
         {saveFailed && <p className="question-caption" role="status">המענה זמין, אך שמירת השאלה נכשלה.</p>}

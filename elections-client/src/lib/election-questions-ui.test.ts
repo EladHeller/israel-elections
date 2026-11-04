@@ -7,14 +7,16 @@ import ElectionQuestions from '../components/ElectionQuestions';
 import QuestionAnswer from '../components/QuestionAnswer';
 import ElectionSelector from '../components/ElectionSelector';
 import AppHeader from '../components/AppHeader';
+import configs from '../data/elections-config.json';
 import manifests from '../data/elections-manifests.json';
 import partyNames from '../data/party-names.json';
+import { decodeSharedScenario } from './shared-scenario';
 import type { QuestionAttempt } from './question-log';
 
 const NavigationTarget = () => React.createElement('p', { id: 'navigation-target' }, useLocation().pathname);
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
-const snapshot = { time: '2026-11-02T10:00:00Z', voteData: { מחל: { votes: 500, mandats: 0 }, ך: { votes: 100, mandats: 0 } }, realResults: {} };
+const snapshot = { time: '2026-11-02T10:00:00Z', voteData: { ...Object.fromEntries(configs['26'].agreements.flat().map(party => [party, { votes: 0, mandats: 0 }])), מחל: { votes: 500, mandats: 0 }, ך: { votes: 100, mandats: 0 } }, realResults: {} };
 const csv = 'סמל ישוב,שם ישוב,מספר קלפי,בזב,מצביעים,כשרים,מחל,ך\n1,מקום,1,200,110,100,80,20';
 test('Enter submits directly, renders prose, records outcomes and ignores stale requests', async () => {
   const originals = { fetch: globalThis.fetch, window: globalThis.window, document: globalThis.document };
@@ -54,7 +56,10 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
   const input = () => renderer.root.findByProps({ id: 'election-question' });
   const ask = async (value: string) => {
     await act(async () => input().props.onChange({ target: { value } }));
-    await act(async () => { renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }); await tick(); });
+    await act(async () => { renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }); await tick();
+      if (!['pending', 'comparison-pending'].includes(mode)) {
+        for (let i = 0; i < 200 && renderer.root.findByProps({ className: 'question-response' }).props['aria-busy']; i++) await new Promise(resolve => setTimeout(resolve, 5));
+      } });
   };
   try {
     await mount('/questions'); assert.equal(requests.length, 0);
@@ -70,15 +75,80 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.ok(renderer.root.findByType(QuestionAnswer));
     assert.equal(renderer.root.findAllByType('table').length, 0); assert.equal(renderer.root.findAllByType('textarea').length, 0);
     assert.ok(!text().includes('פענוח השאלה') && !text().includes('חישוב התשובה'));
+    const scenarioLink = () => renderer.root.findAllByType('a').find(link => link.children.includes('פתיחת התרחיש בסימולטור'));
+    const thresholdHref = scenarioLink()!.props.href;
+    assert.equal(scenarioLink()!.props.className, 'ui-link ui-button ui-button-quiet');
+    const shared = await decodeSharedScenario(thresholdHref.split('=')[1], '26');
+    assert.equal(shared.scenario.config.blockPercentage, 0);
+    assert.deepEqual(shared.base.voteData['מחל'].votes, snapshot.voteData['מחל'].votes);
     const comparisonRequests = requests.length;
     await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /נקודות אחוז/);
+    assert.equal(scenarioLink(), undefined);
     assert.ok(requests.slice(comparisonRequests).includes('/data/25/allResults.json'));
     assert.ok(!requests.slice(comparisonRequests).some(path => path.endsWith('.csv')));
+    for (const wording of ['בכמה אחוזים עלתה הליכוד מהבחירות הקודמות', 'בכמה אחוזים עלתה הליכוד מהכנסת הקודמת']) {
+      await ask(wording);
+      assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /נקודות אחוז/);
+    }
+    for (const [wording, source] of [
+      ['באיזה עיר קיבל הליכוד הכי הרבה קולות', '/data/26/elections.csv'],
+      ['באיזו קלפי קיבל הליכוד אחוז הכי גבוה מהקולות', '/data/26/polling-stations.csv'],
+      ['איזו מפלגה קבלה הכי הרבה קולות במקום', '/data/26/elections.csv'],
+      ['כמה קולות קבלה הליכוד במקום', '/data/26/elections.csv'],
+      ['כמה קולות קיבלה הליכוד במקום בקלפי 1', '/data/26/polling-stations.csv'],
+      ['באיזו קלפי יש הכי הרבה בעלי זכות הצבעה', '/data/26/polling-stations.csv'],
+    ]) {
+      const start: number = requests.length;
+      await ask(wording);
+      assert.equal(records.at(-1)!.outcome, 'answered');
+      assert.ok(requests.slice(start).includes(source));
+      assert.equal(scenarioLink(), undefined);
+      assert.ok(renderer.root.findByType(QuestionAnswer));
+      const placeLink = renderer.root.findByType(QuestionAnswer).findByType('a');
+      const destination = new URL('https://example.org' + placeLink.props.href);
+      assert.equal(destination.pathname, '/localities/26');
+      assert.equal(destination.searchParams.get('locality'), '1');
+      assert.equal(destination.searchParams.has('station'), source.includes('polling-stations'));
+      await act(async () => placeLink.props.onClick({ button: 0, preventDefault() {}, defaultPrevented: false }));
+      assert.equal(renderer.root.findByProps({ id: 'navigation-target' }).children[0], '/localities/26');
+      await mount('/questions/26');
+    }
+    const nationalRequests = requests.length;
+    await ask('איזו רשימה קבלה הכי הרבה קולות');
+    assert.equal(records.at(-1)!.outcome, 'answered');
+    assert.match(text(), /במקום הראשון בארץ/);
+    assert.ok(!requests.slice(nationalRequests).some(path => path.endsWith('.csv')));
+    await ask('כמה קולות קיבל הליכוד');
+    const listLink = renderer.root.findAllByType('a').find(link => link.children.includes('לעמוד הרשימה הליכוד'))!;
+    assert.equal(new URL('https://example.org' + listLink.props.href).searchParams.get('party'), 'מחל');
+    assert.equal(scenarioLink(), undefined);
+    await ask('כמה קולות התבזבזו');
+    assert.ok(renderer.root.findAllByType('a').some(link => link.props.href === '/results/26'));
     await ask('מה היה קורה אם הליכוד הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /חלוקת המנדטים נשארת ללא שינוי/);
     await ask('מה היה קורה אם הליכוד לא הייתה מקבלת קולות בכלל');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /מאבדת/);
+    const originalCompression = globalThis.CompressionStream;
+    let releaseCompression!: () => void;
+    try {
+      Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: class extends TransformStream {
+        constructor() { super({ transform(chunk, controller) { controller.enqueue(chunk); }, flush() { return new Promise<void>(resolve => { releaseCompression = resolve; }); } }); }
+      } });
+      mode = 'pending'; await ask('מה היה קורה אם לא היה אחוז חסימה');
+      assert.ok(releaseCompression);
+      await act(async () => input().props.onChange({ target: { value: 'שאלה חדשה' } }));
+      await act(async () => { releaseCompression(); await tick(); });
+      assert.equal(records.at(-1)!.outcome, 'cancelled'); assert.equal(scenarioLink(), undefined);
+      assert.equal(renderer.root.findAllByType(QuestionAnswer).length, 0);
+    } finally { Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: originalCompression }); mode = 'ok'; }
+    const compression = globalThis.CompressionStream;
+    try {
+      Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: class { constructor() { throw new Error('compression unavailable'); } } });
+      await ask('מה היה קורה אם לא היה אחוז חסימה');
+      assert.ok(renderer.root.findByType(QuestionAnswer)); assert.match(text(), /יצירת הקישור לסימולטור נכשלה/);
+      assert.equal(scenarioLink(), undefined);
+    } finally { Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: compression }); }
     mode = 'comparison-fail'; await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'failed'); assert.match(text(), /לא הצלחתי לטעון את תוצאות/);
     mode = 'comparison-pending'; await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
@@ -89,6 +159,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     await ask('מי ינצח?'); assert.match(text(), /לא הצלחתי/); assert.equal(records.at(-1)!.outcome, 'unsupported');
     await ask('כמה קולות היו חסרים לליכוד כדי לקבל מנדט נוסף בתוצאות האמת?');
     assert.match(text(), /הייתה צריכה עוד/); assert.equal(records.at(-1)!.outcome, 'answered');
+    const gain = await decodeSharedScenario(scenarioLink()!.props.href.split('=')[1], '26');
+    assert.ok(gain.scenario.voteData['מחל'].votes > gain.base.voteData['מחל'].votes);
     await ask('כמה קולות צריכים לרדת לליכוד כדי שתאבד מנדט?');
     assert.match(text(), /צריכה לאבד/); assert.equal(records.at(-1)!.outcome, 'answered');
     await ask('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות');
@@ -154,8 +226,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
 
 test('prose includes explicit green gains and red losses without unchanged seat clutter', () => {
   let renderer!: ReturnType<typeof create>;
-  const show = (kind: 'insight' | 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'below-threshold-winners' | 'results' | 'comparison' | 'comparison-scenario', rows: (string | number)[][]) => {
-    renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [] } })); return JSON.stringify(renderer.toJSON());
+  const show = (kind: 'insight' | 'scenario' | 'rank' | 'gap' | 'seat-gap' | 'seat-loss' | 'below-threshold-winners' | 'results' | 'comparison' | 'comparison-scenario', rows: (string | number)[][], seatChanges?: import('./election-questions').SeatChange[]) => {
+    renderer?.unmount(); renderer = create(React.createElement(QuestionAnswer, { kind, answer: { rows, note: '', columns: [], seatChanges } })); return JSON.stringify(renderer.toJSON());
   };
   try {
     assert.match(show('comparison', [['עלייה של 3 נקודות אחוז, גידול יחסי של 20%']]), /3 נקודות אחוז/);
@@ -170,7 +242,22 @@ test('prose includes explicit green gains and red losses without unchanged seat 
     assert.match(show('rank', [['יישוב', 80, '80%']]), /הכשרים במקום/); assert.match(show('gap', [['א', 0]]), /כבר מגיעה/); assert.match(show('gap', [['א', 10]]), /צריכה עוד/);
     assert.match(show('rank', []), /לא נמצאו/); assert.equal(renderer.root.findAllByType('table').length, 0);
     assert.match(show('seat-gap', [['הציונות הדתית וזהות', 1234, 8]]), /1,234.*מעבר ל־.*8/);
-    assert.match(show('seat-gap', [['א', '—', 120]]), /לא נמצאה.*בטווח החיפוש/);
+    const impact = show('seat-gap', [['הליכוד', 42000, 27]], [
+      { party: 'מחל', name: 'הליכוד', before: 27, after: 28 },
+      { party: 'ב', name: 'רשימה ב', before: 23, after: 22 },
+      { party: 'ג', name: 'רשימה ג', before: 10, after: 11 },
+      { party: 'ד', name: 'רשימה ד', before: 5, after: 4 },
+    ]);
+    assert.match(impact, /42,000/);
+    assert.match(impact, /הליכוד.*מקבלת.*מנדט אחד.*27.*28/);
+    assert.match(impact, /רשימה ב.*מאבדת.*מנדט אחד.*23.*22/);
+    assert.match(impact, /רשימה ג.*מקבלת.*מנדט אחד.*10.*11/);
+    assert.match(impact, /רשימה ד.*מאבדת.*מנדט אחד.*5.*4/);
+    assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-gain' }).length, 2);
+    assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-loss' }).length, 2);
+    assert.match(show('seat-gap', [['א', 12, 0]], [{ party: 'א', name: 'א', before: 0, after: 4 }]), /מקבלת.*4.*מנדטים/);
+    assert.match(show('seat-gap', [['א', '—', 120]], []), /לא נמצאה.*בטווח החיפוש/);
+    assert.equal(renderer.root.findAllByProps({ className: 'question-seat-change is-loss' }).length, 0);
     assert.match(show('seat-loss', [['א', 1234, 8]]), /צריכה לאבד.*1,234/);
     assert.match(show('seat-loss', [['א', '—', 0]]), /אין הפחתת קולות/);
     assert.match(show('below-threshold-winners', [['מקום — קלפי 1', 'עמך ישראל', 45, '45.00%', 'תיקו במקום הראשון']]), /עמך ישראל.*45.*תיקו במקום הראשון/);

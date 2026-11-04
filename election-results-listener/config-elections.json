@@ -1,6 +1,7 @@
 {
   "26": {
     "csvUrl": "https://media26.bechirot.gov.il/files/expc.csv",
+    "pollingStationsCsvUrl": "https://media26.bechirot.gov.il/files/expb.csv",
     "algorithm": "baderOffer",
     "blockPercentage": 0.0325,
     "agreements": [["רק", "ל"], ["דרך", "אמת"], ["עם", "ודם"], ["מחל", "ט"], ["שס", "ג"], ["זץ", "נקי"]]

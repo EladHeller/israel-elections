@@ -40,7 +40,7 @@ async function main() {
   while (!stopping) {
     const startedAt = Date.now();
     try {
-      await csvMonitor();
+      await csvMonitor({ includePollingStations: true });
       const now = Date.now();
       if (lastError || now - lastHeartbeat >= HEARTBEAT_INTERVAL_MS || once) {
         console.log('[local-monitor] poll succeeded', { at: new Date(now).toISOString() });

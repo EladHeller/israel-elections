@@ -174,3 +174,26 @@ test('historical metadata fallback and multi-list decline ranking stay determini
   const unnamed = { ...context, comparison: { ...old, names: {} } };
   assert.match(answer('בכמה אחוזים הרשימות הערביות עלו לעומת הבחירות הקודמות', unnamed).note, /a, b/);
 });
+
+test('explicit renamed-list comparison identifies both compositions without inferring continuity elsewhere', () => {
+  const renamed: QuestionContext = {
+    ...context, names: { ...context.names, new: 'הציונות הדתית וזהות' },
+    comparison: { ...old, names: { ...old.names, old: 'הציונות הדתית' } },
+  };
+  const text = 'בכמה קולות עלתה הציונות הדתית מהבחירות הקודמות';
+  assert.match(sentence(text, renamed), /150.*180.*30 קולות/);
+  assert.match(answer(text, renamed).note, /הרכב הרשימות שונה/);
+  const ranking = sentence('איזו רשימה עלתה הכי הרבה בקולות מהבחירות הקודמות', renamed);
+  assert.ok(!ranking.includes('הציונות הדתית'));
+  for (const comparison of [
+    { ...renamed.comparison!, names: { ...old.names, old: 'שם אחר' } },
+    { ...renamed.comparison!, names: { ...old.names, old: 'הציונות הדתית', other: 'הציונות הדתית' } },
+    { ...renamed.comparison!, id: '24' },
+  ]) {
+    const source = comparison.id === '24' ? 'בכמה קולות עלתה הציונות הדתית לעומת כנסת 24' : text;
+    assert.throws(() => answer(source, { ...renamed, comparison }), /התאמה חד משמעית/);
+  }
+  assert.throws(() => answer('מה היה קורה אם הציונות הדתית הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות', renamed), /התאמה חד משמעית/);
+  assert.deepEqual(query('בכמה קולות עלתה ישראל ביתנו מכנסת קודמת'), { kind: 'comparison', source: '25', target: { type: 'list', id: 'other' }, measure: 'votes' });
+  assert.throws(() => answer(text, { ...renamed, electionId: '27', comparison: { ...renamed.comparison!, id: '26' } }), /התאמה חד משמעית/);
+});

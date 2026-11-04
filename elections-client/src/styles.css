@@ -1980,3 +1980,5 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .polling-location small { display: block; margin-block-start: .75rem; color: var(--ink-70); }
 .polling-location-name { display: block; font-size: .85em; color: var(--ink-70); white-space: normal; }
 @media (max-width: 600px) { .polling-location { padding: .75rem; } .polling-location-map { height: 240px; } }
+
+.question-answer-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .75rem; }

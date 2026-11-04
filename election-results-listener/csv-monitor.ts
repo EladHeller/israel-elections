@@ -10,7 +10,7 @@ const {
   notPartiesKeys, currElections, electionsConfig, distributionID,
 } = config;
 
-const { csvUrl, agreements, blockPercentage } = electionsConfig[currElections];
+const { csvUrl, pollingStationsCsvUrl, agreements, blockPercentage } = electionsConfig[currElections];
 
 async function uploadCsv(csvData: string, time: string) {
   await upload(`data/${currElections}/elections.csv`, csvData, true);
@@ -24,12 +24,17 @@ export async function uploadResults(results, elections: number, time: string = n
   await upload(`data/${elections}/${time}_allResults.json`, JSON.stringify({ ...results, time }));
 }
 
-export async function csvMonitor() {
+export async function csvMonitor({ includePollingStations = false } = {}) {
   if (csvUrl == null) {
     throw new Error('CSV url is missing');
   }
   const { csv, time } = await fetchResultsCsv(csvUrl);
-  return publishResultsCsv(csv, time);
+  await publishResultsCsv(csv, time);
+  // Station updates are independent of changes to nationwide/city results.
+  if (includePollingStations && pollingStationsCsvUrl) {
+    const stations = await fetchResultsCsv(pollingStationsCsvUrl);
+    await publishPollingStationsCsv(stations.csv, stations.time);
+  }
 }
 
 export async function publishResultsCsv(csvData: string, time: string) {

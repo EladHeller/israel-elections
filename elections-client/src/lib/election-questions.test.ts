@@ -111,14 +111,38 @@ test('next-seat questions accept natural Hebrew and return the first added-vote 
         const answer = execute({ kind: 'seat-gap', party }, ctx);
         assert.equal(answer.rows[0][1], expected <= 1000 ? expected : '—');
         assert.equal(answer.rows[0][2], baseline);
+        const original = computeScenarioResults(ctx.votes, ctx.config).realResults;
+        const changed = computeScenarioResults({ ...ctx.votes, [party]: { ...ctx.votes[party], votes: ctx.votes[party].votes + expected } }, ctx.config).realResults;
+        const expectedChanges = Object.keys(ctx.votes).filter(id => (original[id]?.mandats ?? 0) !== (changed[id]?.mandats ?? 0))
+          .map(id => ({ party: id, name: ctx.names[id], before: original[id]?.mandats ?? 0, after: changed[id]?.mandats ?? 0 }));
+        assert.deepEqual([...answer.seatChanges!].sort((a, b) => a.party.localeCompare(b.party)), expectedChanges.sort((a, b) => a.party.localeCompare(b.party)));
+        assert.equal(answer.seatChanges![0].party, party);
+        assert.equal(answer.seatChanges!.reduce((sum, change) => sum + change.after - change.before, 0), 0);
+        assert.ok(answer.seatChanges!.some(change => change.after < change.before));
       }
       assert.deepEqual(ctx, before);
     }
   }
   assert.throws(() => execute({ kind: 'seat-gap', party: 'missing' }, context), /קיימת/);
   const single = { ...context, votes: { מחל: { votes: 100, mandats: 0 } }, config: { ...context.config, agreements: [] } };
-  assert.equal(execute({ kind: 'seat-gap', party: 'מחל' }, single).rows[0][1], '—');
+  const noGain = execute({ kind: 'seat-gap', party: 'מחל' }, single);
+  assert.equal(noGain.rows[0][1], '—');
+  assert.deepEqual(noGain.seatChanges, []);
   assert.equal(execute({ kind: 'seat-gap', party: 'ט' }, { ...context, config: { ...context.config, blockPercentage: 1 } }).rows[0][1], '—');
+});
+
+test('next-seat impact includes threshold cascades and lists losing all their seats', () => {
+  const ctx = { ...context, config: { ...context.config, blockPercentage: 0.31 } };
+  const original = structuredClone(ctx);
+  const answer = execute({ kind: 'seat-gap', party: 'ך' }, ctx);
+  const lost = answer.seatChanges!.find(change => change.party === 'ט')!;
+  assert.ok(lost.before > 0);
+  assert.equal(lost.after, 0);
+  const gained = answer.seatChanges!.find(change => change.party === 'ך')!;
+  assert.equal(gained.before, 0);
+  assert.ok(gained.after > 1);
+  assert.equal(answer.seatChanges!.reduce((sum, change) => sum + change.after - change.before, 0), 0);
+  assert.deepEqual(ctx, original);
 });
 
 test('short next-seat questions resolve list aliases and use the existing seat calculation', () => {
@@ -248,4 +272,64 @@ test('common Hebrew syntax never becomes a ballot identifier across historical e
     assert.equal(query('מה היה קורה אם בלי הסכמי עודפים', ctx).kind, 'scenario');
   }
   assert.equal(query('מה היה קורה אם לא היה אחוז חסימה', { ...context, votes: {} }).kind, 'scenario');
+});
+
+test('unanswered production and develop questions and related Hebrew phrasings get executable queries', () => {
+  const names26 = names['26'];
+  const names25 = names['25'];
+  const ctx: QuestionContext = {
+    ...context, electionId: '26', names: names26,
+    votes: { ...context.votes, שס: { votes: 100, mandats: 0 }, די: { votes: 10, mandats: 0 } },
+    comparison: { id: '25', names: names25, config: context.config, votes: { מחל: { votes: 400, mandats: 0 }, ט: { votes: 250, mandats: 0 }, שס: { votes: 100, mandats: 0 } } },
+  };
+  const places: LocalityVotes[] = [
+    { id: '1', name: 'ירושלים', validVotes: 100, votes: { מחל: 60, ט: 40 } },
+    { id: '2', name: 'חיפה', validVotes: 200, votes: { מחל: 80, ט: 120 } },
+  ];
+  const stations = places.map((p, i) => ({ ...p, pollingStation: String(i + 1) }));
+  const answered = (text: string) => {
+    const q = query(text, ctx);
+    const answer = execute(q, ctx, 'level' in q && q.level === 'stations' ? stations : places);
+    assert.ok(answer.rows.length, text);
+    return { q, answer };
+  };
+  for (const text of ['כמה קולות חסרים לליכוד למנדט נוסף', 'עוד כמה קולות ש״ס הייתה מקבלת מנדט נוסף', 'עוד כמה קולות הליכוד היה מקבל עוד מנדט']) {
+    assert.equal(answered(text).q.kind, 'seat-gap');
+  }
+  for (const name of ['כלכלית', 'הכלכלית', 'המילואימניקים והכלכלית']) {
+    const { q, answer } = answered(`כמה קולות היו חסרים ל${name} לעבור את אחוז החסימה`);
+    assert.deepEqual(q, { kind: 'gap', party: 'די', denominator: 'fixed' });
+    assert.equal(answer.rows[0][1], 212);
+  }
+  for (const unit of ['עיר', 'יישוב', 'ישוב']) for (const order of ['קיבל הליכוד', 'הליכוד קיבלה']) {
+    const { q, answer } = answered(`באיזה ${unit} ${order} הכי הרבה קולות`);
+    assert.deepEqual(q, { kind: 'rank', party: 'מחל', level: 'localities', order: 'votes', limit: 1 });
+    assert.equal(answer.rows[0][0], 'חיפה');
+    assert.equal(answer.rows[0][1], 80);
+  }
+  assert.equal(answered('באילו ערים קיבל הליכוד הכי הרבה קולות').answer.rows.length, 2);
+  for (const wording of ['באיזו קלפי קיבל הליכוד אחוז הכי גבוה מהקולות', 'באיזה קלפי הליכוד קיבלה את אחוז הקולות הגבוה ביותר', 'באיזו קלפי קיבלה הליכוד האחוז הגבוה ביותר']) {
+    const { q, answer } = answered(wording);
+    assert.deepEqual(q, { kind: 'rank', party: 'מחל', level: 'stations', order: 'percentage', limit: 1 });
+    assert.match(String(answer.rows[0][0]), /ירושלים.*קלפי 1/);
+    assert.equal(answer.rows[0][2], '60.00%');
+  }
+  for (const subject of ['איזו מפלגה', 'איזו רשימה', 'איזה מפלגה']) for (const verb of ['קבלה', 'קיבלה', 'קיבל']) {
+    const { q, answer } = answered(`${subject} ${verb} הכי הרבה קולות בירושלים`);
+    assert.equal(q.kind, 'insight');
+    assert.match(String(answer.rows[0][0]), /ירושלים.*הליכוד.*60/);
+  }
+  assert.match(String(answered('איזו רשימה קיבלה הכי הרבה קולות בירושלים בקלפי 1').answer.rows[0][0]), /קלפי 1/);
+  for (const source of ['מהכנסת הקודמת', 'מהבחירות הקודמות', 'לעומת הבחירות הקודמות', 'מאז הבחירות הקודמות']) {
+    const { q, answer } = answered(`בכמה אחוזים עלתה הליכוד ${source}`);
+    assert.deepEqual(q, { kind: 'comparison', source: '25', target: { type: 'list', id: 'מחל' }, measure: 'both' });
+    assert.match(String(answer.rows[0][0]), /נקודות אחוז.*יחסי/);
+  }
+  const changed = answered('בכמה קולות עלתה הציונות הדתית מהבחירות הקודמות');
+  assert.equal(changed.q.kind, 'comparison');
+  assert.match(String(changed.answer.rows[0][0]), /250.*310.*60 קולות/);
+  assert.match(changed.answer.note, /הציונות הדתית וזהות.*הציונות הדתית.*הרכב הרשימות שונה/);
+  for (const text of ['באיזה עיר קיבל הליכוד הכי הרבה קולות וגם שס', 'באיזו קלפי קיבל הליכוד אחוז הכי גבוה מהקולות בחיפה', 'עוד כמה קולות ש״ס הייתה מקבלת מנדט נוסף וגם הליכוד', 'בכמה אחוזים עלתה הליכוד מהבחירות הקודמות וגם שס']) rejected(text, ctx);
+  const ambiguous = { ...ctx, names: { ...ctx.names, יז: 'הכלכלית החדשה' }, votes: { ...ctx.votes, יז: { votes: 1, mandats: 0 } } };
+  rejected('כמה קולות היו חסרים לכלכלית לעבור את אחוז החסימה', ambiguous);
 });

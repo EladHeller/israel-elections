@@ -9,19 +9,21 @@ const actualCsv = require('../../dist/csv-data.js');
 const actualConfig = require('../../dist/config.js').default;
 const csv = 'סמל ישוב,פסולים,מחל,דרך\n1,4,100,50\n';
 
-function listener(url: string | null = 'https://source.example/results.csv', sourceCsv = csv, canPublishEmpty = true) {
+function listener(url: string | null = 'https://source.example/results.csv', sourceCsv = csv, canPublishEmpty = true, stationSource?: { csv: string; error?: string }) {
   const uploads: unknown[][] = [];
   const invalidations: unknown[][] = [];
+  const fetches: string[] = [];
   let exists = false;
+  let stationsExist = false;
   let matches = false;
   let matchChecks = 0;
   let emptyChecks = 0;
   const config = { currElections: 26, notPartiesKeys: actualConfig.notPartiesKeys, distributionID: 'cdn',
-    electionsConfig: { 26: { csvUrl: url, agreements: [], blockPercentage: 0.0325 } } };
+    electionsConfig: { 26: { csvUrl: url, pollingStationsCsvUrl: stationSource ? 'https://source.example/expb.csv' : undefined, agreements: [], blockPercentage: 0.0325 } } };
   const load = Module._load;
   const stub = mock.method(Module, '_load', function (request, parent, isMain) {
     if (request === './config') return { __esModule: true, default: config };
-    if (request === './s3') return { upload: async (...args) => uploads.push(args), isFileAlreadyExists: async () => exists };
+    if (request === './s3') return { upload: async (...args) => uploads.push(args), isFileAlreadyExists: async (key: string) => key.endsWith('/polling-stations.csv') ? stationsExist : exists };
     if (request === './cloudfront') return { invalidCache: async (...args) => invalidations.push(args) };
     if (request === './result-state') return { assertCanPublishEmptyResults: async (key) => {
       emptyChecks += 1;
@@ -32,14 +34,19 @@ function listener(url: string | null = 'https://source.example/results.csv', sou
       assert.equal(expected.countedVotes, 154);
       return matches;
     } };
-    if (request === './csv-data') return { ...actualCsv, fetchResultsCsv: async () => ({ csv: sourceCsv, time: '2026-10-22T00:00:00.000Z' }) };
+    if (request === './csv-data') return { ...actualCsv, fetchResultsCsv: async (sourceUrl: string) => {
+      fetches.push(sourceUrl);
+      const station = sourceUrl === 'https://source.example/expb.csv';
+      if (station && stationSource?.error) throw new Error(stationSource.error);
+      return { csv: station ? stationSource?.csv : sourceCsv, time: '2026-10-22T00:00:00.000Z' };
+    } };
     return load.call(this, request, parent, isMain);
   });
   const path = require.resolve('../../dist/csv-monitor.js');
   delete require.cache[path];
   let api;
   try { api = require(path); } finally { stub.mock.restore(); }
-  return { api, uploads, invalidations, setState: (csvExists: boolean, resultMatches: boolean) => { exists = csvExists; matches = resultMatches; }, get matchChecks() { return matchChecks; }, get emptyChecks() { return emptyChecks; } };
+  return { api, uploads, invalidations, fetches, setStationsExist: (value: boolean) => { stationsExist = value; }, setState: (csvExists: boolean, resultMatches: boolean) => { exists = csvExists; matches = resultMatches; }, get matchChecks() { return matchChecks; }, get emptyChecks() { return emptyChecks; } };
 }
 
 test('changed CSV publishes results and source, while unchanged valid data skips all writes', async () => {
@@ -152,6 +159,7 @@ test('station source is archived independently of unchanged city results without
   assert.deepEqual(state.invalidations, [[['data/26/polling-stations.csv'], 'cdn']]);
   assert.equal(state.matchChecks, 0);
   state.setState(true, true);
+  state.setStationsExist(true);
   await state.api.publishResultsCsv(csv, '2026-10-29T10:01:00.000Z');
   await state.api.publishPollingStationsCsv(stationsCsv, '2026-10-29T10:01:00.000Z');
   assert.equal(state.uploads.length, 2);
@@ -177,4 +185,39 @@ test('publishes the official election 26 station format and retains older statio
     assert.equal(state.uploads[0][1], source);
     assert.equal(state.uploads.length, 2);
   }
+});
+
+
+test('local polling updates stations even when nationwide results are unchanged', async () => {
+  const state = listener(undefined, csv, true, { csv: stationsCsv });
+  state.setState(true, true);
+  await state.api.csvMonitor({ includePollingStations: true });
+  assert.deepEqual(state.fetches, ['https://source.example/results.csv', 'https://source.example/expb.csv']);
+  assert.deepEqual(state.uploads, [
+    ['data/26/polling-stations.csv', stationsCsv, true],
+    ['data/26/2026-10-22T00:00:00.000Z_polling-stations.csv', stationsCsv],
+  ]);
+  assert.deepEqual(state.invalidations, [[['data/26/polling-stations.csv'], 'cdn']]);
+  state.setStationsExist(true);
+  await state.api.csvMonitor({ includePollingStations: true });
+  assert.equal(state.uploads.length, 2);
+});
+
+test('station failures fail the local poll after publishing city updates', async () => {
+  for (const stationSource of [{ csv: stationsCsv, error: 'HTTP 503' }, { csv: '<html>Denied</html>' }]) {
+    const state = listener(undefined, csv, true, stationSource);
+    await assert.rejects(state.api.csvMonitor({ includePollingStations: true }));
+    assert.equal(state.uploads.length, 4);
+    assert.equal(state.uploads[2][0], 'data/26/elections.csv');
+    assert.ok(state.uploads.every(([key]) => !(key as string).includes('polling-stations')));
+  }
+});
+
+test('default monitoring stays city-only and local monitoring supports elections without station sources', async () => {
+  const defaultPoll = listener(undefined, csv, true, { csv: stationsCsv });
+  await defaultPoll.api.csvMonitor();
+  assert.deepEqual(defaultPoll.fetches, ['https://source.example/results.csv']);
+  const noStationSource = listener();
+  await noStationSource.api.csvMonitor({ includePollingStations: true });
+  assert.deepEqual(noStationSource.fetches, ['https://source.example/results.csv']);
 });
