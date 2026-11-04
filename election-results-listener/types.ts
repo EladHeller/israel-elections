@@ -11,5 +11,6 @@ export interface ElectionsConfig {
   blockPercentage: number;
   agreements: string[][];
   csvUrl?: string;
+  pollingStationsCsvUrl?: string;
   voteData?: VoteData;
 }
