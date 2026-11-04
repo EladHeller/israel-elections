@@ -124,7 +124,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     ...computeBlocMap(defaultBlocs),
     ...historicalAssignments[currentElection || ''],
   };
-  const electionNight = isLatestElection && viewMode !== 'summary';
+  const electionNight = isLatestElection && electionManifest?.phase !== 'final' && viewMode !== 'summary';
   const screenClass = electionNight ? 'screen election-night' : 'screen';
 
   const {
@@ -342,7 +342,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
       <PartyPanel
         researchElection={!isDemo && !isSimulator && hasLocalityData(currentElection) ? currentElection! : undefined}
         editable={isSimulator}
-        isLatestElection={isLatestElection}
+        isLatestElection={electionNight}
         isDemo={isDemo}
         isEdited={displayedIsEdited}
         parties={parties}
@@ -505,7 +505,7 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
               blocLabels={blocEntries.map(({ label }) => label)}
               blocTotals={blocTotals} blocSeatDeltas={blocSeatDeltas}
               partyToBloc={partyToBloc}
-              onPartyBlocChange={(party, blocKey) => setHistoricalAssignments((previous) => ({
+              onPartyBlocChange={(party, blocKey) => isLatestElection ? assignParty(party, blocKey) : setHistoricalAssignments((previous) => ({
                 ...previous,
                 [currentElection]: { ...previous[currentElection], [party]: blocKey },
               }))}
