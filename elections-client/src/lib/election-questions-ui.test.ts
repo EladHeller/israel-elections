@@ -7,14 +7,16 @@ import ElectionQuestions from '../components/ElectionQuestions';
 import QuestionAnswer from '../components/QuestionAnswer';
 import ElectionSelector from '../components/ElectionSelector';
 import AppHeader from '../components/AppHeader';
+import configs from '../data/elections-config.json';
 import manifests from '../data/elections-manifests.json';
 import partyNames from '../data/party-names.json';
+import { decodeSharedScenario } from './shared-scenario';
 import type { QuestionAttempt } from './question-log';
 
 const NavigationTarget = () => React.createElement('p', { id: 'navigation-target' }, useLocation().pathname);
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
-const snapshot = { time: '2026-11-02T10:00:00Z', voteData: { מחל: { votes: 500, mandats: 0 }, ך: { votes: 100, mandats: 0 } }, realResults: {} };
+const snapshot = { time: '2026-11-02T10:00:00Z', voteData: { ...Object.fromEntries(configs['26'].agreements.flat().map(party => [party, { votes: 0, mandats: 0 }])), מחל: { votes: 500, mandats: 0 }, ך: { votes: 100, mandats: 0 } }, realResults: {} };
 const csv = 'סמל ישוב,שם ישוב,מספר קלפי,בזב,מצביעים,כשרים,מחל,ך\n1,מקום,1,200,110,100,80,20';
 test('Enter submits directly, renders prose, records outcomes and ignores stale requests', async () => {
   const originals = { fetch: globalThis.fetch, window: globalThis.window, document: globalThis.document };
@@ -54,7 +56,10 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
   const input = () => renderer.root.findByProps({ id: 'election-question' });
   const ask = async (value: string) => {
     await act(async () => input().props.onChange({ target: { value } }));
-    await act(async () => { renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }); await tick(); });
+    await act(async () => { renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }); await tick();
+      if (!['pending', 'comparison-pending'].includes(mode)) {
+        for (let i = 0; i < 200 && renderer.root.findByProps({ className: 'question-response' }).props['aria-busy']; i++) await new Promise(resolve => setTimeout(resolve, 5));
+      } });
   };
   try {
     await mount('/questions'); assert.equal(requests.length, 0);
@@ -70,15 +75,42 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.ok(renderer.root.findByType(QuestionAnswer));
     assert.equal(renderer.root.findAllByType('table').length, 0); assert.equal(renderer.root.findAllByType('textarea').length, 0);
     assert.ok(!text().includes('פענוח השאלה') && !text().includes('חישוב התשובה'));
+    const scenarioLink = () => renderer.root.findAllByType('a').find(link => link.children.includes('פתיחת התרחיש בסימולטור'));
+    const thresholdHref = scenarioLink()!.props.href;
+    assert.equal(scenarioLink()!.props.className, 'ui-link ui-button ui-button-quiet');
+    const shared = await decodeSharedScenario(thresholdHref.split('=')[1], '26');
+    assert.equal(shared.scenario.config.blockPercentage, 0);
+    assert.deepEqual(shared.base.voteData['מחל'].votes, snapshot.voteData['מחל'].votes);
     const comparisonRequests = requests.length;
     await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /נקודות אחוז/);
+    assert.equal(scenarioLink(), undefined);
     assert.ok(requests.slice(comparisonRequests).includes('/data/25/allResults.json'));
     assert.ok(!requests.slice(comparisonRequests).some(path => path.endsWith('.csv')));
     await ask('מה היה קורה אם הליכוד הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /חלוקת המנדטים נשארת ללא שינוי/);
     await ask('מה היה קורה אם הליכוד לא הייתה מקבלת קולות בכלל');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /מאבדת/);
+    const originalCompression = globalThis.CompressionStream;
+    let releaseCompression!: () => void;
+    try {
+      Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: class extends TransformStream {
+        constructor() { super({ transform(chunk, controller) { controller.enqueue(chunk); }, flush() { return new Promise<void>(resolve => { releaseCompression = resolve; }); } }); }
+      } });
+      mode = 'pending'; await ask('מה היה קורה אם לא היה אחוז חסימה');
+      assert.ok(releaseCompression);
+      await act(async () => input().props.onChange({ target: { value: 'שאלה חדשה' } }));
+      await act(async () => { releaseCompression(); await tick(); });
+      assert.equal(records.at(-1)!.outcome, 'cancelled'); assert.equal(scenarioLink(), undefined);
+      assert.equal(renderer.root.findAllByType(QuestionAnswer).length, 0);
+    } finally { Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: originalCompression }); mode = 'ok'; }
+    const compression = globalThis.CompressionStream;
+    try {
+      Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: class { constructor() { throw new Error('compression unavailable'); } } });
+      await ask('מה היה קורה אם לא היה אחוז חסימה');
+      assert.ok(renderer.root.findByType(QuestionAnswer)); assert.match(text(), /יצירת הקישור לסימולטור נכשלה/);
+      assert.equal(scenarioLink(), undefined);
+    } finally { Object.defineProperty(globalThis, 'CompressionStream', { configurable: true, value: compression }); }
     mode = 'comparison-fail'; await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'failed'); assert.match(text(), /לא הצלחתי לטעון את תוצאות/);
     mode = 'comparison-pending'; await ask('בכמה אחוזים עלתה הליכוד לעומת הבחירות הקודמות');
@@ -89,6 +121,8 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     await ask('מי ינצח?'); assert.match(text(), /לא הצלחתי/); assert.equal(records.at(-1)!.outcome, 'unsupported');
     await ask('כמה קולות היו חסרים לליכוד כדי לקבל מנדט נוסף בתוצאות האמת?');
     assert.match(text(), /הייתה צריכה עוד/); assert.equal(records.at(-1)!.outcome, 'answered');
+    const gain = await decodeSharedScenario(scenarioLink()!.props.href.split('=')[1], '26');
+    assert.ok(gain.scenario.voteData['מחל'].votes > gain.base.voteData['מחל'].votes);
     await ask('כמה קולות צריכים לרדת לליכוד כדי שתאבד מנדט?');
     assert.match(text(), /צריכה לאבד/); assert.equal(records.at(-1)!.outcome, 'answered');
     await ask('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות');
