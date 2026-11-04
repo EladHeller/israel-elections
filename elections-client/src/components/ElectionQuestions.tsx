@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import ResultsTimestamp from './ResultsTimestamp';
 import QuestionAnswer from './QuestionAnswer';
 import QuestionInput from './QuestionInput';
+import QuestionShare from './QuestionShare';
+import { questionHref } from '../lib/question-link';
 import BetaBadge from './BetaBadge';
+import { useQuestionPlaces } from '../hooks/use-question-places';
 import { useElectionData } from '../hooks/use-election-data';
 import partyNamesAll from '../data/party-names.json';
 import { insightNeedsPlaces } from '../lib/question-insights';
@@ -22,9 +25,11 @@ import { buildQuestionExamples, selectQuestionExamples } from '../lib/question-e
 type Reply = { links: AnswerLink[]; answer: Answer; kind: QuestionQuery['kind']; explanation: string; time?: string; scenarioHref?: string; scenarioLinkFailed?: boolean };
 export default function ElectionQuestions() {
   const { electionId = '' } = useParams();
-  return <QuestionScreen key={electionId} electionId={electionId} />;
+  const [params] = useSearchParams();
+  const initialQuestion = params.get('q') ?? '';
+  return <QuestionScreen key={electionId} electionId={electionId} initialQuestion={initialQuestion} />;
 }
-function QuestionScreen({ electionId }: { electionId: string }) {
+function QuestionScreen({ electionId, initialQuestion }: { electionId: string; initialQuestion: string }) {
   const navigate = useNavigate();
   const data = useElectionData(electionId, !!electionId);
   const [exampleSeed] = useState(() => Math.floor(Math.random() * 4294967296));
@@ -33,9 +38,12 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     for (const list of data.electionManifest?.lists ?? []) names[list.ballotLetter] ??= list.name;
     return selectQuestionExamples(data.results ? buildQuestionExamples({ votes: data.results.voteData, names, config: data.electionConfig, electionId, blocs: data.blocs }) : [], exampleSeed);
   }, [data.results, data.partyNames, data.electionManifest, data.electionConfig, data.blocs, electionId, exampleSeed]);
-  const [question, setQuestion] = useState('');
+  const [question, setQuestion] = useState(() => initialQuestion.slice(0, 600));
+  const autoStarted = useRef(false);
+  const previousLinkedQuestion = useRef(initialQuestion);
+  const places = useQuestionPlaces(data.results ? electionId : undefined, question.includes('בקלפי'));
   const [reply, setReply] = useState<Reply | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialQuestion.length > 600 ? 'השאלה בקישור ארוכה מדי. אפשר לערוך שאלה של עד 600 תווים ולשלוח אותה.' : null);
   const [busy, setBusy] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const active = useRef<AbortController | null>(null);
@@ -45,7 +53,16 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     config: data.electionConfig, electionId, blocs: data.blocs,
   } : undefined, [data.results, data.electionManifest, data.partyNames, data.electionConfig, data.blocs, electionId]);
   useEffect(() => () => active.current?.abort(), []);
+  useEffect(() => {
+    if (previousLinkedQuestion.current === initialQuestion) return;
+    previousLinkedQuestion.current = initialQuestion;
+    autoStarted.current = false;
+    active.current?.abort(); setBusy(false);
+    setQuestion(initialQuestion.slice(0, 600)); setReply(null); setSaveFailed(false);
+    setError(initialQuestion.length > 600 ? 'השאלה בקישור ארוכה מדי. אפשר לערוך שאלה של עד 600 תווים ולשלוח אותה.' : null);
+  }, [initialQuestion]);
   const changeQuestion = (value: string) => {
+    autoStarted.current = true;
     active.current?.abort(); setBusy(false);
     setQuestion(value); setReply(null); setError(null); setSaveFailed(false);
   };
@@ -53,12 +70,12 @@ function QuestionScreen({ electionId }: { electionId: string }) {
     changeQuestion(example); document.getElementById('election-question')?.focus();
   };
   const exampleButton = (example: string) => <button type="button" className="ui-button ui-button-quiet" key={example} onClick={() => chooseExample(example)}>{example}</button>;
-  const ask = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!data.results || !question.trim()) return;
+  const ask = useCallback(async (text: string) => {
+    if (!data.results || !text.trim()) return;
+    autoStarted.current = true;
     active.current?.abort();
     const controller = new AbortController(); active.current = controller;
-    const attempt = { id: crypto.randomUUID(), election: electionId, question: question.trim() };
+    const attempt = { id: crypto.randomUUID(), election: electionId, question: text.trim() };
     const names = { ...data.partyNames };
     for (const list of data.electionManifest!.lists) names[list.ballotLetter] ??= list.name;
     const context = { votes: data.results.voteData, names, config: data.electionConfig, electionId, blocs: data.blocs };
@@ -106,13 +123,18 @@ function QuestionScreen({ electionId }: { electionId: string }) {
         if (active.current === controller && !controller.signal.aborted) setSaveFailed(!saved);
       });
     }
-  };
+  }, [data.results, data.partyNames, data.electionManifest, data.electionConfig, data.blocs, electionId]);
+  useEffect(() => {
+    if (autoStarted.current || !data.results || !initialQuestion.trim() || initialQuestion.length > 600) return;
+    autoStarted.current = true;
+    void ask(initialQuestion);
+  }, [ask, data.results, initialQuestion]);
   const validElection = !!electionId && data.availableElections.includes(electionId);
   return <div className="screen election-questions" dir="rtl">
     <AppHeader statusText="שאלות על הבחירות" showSimulator={!!data.electionManifest && phaseHasResults(data.electionManifest.phase)}
       isEdited={false} currentElection={validElection ? electionId : null}
       availableElections={data.availableElections} viewMode="questions"
-      setCurrentElection={id => navigate(`/questions/${id}`)}
+      setCurrentElection={id => navigate(initialQuestion ? questionHref(id, initialQuestion) : `/questions/${id}`)}
       setViewMode={mode => navigate(mode === 'summary' ? '/summary' : validElection ? `/${mode}/${electionId}` : mode === 'questions' ? '/questions' : '/')} />
     <main className="panel question-workspace">
       <div className="question-intro"><p className="subtitle">שאלות על הבחירות <BetaBadge /></p><h1>מה תרצו לדעת?</h1>
@@ -125,11 +147,17 @@ function QuestionScreen({ electionId }: { electionId: string }) {
       {data.error && <p role="alert">טעינת נתוני הבחירות נכשלה. אפשר לבחור שוב או לרענן את העמוד.</p>}
       {data.refreshError && <p role="status">{data.refreshError}</p>}
       {validElection && !data.results && !data.error && <p role="status">{data.electionManifest && !['counting', 'final'].includes(data.electionManifest.phase) ? 'אין עדיין תוצאות לבחירות אלו.' : 'טוען תוצאות…'}</p>}
-      <form className="question-form" onSubmit={event => { void ask(event); }}>
+      <form className="question-form" onSubmit={event => {
+        event.preventDefault();
+        const submitted = question.trim();
+        if (submitted && initialQuestion !== submitted) navigate(questionHref(electionId, submitted));
+        else void ask(submitted);
+      }}>
         <label htmlFor="election-question">השאלה שלכם</label>
         <QuestionInput value={question} onChange={changeQuestion} busy={busy} disabled={!validElection || !data.results}
-          context={completionContext} />
+          context={completionContext} places={places} placesLoading={places.loading} placesError={places.error} retryPlaces={places.retry} />
       </form>
+      <QuestionShare election={electionId} question={question} disabled={!validElection} />
       {examples.featured.length > 0 && <section className="question-suggestions" aria-label="שאלות לדוגמה">
         <div className="question-examples"><span>למשל</span>{examples.featured.map(exampleButton)}</div>
         {examples.remaining.length > 0 && <details className="question-example-catalog">

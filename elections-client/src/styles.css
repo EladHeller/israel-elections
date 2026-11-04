@@ -2001,3 +2001,23 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .question-completions button { min-height: 48px; white-space: normal; text-align: start; overflow-wrap: anywhere; }
 .question-suggest-toggle { min-width: 44px; }
 @media (max-width: 560px) { .question-input-row input { padding-inline: .35rem; } .question-suggest-toggle { padding-inline: .5rem !important; } }
+
+.question-tokenized { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: .15rem; padding: .35rem; color: var(--ink-90); white-space: pre-wrap; }
+.question-tokenized:focus-visible { outline: 2px solid var(--ink-50); border-radius: 8px; }
+.question-entity-chip.searchable-select-control { display: inline-flex; flex-direction: row; gap: 0; width: auto; min-width: 0; max-width: 100%; position: static; }
+.question-entity-chip > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.question-entity-chip .election-selector { position: static; min-width: 0; }
+.question-entity-chip .election-selector-trigger { min-height: 44px; padding: .35rem .65rem; border-radius: 999px; border: 1px solid var(--control-border); background: var(--selection-background); white-space: normal; }
+.question-entity-chip .election-selector-menu { inset-inline: 0; top: 100%; width: 100%; z-index: 30; white-space: normal; }
+@media (max-width: 560px) {
+  .question-input-row:has(.question-tokenized) { flex-wrap: wrap; }
+  .question-tokenized { flex-basis: 100%; }
+  .question-edit-text { margin-inline-end: auto; }
+}
+.question-composer .ui-button-primary { background: var(--ink-70); color: var(--card); border-color: var(--ink-70); }
+.question-share { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-block: 0 1rem; color: var(--ink-70); }
+.question-share input { display: block; width: min(100%, 36rem); padding: .5rem; margin-top: .4rem; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); color: var(--ink-90); font: inherit; }
+.question-number-editor { padding: 1rem; }
+.question-number-editor input { min-height: 44px; padding: .6rem; margin-block: .5rem; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); color: var(--ink-90); }
+.question-number-actions { display: flex; gap: .5rem; }
+.question-number-actions button { width: auto; }
