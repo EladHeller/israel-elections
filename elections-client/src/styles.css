@@ -1991,3 +1991,13 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .question-example-group { padding-block: 12px; border-top: 1px solid var(--ink-20); }
 .question-example-group h2 { margin: 0 0 10px; font-size: 1rem; }
 @media (max-width: 560px) { .question-suggestions .question-examples button { width: 100%; min-height: 44px; } }
+
+/* Question completion uses the shared selector surfaces and option states. */
+.question-composer { position: relative; min-width: 0; }
+.question-completions.election-selector-menu { position: absolute; inset-inline: 0; top: auto; margin-top: 6px; z-index: 20; }
+.question-completion-label { margin: 0; padding: 10px 12px; color: var(--ink-70); font-size: .85rem; }
+.question-completions small { display: block; color: var(--ink-70); font-size: .78rem; margin-top: 3px; }
+.question-completions .searchable-select-options { max-height: min(280px, 40dvh); }
+.question-completions button { min-height: 48px; white-space: normal; text-align: start; overflow-wrap: anywhere; }
+.question-suggest-toggle { min-width: 44px; }
+@media (max-width: 560px) { .question-input-row input { padding-inline: .35rem; } .question-suggest-toggle { padding-inline: .5rem !important; } }
