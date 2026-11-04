@@ -1,3 +1,4 @@
+import { partyAnswerLink } from './question-answer-links';
 import type { BlocsConfig, ElectionConfig, PartyNames, VoteData } from '../types';
 import type { Answer, QuestionContext, QuestionParse } from './election-questions';
 import { normalizeQuestion, resolveParties } from './election-questions';
@@ -212,9 +213,9 @@ export function executeComparison(query: ComparisonQuery, context: QuestionConte
       sentence += query.measure === 'relative' ? rel : `${movement(points, 'נקודות אחוז')}${query.measure === 'both' ? `, ${rel}` : ''}`;
       sentence += '.';
     }
-    return { sentence, delta };
+    return { sentence, delta, target };
   }).filter(row => !query.direction || (row.delta !== null && (query.direction === 'up' ? row.delta > 1e-10 : row.delta < -1e-10)))
     .sort((a, b) => (query.direction === 'down' ? a.delta! - b.delta! : b.delta! - a.delta!) || a.sentence.localeCompare(b.sentence));
   const winners = query.target || !changes.length ? changes : changes.filter(row => Math.abs(row.delta! - changes[0].delta!) < 1e-10);
-  return { columns: ['תשובה'], rows: winners.map(row => [row.sentence]), note: `השוואה מבחירות ${previous!.id} לבחירות ${current.id}. ${query.target ? membership(query.target) : 'הדירוג כולל רק רשימות עם התאמה חד משמעית בשם בשתי הבחירות; רשימות חדשות, איחודים ופיצולים ללא התאמה אינם נכללים. כל השוויונות במקום הראשון מוצגים. דירוג באחוזים ללא פירוט הוא לפי נקודות אחוז.'} שינוי יחסי באחוזים מתייחס לשיעור התמיכה, ולא למספר הקולות. התוצאות כפופות למצב הספירה בכל מערכת.` };
+  return { rowLinks: winners.map(row => context.electionId && row.target.type === 'list' ? [partyAnswerLink(row.target.id, context, context.electionId)] : []), columns: ['תשובה'], rows: winners.map(row => [row.sentence]), note: `השוואה מבחירות ${previous!.id} לבחירות ${current.id}. ${query.target ? membership(query.target) : 'הדירוג כולל רק רשימות עם התאמה חד משמעית בשם בשתי הבחירות; רשימות חדשות, איחודים ופיצולים ללא התאמה אינם נכללים. כל השוויונות במקום הראשון מוצגים. דירוג באחוזים ללא פירוט הוא לפי נקודות אחוז.'} שינוי יחסי באחוזים מתייחס לשיעור התמיכה, ולא למספר הקולות. התוצאות כפופות למצב הספירה בכל מערכת.` };
 }

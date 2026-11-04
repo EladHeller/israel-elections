@@ -105,9 +105,9 @@ test('eligible-voter ranking differs from turnout, includes places without valid
   const q = query('באיזו קלפי יש הכי הרבה בעלי זכות הצבעה');
   assert.ok(insightNeedsPlaces(q));
   const places: LocalityVotes[] = [
-    { id: '1', name: 'גדולה', pollingStation: '1', validVotes: 0, voters: 0, eligibleVoters: 2000, votes: {} },
-    { id: '2', name: 'מצביעה', pollingStation: '2', validVotes: 900, voters: 900, eligibleVoters: 1000, votes: { מחל: 900 } },
-    { id: '3', name: 'חסרה', pollingStation: '3', validVotes: 100, votes: {} },
+    { id: JSON.stringify(['1', '1', null]), name: 'גדולה', pollingStation: '1', validVotes: 0, voters: 0, eligibleVoters: 2000, votes: {} },
+    { id: JSON.stringify(['2', '2', null]), name: 'מצביעה', pollingStation: '2', validVotes: 900, voters: 900, eligibleVoters: 1000, votes: { מחל: 900 } },
+    { id: JSON.stringify(['3', '3', null]), name: 'חסרה', pollingStation: '3', validVotes: 100, votes: {} },
   ];
   assert.match(String(executeElectionQuestion(q, context, places).rows[0][0]), /גדולה.*2,000 בעלי זכות/);
   const turnout = query('באיזה קלפי שיעור ההצבעה היה הכי גבוה');
@@ -117,7 +117,7 @@ test('eligible-voter ranking differs from turnout, includes places without valid
   const locality = query('באיזה יישוב יש הכי הרבה בעלי זכות הצבעה');
   assert.ok('level' in locality && locality.level === 'localities');
   assert.match(String(executeElectionQuestion(locality, context, places).rows[0][0]), /גדולה/);
-  const ties = [{ ...places[0], id: 'b', name: 'ב' }, { ...places[0], id: 'a', name: 'א' }, { ...places[0], id: 'a', name: 'ג' }];
+  const ties = [{ ...places[0], id: JSON.stringify(['b', '1', null]), name: 'ב' }, { ...places[0], id: JSON.stringify(['a', '1', null]), name: 'א' }, { ...places[0], id: JSON.stringify(['a', '1', null]), name: 'ג' }];
   assert.match(String(executeElectionQuestion(q, context, ties).rows[0][0]), /^א/);
   assert.equal(executeElectionQuestion(q, context, []).rows.length, 0);
   for (const eligibleVoters of [undefined, 0, -1, NaN, 1.5]) assert.throws(() => executeElectionQuestion(q, context, [{ ...places[0], eligibleVoters }]), /אין נתוני בעלי זכות/);

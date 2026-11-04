@@ -1,3 +1,4 @@
+import { localityHref } from './locality-results';
 import type { ElectionConfig, PartyNames, ScenarioState, VoteData } from '../types';
 import { executeInsight, parseInsight, type InsightQuery, type PreviousElection } from './question-insights';
 import { computeScenarioResults } from './scenario';
@@ -19,7 +20,8 @@ export type QuestionQuery =
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
 export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection; electionId?: string; blocs?: BlocsConfig; comparison?: ElectionSnapshot }
 export interface SeatChange { party: string; name: string; before: number; after: number }
-export interface Answer { note: string; columns: string[]; rows: (string | number)[][]; seatChanges?: SeatChange[]; scenario?: ScenarioState }
+export interface AnswerLink { href: string; label: string }
+export interface Answer { rowLinks?: AnswerLink[][]; note: string; columns: string[]; rows: (string | number)[][]; seatChanges?: SeatChange[]; scenario?: ScenarioState }
 
 export const normalizeQuestion = (value: string): string => value.normalize('NFKC')
   .replace(/[\u0591-\u05bd\u05bf-\u05c2\u05c4-\u05c5\u05c7]/g, '').replace(/["'״׳?？!,:;]/g, '').replace(/[־–—-]/g, ' ')
@@ -171,7 +173,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
         && (query.measure === 'majority' ? count > place.validVotes / 2 : count === highest))
         .map(([party, count]) => ({ place, party, count, share: count / place.validVotes, tied }));
     }).sort((a, b) => b.share - a.share || b.count - a.count || a.place.id.localeCompare(b.place.id) || a.party.localeCompare(b.party));
-    return { note: 'כל התוצאות המתאימות בקובץ הזמין, לפי שיעור התמיכה במקום. רוב פירושו יותר מ־50% מהקולות הכשרים; מקום ראשון יכול לכלול תיקו. המעמד הארצי מחושב מתמונת התוצאות הארציות, וקובץ המקומות נטען בנפרד.', columns: ['מקום', 'רשימה', 'קולות', 'אחוז', 'מיקום'], rows: winners.map(({ place, party, count, share, tied }) => [
+    return { note: 'כל התוצאות המתאימות בקובץ הזמין, לפי שיעור התמיכה במקום. רוב פירושו יותר מ־50% מהקולות הכשרים; מקום ראשון יכול לכלול תיקו. המעמד הארצי מחושב מתמונת התוצאות הארציות, וקובץ המקומות נטען בנפרד.', columns: ['מקום', 'רשימה', 'קולות', 'אחוז', 'מיקום'], rowLinks: winners.map(({ place }) => context.electionId ? [{ href: localityHref(context.electionId, place), label: 'תוצאות המקום' }] : []), rows: winners.map(({ place, party, count, share, tied }) => [
       `${place.name}${place.pollingStation ? ` — קלפי ${place.pollingStation}${place.split !== undefined ? ` / פיצול ${place.split}` : ''}` : ''}`,
       label(party), count, `${(share * 100).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}%`, tied ? 'תיקו במקום הראשון' : 'מקום ראשון',
     ]) };
@@ -180,7 +182,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     known(query.party);
     if (!places) throw new Error('נתוני היישובים או הקלפיות אינם זמינים לבחירות אלו.');
     const ranked = rankLocalities(places, query.party, query.order).slice(0, query.limit);
-    return { note: 'דירוג מתוך המקומות בקובץ הזמין. אחוזים מחושבים מתוך הקולות הכשרים במקום; מקומות ללא קולות לרשימה אינם נכללים. אין סינון מינימום. קובץ המקומות נטען בנפרד מתמונת התוצאות הארציות.', columns: ['מקום', 'קולות', 'אחוז'], rows: ranked.map(row => [
+    return { note: 'דירוג מתוך המקומות בקובץ הזמין. אחוזים מחושבים מתוך הקולות הכשרים במקום; מקומות ללא קולות לרשימה אינם נכללים. אין סינון מינימום. קובץ המקומות נטען בנפרד מתמונת התוצאות הארציות.', columns: ['מקום', 'קולות', 'אחוז'], rowLinks: ranked.map(place => context.electionId ? [{ href: localityHref(context.electionId, place), label: 'תוצאות המקום' }] : []), rows: ranked.map(row => [
       `${row.name}${row.pollingStation ? ` — קלפי ${row.pollingStation}${row.split !== undefined ? ` / פיצול ${row.split}` : ''}` : ''}`, row.partyVotes, `${row.percentage.toFixed(2)}%`,
     ]) };
   }

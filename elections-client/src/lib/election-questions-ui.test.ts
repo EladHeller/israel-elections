@@ -105,12 +105,26 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
       assert.ok(requests.slice(start).includes(source));
       assert.equal(scenarioLink(), undefined);
       assert.ok(renderer.root.findByType(QuestionAnswer));
+      const placeLink = renderer.root.findByType(QuestionAnswer).findByType('a');
+      const destination = new URL('https://example.org' + placeLink.props.href);
+      assert.equal(destination.pathname, '/localities/26');
+      assert.equal(destination.searchParams.get('locality'), '1');
+      assert.equal(destination.searchParams.has('station'), source.includes('polling-stations'));
+      await act(async () => placeLink.props.onClick({ button: 0, preventDefault() {}, defaultPrevented: false }));
+      assert.equal(renderer.root.findByProps({ id: 'navigation-target' }).children[0], '/localities/26');
+      await mount('/questions/26');
     }
     const nationalRequests = requests.length;
     await ask('איזו רשימה קבלה הכי הרבה קולות');
     assert.equal(records.at(-1)!.outcome, 'answered');
     assert.match(text(), /במקום הראשון בארץ/);
     assert.ok(!requests.slice(nationalRequests).some(path => path.endsWith('.csv')));
+    await ask('כמה קולות קיבל הליכוד');
+    const listLink = renderer.root.findAllByType('a').find(link => link.children.includes('לעמוד הרשימה הליכוד'))!;
+    assert.equal(new URL('https://example.org' + listLink.props.href).searchParams.get('party'), 'מחל');
+    assert.equal(scenarioLink(), undefined);
+    await ask('כמה קולות התבזבזו');
+    assert.ok(renderer.root.findAllByType('a').some(link => link.props.href === '/results/26'));
     await ask('מה היה קורה אם הליכוד הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות');
     assert.equal(records.at(-1)!.outcome, 'answered'); assert.match(text(), /חלוקת המנדטים נשארת ללא שינוי/);
     await ask('מה היה קורה אם הליכוד לא הייתה מקבלת קולות בכלל');
