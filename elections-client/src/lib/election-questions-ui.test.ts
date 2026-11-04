@@ -18,7 +18,10 @@ const NavigationTarget = () => React.createElement('p', { id: 'navigation-target
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const snapshot = { time: '2026-11-02T10:00:00Z', voteData: { ...Object.fromEntries(configs['26'].agreements.flat().map(party => [party, { votes: 0, mandats: 0 }])), מחל: { votes: 500, mandats: 0 }, ך: { votes: 100, mandats: 0 } }, realResults: {} };
 const csv = 'סמל ישוב,שם ישוב,מספר קלפי,בזב,מצביעים,כשרים,מחל,ך\n1,מקום,1,200,110,100,80,20';
-test('Enter submits directly, renders prose, records outcomes and ignores stale requests', async () => {
+test('Enter submits directly, renders prose, records outcomes and ignores stale requests', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const originals = { fetch: globalThis.fetch, window: globalThis.window, document: globalThis.document };
   let focused = false;
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { setInterval: () => 1, clearInterval() {} } });

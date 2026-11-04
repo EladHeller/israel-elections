@@ -165,10 +165,11 @@ async function uploadFiles(distributionId: string) {
 
   await Promise.all(files.map(async ({ file }: FileData) => {
     const key = file.replace(`${basePath}/`, '');
-    // The listener owns live results; deployment may only seed missing objects.
-    const initialOnly = key === `data/${currElections}/allResults.json`
+    // The listener owns live results until finalization. Final snapshots are versioned and deployed.
+    const isFinal = electionManifests[currElections as keyof typeof electionManifests]?.phase === 'final';
+    const initialOnly = !isFinal && (key === `data/${currElections}/allResults.json`
       || key === `data/${currElections}/elections.csv`
-      || key === `data/${currElections}/polling-stations.csv`;
+      || key === `data/${currElections}/polling-stations.csv`);
     const updated = await upload(clientCodeName, key, file, undefined, initialOnly);
     if (updated) updatedFiles.push(`/${key}`);
   }));

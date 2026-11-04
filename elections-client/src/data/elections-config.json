@@ -586,8 +586,10 @@
         "נקי"
       ]
     ],
-    "turnoutPercentage": 77.7,
-    "totalVotes": 5716673
+    "turnoutPercentage": 77.98,
+    "totalVotes": 5717397,
+    "finalResults": true,
+    "eligibleVoters": 7331981
   },
   "25": {
     "finalResults": true,

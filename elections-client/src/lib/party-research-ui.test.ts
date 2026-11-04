@@ -7,6 +7,7 @@ import PartyResearch from '../components/PartyResearch';
 import AppHeader from '../components/AppHeader';
 import PartyRow from '../components/PartyRow';
 import partyNames from '../data/party-names.json';
+import manifests from '../data/elections-manifests.json';
 
 const csv = 'שם ישוב,סמל ישוב,כשרים,מחל,אמת\nגדול,1,100,60,40\nקטן,2,10,9,1\n';
 const text = (renderer: ReturnType<typeof create>) => {
@@ -15,7 +16,10 @@ const text = (renderer: ReturnType<typeof create>) => {
 };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-test('research route loads official CSV, selects a party, filters and refreshes with retry', async () => {
+test('research route loads official CSV, selects a party, filters and refreshes with retry', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const originalFetch = globalThis.fetch;
   const originalWindow = globalThis.window;
   const originalDocument = globalThis.document;
@@ -160,7 +164,10 @@ test('research paginates every locality, resets on list changes, handles empty f
   }
 });
 
-test('research pauses hidden polling, deduplicates slow requests and ignores late success or failure after navigation', async () => {
+test('research pauses hidden polling, deduplicates slow requests and ignores late success or failure after navigation', async t => {
+  const phase = manifests['26'].phase;
+  manifests['26'].phase = 'counting';
+  t.after(() => { manifests['26'].phase = phase; });
   const originalFetch = globalThis.fetch;
   const originalWindow = globalThis.window;
   const originalDocument = globalThis.document;
