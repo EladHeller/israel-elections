@@ -62,3 +62,31 @@ test('reject removing all valid votes and combined overflow', () => {
   assert.throws(() => executeElectionQuestion(parsed.query, context), /אפס קולות/);
   assert.throws(() => executeElectionQuestion({ kind: 'scenario', voteChanges: [{ party: 'a', delta: Number.MAX_SAFE_INTEGER - 100000 }, { party: 'b', delta: 100000 }] }, context), /טווח/);
 });
+
+test('reject a vote change after a transfer involving the same list', () => {
+  const parsed = parseElectionQuestion('מה היה קורה אם כל הקולות של רעם היו עוברים לליכוד וגם רעם לא הייתה מקבלת קולות', context);
+  assert.ok('error' in parsed);
+  assert.match(parsed.error, /שינוי אחד בלבד/);
+});
+
+test('reject repeated list changes supplied directly to the executor', () => {
+  assert.throws(() => executeElectionQuestion({ kind: 'scenario', voteChanges: [
+    { party: 'a', delta: -1000 }, { party: 'a', delta: -2000 },
+  ] }, context), /שינוי אחד בלבד/);
+});
+
+test('accept explicit zero votes for a list that already has no votes', () => {
+  const emptyList = { ...context, votes: { ...context.votes, a: { votes: 0, mandats: 0 } } };
+  const parsed = parseElectionQuestion('מה היה קורה אם רעם הייתה מקבלת אפס קולות וגם אחוז החסימה היה 1%', emptyList);
+  assert.ok('query' in parsed);
+  const answer = executeElectionQuestion(parsed.query, emptyList);
+  assert.equal(answer.scenario!.voteData.a.votes, 0);
+  assert.equal(answer.scenario!.config.blockPercentage, 0.01);
+});
+
+test('reject conflicting thresholds joined with the shorter conjunction', () => {
+  const parsed = parseElectionQuestion('מה היה קורה אם אחוז החסימה היה 1% ואחוז החסימה היה 2%', context);
+  assert.ok('error' in parsed);
+  assert.match(parsed.error, /אחוז החסימה היה 2%/);
+  assert.match(parsed.error, /לא חושב תרחיש חלקי/);
+});
