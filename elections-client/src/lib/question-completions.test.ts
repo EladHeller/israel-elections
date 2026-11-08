@@ -44,7 +44,9 @@ test('every offered terminal question parses for every historical election', () 
       if (seen.has(text)) continue;
       seen.add(text);
       const options = complete(text).options;
-      if (options.length) pending.push(...options.map(x => x.value));
+      // Chaining is open-ended; exercise it in bounded scenario and UI tests below.
+      const next = options.filter(option => option.label !== 'וגם' && !normalizeQuestion(option.value).includes(' וגם '));
+      if (next.length) pending.push(...next.map(x => x.value));
       else if (text) {
         const parsed = parseElectionQuestion(text, { electionId, config: config as ElectionConfig, names: parties,
           votes: Object.fromEntries(Object.keys(parties).map((id, i) => [id, { votes: i === 0 ? 100000 : i, mandats: 0 }])) });
@@ -101,4 +103,42 @@ test('comparison wording cannot consume a historical ballot letter inside בין
   const parsed = parseElectionQuestion('השווה בין כחול לבן לש"ס', ctx);
   assert.ok(!('error' in parsed));
   if (!('error' in parsed)) assert.deepEqual(parsed.query, { kind: 'results', parties: ['פה', 'שס'] });
+});
+
+test('dropdowns chain arbitrary lists and thresholds while preserving the existing question', () => {
+  const complete = createQuestionCompletions(context);
+  const first = 'מה היה קורה אם רשימה שנייה לא הייתה מקבלת קולות?';
+  const join = complete(first).options.find(option => option.label === 'וגם')!;
+  assert.equal(join.value, first.slice(0, -1) + ' וגם ');
+  const target = normalizeQuestion(first.slice(0, -1) + ' וגם רשימה שלישית לא הייתה מקבלת קולות וגם אחוז החסימה היה 2%');
+  let current = join.value;
+  for (let step = 0; normalizeQuestion(current) !== target && step < 20; step++) {
+    const next = complete(current).options.filter(option => target.startsWith(normalizeQuestion(option.value)))
+      .sort((a, b) => b.value.length - a.value.length)[0];
+    assert.ok(next, `cannot continue after ${current}`);
+    current = next.value;
+  }
+  assert.equal(normalizeQuestion(current), target);
+  const parsed = parseElectionQuestion(current, context);
+  assert.ok('query' in parsed);
+  assert.equal(parsed.query.kind, 'scenario');
+  assert.ok(complete(current).options.some(option => option.label === 'וגם'));
+});
+
+test('continuations reject conflicting changes, unsupported questions and overlong chains', () => {
+  const complete = createQuestionCompletions(context);
+  const first = 'מה היה קורה אם רשימה שנייה לא הייתה מקבלת קולות';
+  assert.equal(complete(`${first} וגם רשימה שנייה`).options.length, 0);
+  assert.equal(complete('מה היה קורה אם אחוז החסימה היה 1% וגם אחוז החסימה').options.length, 0);
+  assert.equal(complete('מה היה קורה אם השמש תזרח וגם').options.length, 0);
+  assert.equal(complete('מה היה קורה אם רשימה ראשונה הייתה מקבלת אותו מספר קולות כמו הבחירות הקודמות').options.some(x => x.label === 'וגם'), false);
+  assert.equal(complete('כמה קולות קיבלה רשימה ראשונה').options.some(x => x.label === 'וגם'), false);
+  assert.equal(complete('א'.repeat(601)).options.length, 0);
+  const padded = ' '.repeat(600 - first.length) + first;
+  assert.ok(complete(padded).options.every(option => option.value.length <= 600));
+  const changed = 'מה היה קורה אם רשימה ראשונה הייתה מקבלת 5,000 פחות קולות וגם ';
+  const options = complete(changed).options;
+  assert.ok(options.length);
+  assert.ok(options.every(option => option.value.startsWith(changed)));
+  assert.ok(complete(`${first} וגם רשימה ש`).options.length);
 });

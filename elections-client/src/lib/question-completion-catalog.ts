@@ -1,7 +1,7 @@
 import { normalizeQuestion } from './election-questions';
 import type { QuestionCompletion } from './question-completions';
 
-interface Node { value: string; children: Map<string, Node> }
+interface Node { value: string; children: Map<string, Node>; terminal?: boolean }
 // Keep familiar openings in one choice; names are also kept whole below.
 const openings = ['כמה קולות חסרים ל', 'כמה קולות קיבלה', 'כמה מנדטים קיבלה', 'כמה אחוזים קיבלה',
   'כמה קולות צריכים לרדת ל', 'כמה קולות נוספים הייתה צריכה', 'כמה קולות היו חסרים ל',
@@ -33,6 +33,7 @@ export function completionCatalog(questions: string[], names: string[]) {
       if (!node.children.has(value)) node.children.set(value, { value, children: new Map() });
       node = node.children.get(value)!;
     }
+    node.terminal = true;
   }
   const branches: { prefix: string; children: QuestionCompletion[] }[] = [];
   const visit = (node: Node) => {
@@ -40,7 +41,7 @@ export function completionCatalog(questions: string[], names: string[]) {
     branches.push({ prefix: node.value, children: [...node.children.values()].map(child => {
       let next = child;
       // Do not skip a list choice just because that list has a single continuation.
-      while (node.value && next.children.size === 1 && !atoms.some(atom => { const suffix = next.value.slice(node.value.length).trim(); return suffix === atom || suffix === `ל${atom}`; })) next = [...next.children.values()][0];
+      while (node.value && !next.terminal && next.children.size === 1 && !atoms.some(atom => { const suffix = next.value.slice(node.value.length).trim(); return suffix === atom || suffix === `ל${atom}`; })) next = [...next.children.values()][0];
       return { label: next.value.slice(node.value.length).trim(), value: next.value };
     }) });
     for (const child of node.children.values()) visit(child);
