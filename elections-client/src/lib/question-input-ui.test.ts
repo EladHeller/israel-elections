@@ -142,3 +142,40 @@ test('a number chip updates only its numeric span and stays in structured editin
     assert.ok(renderer.root.findByProps({ className: 'question-tokenized' }));
   } finally { act(() => renderer.unmount()); }
 });
+
+test('pointer and keyboard chain conditions while chips and native Enter remain available', () => {
+  const ctx = { ...context, votes: { aa: { votes: 999, mandats: 0 }, bb: { votes: 1, mandats: 0 }, cc: { votes: 100, mandats: 0 } }, names: { aa: 'רשימה א', bb: 'רשימה ב', cc: 'רשימה ג' } };
+  let renderer!: ReturnType<typeof create>; let value = 'מה היה קורה אם רשימה א לא הייתה מקבלת קולות'; let submissions = 0;
+  const props = () => ({ value, context: ctx, busy: false, disabled: false, onChange: (next: string) => {
+    value = next; renderer.update(React.createElement(QuestionInput, props()));
+  } });
+  act(() => { renderer = create(React.createElement(QuestionInput, props()), { createNodeMock: element => element.type === 'input'
+    ? { focus() {}, form: { requestSubmit() { submissions++; } } } : { focus() {}, scrollIntoView() {} } }); });
+  const choose = (label: string) => {
+    const options = renderer.root.findAllByProps({ role: 'option' });
+    const option = options.find(node => node.findAllByType('span')[0].children[0] === label)
+      ?? options.find(node => String(node.findAllByType('span')[0].children[0]).startsWith(label));
+    assert.ok(option, `missing ${label}`);
+    act(() => option.props.onClick());
+  };
+  try {
+    act(() => renderer.root.findByProps({ className: 'ui-button ui-button-quiet question-suggest-toggle' }).props.onClick());
+    choose('וגם');
+    assert.ok(value.endsWith(' וגם '));
+    choose('רשימה ב');
+    choose('לא הייתה מקבלת קולות');
+    assert.equal(renderer.root.findAllByType(SearchableSelect).length, 2);
+    choose('וגם');
+    const options = renderer.root.findAllByProps({ role: 'option' });
+    const threshold = options.findIndex(node => String(node.findAllByType('span')[0].children[0]).startsWith('אחוז החסימה'));
+    assert.ok(threshold >= 0);
+    const preview = () => renderer.root.findByProps({ className: 'question-tokenized' });
+    const key = (key: string) => act(() => { const target = {}; preview().props.onKeyDown({ key, target, currentTarget: target, preventDefault() {} }); });
+    for (let i = 0; i <= threshold; i++) key('ArrowDown');
+    key('Enter');
+    if (!value.endsWith('%')) choose('1%');
+    assert.ok(value.includes('וגם אחוז החסימה'));
+    assert.equal(renderer.root.findAllByType(QuestionNumberChip).length, 1);
+    key('Enter'); assert.equal(submissions, 1);
+  } finally { act(() => renderer.unmount()); }
+});
