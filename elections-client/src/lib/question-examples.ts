@@ -32,6 +32,7 @@ export function buildQuestionExamples(context: QuestionContext, allLists = false
     'מה היה קורה אם אחוז החסימה היה 5%?',
     ...(config.agreements.length ? ['מה היה קורה אם לא היו הסכמי עודפים?', 'מה היה קורה אם לא היה אחוז חסימה וגם לא היו הסכמי עודפים?'] : []),
     ...leading.map(id => `מה היה קורה אם ${label(id)} לא הייתה מקבלת קולות בכלל?`),
+    ...(parties.length > 2 ? [`מה היה קורה אם ${label(leading[0])} לא הייתה מקבלת קולות וגם ${label(leading[1])} לא הייתה מקבלת קולות וגם אחוז החסימה היה 1%?`] : []),
     ...(leading.length > 1 ? [`מה היה קורה אם כל הקולות של ${label(leading[1])} היו עוברים ל${label(leading[0])}?`,
       `מה היה קורה אם 10% מהקולות של ${label(leading[0])} היו עוברים ל${label(leading[1])}?`] : [])]);
   add('ירידה בקולות', leading.flatMap(id => {

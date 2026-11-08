@@ -17,7 +17,7 @@ export type QuestionQuery =
   | { kind: 'seat-gap'; party: string }
   | { kind: 'seat-loss'; party: string }
   | { kind: 'below-threshold-winners'; level: 'localities' | 'stations'; measure: 'majority' | 'plurality' }
-  | { kind: 'scenario'; voteChange?: { party: string; delta: number }; threshold?: number; withoutAgreements?: boolean; transfer?: { from: string; to: string; fraction: number } };
+  | { kind: 'scenario'; voteChange?: { party: string; delta: number }; voteChanges?: { party: string; delta: number }[]; threshold?: number; withoutAgreements?: boolean; transfer?: { from: string; to: string; fraction: number } };
 export type QuestionParse = { query: QuestionQuery; explanation: string } | { error: string };
 export interface QuestionContext { votes: VoteData; names: PartyNames; config: ElectionConfig; previous?: PreviousElection; electionId?: string; blocs?: BlocsConfig; comparison?: ElectionSnapshot }
 export interface SeatChange { party: string; name: string; before: number; after: number }
@@ -75,11 +75,12 @@ export function resolveParties(text: string, context: QuestionContext): { text: 
 
 export function parseElectionQuestion(input: string, context: QuestionContext): QuestionParse {
   if (input.length > 600) return { error: 'השאלה ארוכה מדי. נסו שאלה אחת עד 600 תווים.' };
-  const voteChange = parseVoteChange(input, context);
+  const compound = /\sוגם(?:\s|$)/.test(input);
+  const voteChange = compound ? null : parseVoteChange(input, context);
   if (voteChange) return voteChange;
   const raw = normalizeQuestion(input).replace(/^איפה /, 'באילו יישובים ')
     .replace(/^מה היה קורב אם /, 'מה היה קורה אם ');
-  const comparison = parseComparison(raw, context);
+  const comparison = compound ? null : parseComparison(raw, context);
   if (comparison) return comparison;
   const neutralInsight = raw.startsWith('מי ') ? null : parseInsight(raw, []);
   if (neutralInsight) return neutralInsight;
@@ -87,7 +88,7 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
   const { text, parties, ambiguous } = resolveParties(normalized, context);
   if (ambiguous) return { error: 'שם הרשימה מתאים ליותר מרשימה אחת. השתמשו בשם המלא או באותיות הקלפי.' };
   const label = (id: string) => context.names[id] ?? id;
-  const unsupported = { error: 'לא הצלחתי לפרש את כל השאלה בבטחה. נסו אחת מהדוגמאות, ובדקו שהרשימה התמודדה בשם הזה בבחירות שנבחרו. שאלות המשך וכמה שאלות יחד עדיין אינן נתמכות.' };
+  const unsupported = { error: 'לא הצלחתי לפרש את כל השאלה בבטחה. נסו אחת מהדוגמאות, ובדקו שהרשימה התמודדה בשם הזה בבחירות שנבחרו. אפשר לחבר תנאים לתרחיש באמצעות „וגם”.' };
   const insight = parseInsight(text, parties);
   if (insight) return insight;
   const belowList = '(?:רשימה|מפלגה) שלא עברה את אחוז החסימה(?: הארצי)?';
@@ -124,30 +125,46 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
     const query: Extract<QuestionQuery, { kind: 'scenario' }> = { kind: 'scenario' };
     const descriptions: string[] = [];
     const clauses = remainder.split(/ וגם | ו(?=(?:בלי|ללא|אחוז החסימה|@))/);
-    for (const clause of clauses) {
+    const originalClauses = input.replace(/^מה (?:היה קורה )?אם /, '').split(/\sוגם\s/);
+    for (const [clauseIndex, clause] of clauses.entries()) {
       remainder = clause.trim();
+      const fail = (reason: string): QuestionParse => ({ error: `לא ניתן להחיל את התנאי „${originalClauses[clauseIndex]?.trim() ?? clause}”: ${reason} לא חושב תרחיש חלקי.` });
+      const zero = /^@(\d+) (?:לא (?:הייתה|היתה|היה)? ?(?:מקבלת|מקבל) (?:את )?(?:הקולות|קולות)(?: בכלל)?|(?:הייתה|היתה|היה)? ?(?:מקבלת|מקבל) (?:אפס|0) קולות)$/.exec(remainder);
+      const relative = parseVoteChange(`מה היה קורה אם ${originalClauses[clauseIndex]?.trim() ?? ''}`, context);
+      if (relative && 'error' in relative) return fail(relative.error);
+      const change = zero ? { party: parties[Number(zero[1])], delta: -context.votes[parties[Number(zero[1])]].votes }
+        : relative && relative.query.kind === 'scenario' ? relative.query.voteChange : undefined;
+      if (change) {
+        if (query.voteChanges?.some(entry => entry.party === change.party)
+          || query.transfer && [query.transfer.from, query.transfer.to].includes(change.party)) return fail('יש לציין שינוי אחד בלבד לכל רשימה.');
+        (query.voteChanges ??= []).push(change);
+        descriptions.push(zero ? `איפוס קולות ${label(change.party)}` : relative!.explanation);
+        continue;
+      }
+      remainder = remainder.replace(/אחוז אחד$/, '1%');
       if (/^(?:לא היה אחוז חסימה|בלי אחוז חסימה|ללא אחוז חסימה)$/.test(remainder) && query.threshold === undefined) {
         query.threshold = 0; descriptions.push('ללא אחוז חסימה'); continue;
       }
       const threshold = /^אחוז החסימה (?:(?:היה|יהיה)(?: על)?|על) (\d+(?:\.\d+)?)\s*(?:%|אחוז|אחוזים)$/.exec(remainder);
       if (threshold && query.threshold === undefined) {
         const value = Number(threshold[1]);
-        if (value > 100) return { error: 'אחוז החסימה חייב להיות בין 0 ל־100.' };
+        if (value > 100) return fail('אחוז החסימה חייב להיות בין 0 ל־100.');
         query.threshold = value / 100; descriptions.push(`אחוז חסימה ${value}%`); continue;
       }
       if (/^(?:בלי|ללא|לא היו) הסכמי עודפים$/.test(remainder) && !query.withoutAgreements) {
         query.withoutAgreements = true; descriptions.push('ללא הסכמי עודפים'); continue;
       }
-      const outgoing = /^(כל הקולות|הקולות|\d+(?:\.\d+)?% מהקולות) של @([01]) היו עוברים ל@([01])$/.exec(remainder);
+      const outgoing = /^(כל הקולות|הקולות|\d+(?:\.\d+)?% מהקולות) של @(\d+) היו עוברים ל@(\d+)$/.exec(remainder);
       if (outgoing) remainder = `@${outgoing[3]} מקבלת ${outgoing[1]} של @${outgoing[2]}`;
-      const transfer = /^@([01]) (?:הייתה מקבלת|היתה מקבלת|מקבלת|תקבל) (?:את )?(כל הקולות|הקולות|\d+(?:\.\d+)?% מהקולות) של @([01])$/.exec(remainder);
-      if (transfer && parties.length === 2 && !query.transfer && transfer[1] !== transfer[3]) {
+      const transfer = /^@(\d+) (?:הייתה מקבלת|היתה מקבלת|מקבלת|תקבל) (?:את )?(כל הקולות|הקולות|\d+(?:\.\d+)?% מהקולות) של @(\d+)$/.exec(remainder);
+      if (transfer && !query.transfer && transfer[1] !== transfer[3]) {
         const fraction = transfer[2].includes('%') ? Number.parseFloat(transfer[2]) / 100 : 1;
-        if (fraction <= 0 || fraction > 1) return { error: 'העברת קולות חייבת להיות מעל 0% ועד 100%.' };
+        if (fraction <= 0 || fraction > 1) return fail('העברת קולות חייבת להיות מעל 0% ועד 100%.');
+        if (query.voteChanges?.some(entry => [parties[Number(transfer[1])], parties[Number(transfer[3])]].includes(entry.party))) return fail('יש לציין שינוי אחד בלבד לכל רשימה.');
         query.transfer = { to: parties[Number(transfer[1])], from: parties[Number(transfer[3])], fraction };
         descriptions.push(`העברת ${fraction * 100}% מקולות ${label(query.transfer.from)} אל ${label(query.transfer.to)} (הפחתה מהמקור)`); continue;
       }
-      return unsupported;
+      return fail(unsupported.error);
     }
     return { query, explanation: `${descriptions.join('; ')}. יתר הקולות והכללים נשארים כפי שהיו. העברה מחושבת לפי תמונת המקור ומעוגלת מטה לקול שלם.` };
   }
@@ -224,15 +241,19 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     return { note: 'אחוז מתוך כלל הקולות הכשרים. מנדטים מחושבים במנוע האתר לפי כללי הבחירות שנבחרו.', columns: ['רשימה', 'קולות', 'אחוז', 'מנדטים'], rows: query.parties.map(party => [label(party), votes[party].votes, `${(votes[party].votes / total * 100).toFixed(2)}%`, baseline[party]?.mandats ?? 0]) };
   }
   const changed = structuredClone(votes);
-  if (query.voteChange) {
-    const { party, delta } = query.voteChange;
+  const voteChanges = [...(query.voteChanges ?? []), ...(query.voteChange ? [query.voteChange] : [])];
+  const changedParties = new Set<string>();
+  for (const { party, delta } of voteChanges) {
     known(party);
-    if (query.transfer) throw new Error('יש לבחור שינוי קולות או העברה בין רשימות בתרחיש אחד.');
+    if (changedParties.has(party) || query.transfer && [query.transfer.from, query.transfer.to].includes(party)) throw new Error('יש לציין שינוי אחד בלבד לכל רשימה, כולל העברה.');
+    changedParties.add(party);
     const next = votes[party].votes + delta;
-    if (!Number.isSafeInteger(delta) || delta === 0 || !Number.isSafeInteger(next) || next < 0
-      || !Number.isSafeInteger(total + delta) || total + delta <= 0) throw new Error('אי אפשר להפחית יותר קולות ממה שהרשימה קיבלה, להשאיר אפס קולות כשרים או לחרוג מטווח החישוב.');
+    if (!Number.isSafeInteger(delta) || (delta === 0 && query.voteChange?.party === party) || !Number.isSafeInteger(next) || next < 0) throw new Error('אי אפשר להפחית יותר קולות ממה שהרשימה קיבלה או לחרוג מטווח החישוב.');
     changed[party].votes = next;
   }
+  const changedTotal = Object.values(changed).reduce((sum, entry) => sum + entry.votes, 0);
+  if (!Number.isSafeInteger(changedTotal) || changedTotal <= 0) throw new Error('אי אפשר להשאיר אפס קולות כשרים או לחרוג מטווח החישוב.');
+
   if (query.transfer) {
     const { from, to, fraction } = query.transfer;
     known(from); known(to);
@@ -243,5 +264,5 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
   if (query.threshold !== undefined && (!Number.isFinite(query.threshold) || query.threshold < 0 || query.threshold > 1)) throw new Error('אחוז החסימה אינו תקין.');
   const scenarioConfig = { ...config, blockPercentage: query.threshold ?? config.blockPercentage, agreements: query.withoutAgreements ? [] : config.agreements };
   const scenario = computeScenarioResults(changed, scenarioConfig).realResults;
-  return { scenario: { voteData: changed, config: scenarioConfig }, note: (query.voteChange ? 'השינוי במספר הקולות של הרשימה משנה גם את סך הקולות הכשרים. יתר הרשימות נשארות ללא שינוי; הקולות אינם מועברים לרשימה אחרת. ' : '') + 'תרחיש מחושב, לא תחזית. הסכמים קיימים נשמרים אלא אם ביקשתם להסירם. בתיקו מופעל כלל ההכרעה הדטרמיניסטי של מנוע האתר.', columns: ['רשימה', 'לפני', 'אחרי', 'שינוי'], rows: Object.keys(votes).sort((a, b) => (scenario[b]?.mandats ?? 0) - (scenario[a]?.mandats ?? 0)).map(party => [label(party), baseline[party]?.mandats ?? 0, scenario[party]?.mandats ?? 0, (scenario[party]?.mandats ?? 0) - (baseline[party]?.mandats ?? 0)]) };
+  return { scenario: { voteData: changed, config: scenarioConfig }, note: (voteChanges.length ? 'השינויים בקולות מחושבים יחד ומשנים גם את סך הקולות הכשרים. שינויי קולות אינם מועברים לרשימות אחרות אלא אם צוינה העברה במפורש. ' : '') + 'תרחיש מחושב, לא תחזית. הסכמים קיימים נשמרים אלא אם ביקשתם להסירם. בתיקו מופעל כלל ההכרעה הדטרמיניסטי של מנוע האתר.', columns: ['רשימה', 'לפני', 'אחרי', 'שינוי'], rows: Object.keys(votes).sort((a, b) => (scenario[b]?.mandats ?? 0) - (scenario[a]?.mandats ?? 0)).map(party => [label(party), baseline[party]?.mandats ?? 0, scenario[party]?.mandats ?? 0, (scenario[party]?.mandats ?? 0) - (baseline[party]?.mandats ?? 0)]) };
 }
