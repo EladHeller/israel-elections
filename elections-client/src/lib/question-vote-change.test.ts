@@ -27,8 +27,8 @@ test('relative vote counts accept Hebrew word order, prefixes and validated thou
   for (const text of ['מה אם הליכוד תקבל 5,00 פחות קולות', 'מה אם הליכוד תקבל 1.5 פחות קולות',
     'מה אם הליכוד תקבל 0 פחות קולות', 'מה אם הליכוד תקבל 9007199254740992 פחות קולות',
     'מה אם הליכוד תקבל -5000 פחות קולות', 'מה אם לא קיימת תקבל 5000 פחות קולות',
-    'מה אם הליכוד תקבל 5% פחות קולות', 'מה אם הליכוד תקבל 5000 פחות קולות לעומת הבחירות הקודמות',
-    'מה אם הליכוד תקבל 5000 פחות קולות וגם רשימה ב תקבל 5000 יותר קולות']) assert.ok('error' in parseElectionQuestion(text, context), text);
+    'מה אם הליכוד תקבל 5% פחות קולות', 'מה אם הליכוד תקבל 5000 פחות קולות לעומת הבחירות הקודמות']) assert.ok('error' in parseElectionQuestion(text, context), text);
+  assert.deepEqual(query('מה אם הליכוד תקבל 5000 פחות קולות וגם רשימה ב תקבל 5000 יותר קולות'), { kind: 'scenario', voteChanges: [{ party: 'א', delta: -5000 }, { party: 'ב', delta: 5000 }] });
   const ambiguous = { ...context, names: { א: 'שם משותף', ב: 'שם משותף' } };
   assert.ok('error' in parseElectionQuestion('מה אם שם משותף תקבל 1 פחות קולות', ambiguous));
   const nameless = parseElectionQuestion('מה אם א מקבל 1 פחות קולות', { ...context, names: {} });
