@@ -72,3 +72,16 @@ preview cache, and that a different question/election has a distinct cache key.
 Check a newly shared link on a real WhatsApp device; old previews may remain
 cached by the sharing service. Verify PNG MIME types and that question images
 contain no real-results chart.
+
+## Lambda module compatibility
+
+The CommonJS preview build uses the Node entry point `csv-parse/sync`. The
+browser continues to use `csv-parse/browser/esm/sync`. The preparation step adapts
+exactly one import in the emitted server runtime and fails the build if that
+import is missing or ambiguous. It does not alter shared source or browser code.
+
+The runtime smoke test starts the compiled handler with
+`--no-experimental-require-module --no-experimental-detect-module`, matching
+Lambda's disabled experimental features. It executes a polling-station question
+and requires a nonempty calculated answer description, catching module-init
+failures before deployment.
