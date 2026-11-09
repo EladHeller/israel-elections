@@ -73,6 +73,7 @@ test('Enter submits directly, renders prose, records outcomes and ignores stale 
     await act(async () => renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }));
     await act(async () => renderer.root.findByType(ElectionSelector).props.onChange('26'));
     assert.equal(renderer.root.findByType(AppHeader).props.currentElection, '26');
+    assert.ok(!requests.some(path => path.endsWith('.csv')), 'initial national questions do not download geographic data');
     const suggestions = renderer.root.findByProps({ className: 'question-suggestions' });
     const featured = suggestions.findAllByProps({ className: 'question-examples' })[0];
     assert.equal(featured.findAllByType('button').length, 4);
