@@ -37,7 +37,9 @@ function QuestionScreen({ electionId, initialQuestion }: { electionId: string; i
   const [question, setQuestion] = useState(() => initialQuestion.slice(0, 600));
   const autoStarted = useRef(false);
   const previousLinkedQuestion = useRef(initialQuestion);
-  const places = useQuestionPlaces(data.results ? electionId : undefined, question.includes('בקלפי'));
+  // National questions need neither the CSV download nor synchronous geographic parsing.
+  const needsPlaces = /(?:יישוב|ישוב|בקלפי|קולות ב|ניצחה ב|ניצח ב)/.test(question);
+  const places = useQuestionPlaces(data.results && needsPlaces ? electionId : undefined, question.includes('בקלפי'));
   const [reply, setReply] = useState<Reply | null>(null);
   const [error, setError] = useState<string | null>(initialQuestion.length > 600 ? 'השאלה בקישור ארוכה מדי. אפשר לערוך שאלה של עד 600 תווים ולשלוח אותה.' : null);
   const [busy, setBusy] = useState(false);

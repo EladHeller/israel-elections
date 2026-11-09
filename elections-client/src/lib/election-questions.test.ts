@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { executeElectionQuestion as execute, parseElectionQuestion as parse, normalizeQuestion, type QuestionContext, type QuestionQuery } from './election-questions';
+import { executeElectionQuestion as execute, parseElectionQuestion as parse, normalizeQuestion, resolveParties, type QuestionContext, type QuestionQuery } from './election-questions';
 import names from '../data/party-names.json';
 import type { LocalityVotes } from './party-research';
 import { computeScenarioResults } from './scenario';
@@ -345,4 +345,22 @@ test('local winner percentages round to at most two decimals without changing vo
   assert.deepEqual(answer.rows.map(row => [row[0], row[2], row[3]]), [
     ['נוה', 334, '83.71%'], ['מצפה', 255, '47.31%'], ['שלם', 40, '40%'],
   ]);
+});
+
+
+test('reused party vocabulary stays correct across elections and in-place name/list edits', () => {
+  const names = { א: 'הליכוד', ב: 'שס' };
+  const ctx: QuestionContext = { ...context, names, votes: { א: { votes: 500, mandats: 0 } } };
+  for (let i = 0; i < 3; i++) assert.deepEqual(resolveParties('הליכוד', ctx).parties, ['א']);
+  const other = { ...ctx, votes: { ב: { votes: 300, mandats: 0 } } };
+  assert.deepEqual(resolveParties('הליכוד', other).parties, []);
+  assert.deepEqual(resolveParties('שס', other).parties, ['ב']);
+  assert.deepEqual(resolveParties('הליכוד', ctx).parties, ['א']);
+  names.א = 'יש עתיד';
+  assert.deepEqual(resolveParties('הליכוד', ctx).parties, []);
+  assert.deepEqual(resolveParties('יש עתיד', ctx).parties, ['א']);
+  ctx.votes.ב = { votes: 100, mandats: 0 };
+  assert.deepEqual(resolveParties('שס', ctx).parties, ['ב']);
+  delete ctx.votes.א;
+  assert.deepEqual(resolveParties('יש עתיד', ctx).parties, []);
 });

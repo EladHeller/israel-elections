@@ -58,7 +58,7 @@ export function createQuestionCompletions(context: QuestionContext, places: Ques
       add(base, 'לפי מספר קולות או שיעור התמיכה?', leaves(base, ['קיבלה הכי הרבה קולות', 'קיבלה את אחוז הקולות הגבוה ביותר']));
     }
   }
-  if (hasLocalityData(context.electionId ?? null) && places.localities.length) {
+  if (hasLocalityData(context.electionId ?? null)) {
     root('איזו רשימה קיבלה הכי הרבה קולות ביישוב', 'איזו רשימה קיבלה הכי הרבה קולות ביישוב ');
     root('מי ניצחה ביישוב', 'מי ניצחה ביישוב ');
     for (const id of parties) {
@@ -114,8 +114,10 @@ export function createQuestionCompletions(context: QuestionContext, places: Ques
       || parsed.query.kind === 'comparison-scenario' && parsed.query.mode === 'zero' && parsed.query.target.type === 'list');
   };
   // Reuse supported single-condition choices, then let the parser reject conflicts with the existing scenario.
-  const atoms = [...new Set([...catalog, ...branches.flatMap(branch => branch.children.map(option => option.value))].map(normalizeQuestion))].filter(text => text.startsWith(`${scenario} `)
+  const buildAtoms = () => [...new Set([...catalog, ...branches.flatMap(branch => branch.children.map(option => option.value))].map(normalizeQuestion))].filter(text => text.startsWith(`${scenario} `)
     && !text.includes(' וגם ') && chainable(text));
+  let atoms: string[] | undefined;
+  const scenarioAtoms = () => atoms ??= buildAtoms();
   const validAddition = (prefix: string, text: string) => {
     const combined = `${prefix} ${text.slice(scenario.length).trimStart()}`;
     const parsed = parseElectionQuestion(combined, context);
@@ -126,7 +128,7 @@ export function createQuestionCompletions(context: QuestionContext, places: Ques
   const afterConjunction = (prefix: string, tail: string) => {
     if (prefix !== cachedPrefix) {
       cachedPrefix = prefix;
-      const valid = atoms.filter(text => validAddition(prefix, text));
+      const valid = scenarioAtoms().filter(text => validAddition(prefix, text));
       continuations = prepare(completionCatalog(valid, parties.map(token)).map(branch => ({ ...branch, label: 'בחרו תנאי נוסף' })));
     }
     return lookup(`${scenario} ${tail}`.trim(), continuations).options.map(option => ({ ...option,
@@ -143,7 +145,7 @@ export function createQuestionCompletions(context: QuestionContext, places: Ques
         clean.slice(conjunction.index! + conjunction[0].length)) }
       : lookup(input);
     const options: QuestionCompletion[] = suggestions.options.filter(option => option.value.length <= 600);
-    if (chainable(clean) && atoms.some(text => validAddition(`${clean} וגם`, text)) && `${clean} וגם `.length <= 600) {
+    if (chainable(clean) && scenarioAtoms().some(text => validAddition(`${clean} וגם`, text)) && `${clean} וגם `.length <= 600) {
       options.push({ label: 'וגם', value: `${clean} וגם `, detail: 'הוספת תנאי לתרחיש' });
     }
     return { label: suggestions.label, options };
