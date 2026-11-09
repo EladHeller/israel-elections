@@ -22,6 +22,10 @@ export const fetchElectionResults = async <TResult = unknown>(
     throw new Error(`Failed to load data for election ${electionId}`);
   }
   const results: Partial<ElectionResultsPayload> = await res.json();
+  return cleanElectionResults(results) as TResult;
+};
+
+export function cleanElectionResults(results: Partial<ElectionResultsPayload>): Partial<ElectionResultsPayload> {
   const metadataColumns = ['חיצוניות', 'קלפי אחרת'];
   const metadataVotes = metadataColumns.reduce((sum, key) => sum + (results.voteData?.[key]?.votes ?? 0), 0);
   for (const field of ['voteData', 'realResults', 'withoutAgreements', 'beforeBaderOffer', 'afterBaderOffer'] as const) {
@@ -31,6 +35,6 @@ export const fetchElectionResults = async <TResult = unknown>(
     }
   }
   if (results.countedVotes !== undefined) results.countedVotes -= metadataVotes;
-  return results as TResult;
-};
+  return results;
+}
 

@@ -183,6 +183,7 @@ async function uploadFiles(distributionId: string) {
   if (updatedClientZip) updatedFiles.push('/client.zip');
 
   if (updatedFiles.length > 0) {
+    updatedFiles.push('/api/question-preview/*');
     console.log(`Invalidating ${updatedFiles.length} files in CloudFront...`);
     await cfClient.send(new CreateInvalidationCommand({
       DistributionId: distributionId,
@@ -205,8 +206,9 @@ function getOutput(outputs: Output[] | undefined, key: string): string | undefin
   return outputs?.find(output => output.OutputKey === key)?.OutputValue;
 }
 
-function t00Parameters(apiEndpoint?: string): Parameter[] {
+function t00Parameters(apiEndpoint?: string, answersEnabled = false): Parameter[] {
   const parameters: Parameter[] = [
+    { ParameterKey: 'EnableQuestionAnswers', ParameterValue: String(answersEnabled) },
     { ParameterKey: 'BucketCodeName', ParameterValue: bucketCodeName },
     { ParameterKey: 'ClientCodeName', ParameterValue: clientCodeName },
     { ParameterKey: 'SubDomain', ParameterValue: subDomain },
@@ -253,6 +255,7 @@ async function main() {
       { ParameterKey: 'Region', ParameterValue: region },
       { ParameterKey: 'CurrentElections', ParameterValue: currElections },
       { ParameterKey: 'DistributionId', ParameterValue: distributionId },
+      { ParameterKey: 'SiteUrl', ParameterValue: siteUrl },
     ],
     ['CAPABILITY_NAMED_IAM'],
   );
@@ -261,7 +264,9 @@ async function main() {
   const lambda = new LambdaClient({ region });
   const questionLogFunctionName = getOutput(backendOutputs, 'QuestionLogFunctionName');
   if (!questionLogFunctionName) throw new Error('Missing QuestionLogFunctionName output');
-  for (const FunctionName of ['Israel-elections-function', 'Israel-elections-scenario-share', questionLogFunctionName]) {
+  const previewFunctionName = getOutput(backendOutputs, 'QuestionPreviewFunctionName');
+  if (!previewFunctionName) throw new Error('Missing QuestionPreviewFunctionName output');
+  for (const FunctionName of ['Israel-elections-function', 'Israel-elections-scenario-share', questionLogFunctionName, previewFunctionName]) {
     await lambda.send(new UpdateFunctionCodeCommand({
       FunctionName, S3Bucket: bucketCodeName, S3Key: 'dist.zip',
     }));
@@ -274,8 +279,13 @@ async function main() {
   await runTemplate(
     './infra/CD/t00.cf.yaml',
     'Israel-elections-code-bucket',
-    t00Parameters(newScenarioApiEndpoint),
+    t00Parameters(newScenarioApiEndpoint, true),
   );
+
+  await cfClient.send(new CreateInvalidationCommand({
+    DistributionId: distributionId,
+    InvalidationBatch: { CallerReference: `${Date.now()}-previews`, Paths: { Quantity: 1, Items: ['/api/question-preview/*'] } },
+  }));
 
   console.log('Deployment completed successfully!');
 }
