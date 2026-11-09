@@ -68,7 +68,12 @@ test('scenario routes and election data use the intended CDN lifetimes', () => {
   const behaviors = template.split('        CacheBehaviors:\n')[1]
     .split('        DefaultCacheBehavior:')[0]
     .split('          - PathPattern: ').slice(1);
-  assert.equal(behaviors.length, 7);
+  assert.equal(behaviors.length, 8);
+  const previewBehavior = behaviors.shift()!;
+  assert.ok(previewBehavior.startsWith('/api/question-preview/*'));
+  assert.match(previewBehavior, /QueryString: true/);
+  assert.match(previewBehavior, /Forward: none/);
+  assert.match(previewBehavior, /MinTTL: 0/);
 
   assert.ok(behaviors[0].startsWith('/api/*'));
   assert.match(behaviors[0], /AllowedMethods:\n[\s\S]*- POST\n/);
