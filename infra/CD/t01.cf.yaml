@@ -12,6 +12,8 @@ Parameters:
   Region:
     Description: The region that running on.
     Type: String
+  SiteUrl:
+    Type: String
   DistributionId:
     Description: The distribution id.
     Type: String
@@ -252,6 +254,86 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ScenarioApi}/*/POST/api/questions'
 
+  QuestionPreviewLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${AWS::StackName}-question-preview'
+      RetentionInDays: 14
+
+  QuestionPreviewRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: Read-preview-data
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${ClientCodeName}/data/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${ClientCodeName}/election-config.json'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt QuestionPreviewLogGroup.Arn
+
+  QuestionPreviewLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt QuestionPreviewRole.Arn
+      FunctionName: !Sub '${AWS::StackName}-question-preview'
+      Runtime: nodejs24.x
+      Handler: dist/preview-runtime/election-results-listener/question-preview.handler
+      Timeout: 10
+      MemorySize: 512
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          CLIENT_BUCKET: !Ref ClientCodeName
+          SITE_URL: !Ref SiteUrl
+      Code:
+        S3Bucket: !Ref BucketCodeName
+        S3Key: dist.zip
+
+  QuestionPreviewIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ScenarioApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt QuestionPreviewLambda.Arn
+      PayloadFormatVersion: "2.0"
+
+  QuestionPreviewGetRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "GET /api/question-preview/v1/{election}"
+      Target: !Join [/, [integrations, !Ref QuestionPreviewIntegration]]
+
+  QuestionPreviewHeadRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "HEAD /api/question-preview/v1/{election}"
+      Target: !Join [/, [integrations, !Ref QuestionPreviewIntegration]]
+
+  QuestionPreviewPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref QuestionPreviewLambda
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ScenarioApi}/*/*/api/question-preview/v1/*'
+
   ScenarioApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
@@ -290,6 +372,8 @@ Resources:
   ScenarioApiStage:
     DependsOn:
       - QuestionLogRoute
+      - QuestionPreviewGetRoute
+      - QuestionPreviewHeadRoute
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId: !Ref ScenarioApi
@@ -312,6 +396,8 @@ Resources:
       SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ScenarioApi}/*/*/*"
 
 Outputs:
+  QuestionPreviewFunctionName:
+    Value: !Ref QuestionPreviewLambda
   QuestionLogTableName:
     Description: Private question records, isolated per environment; query by-outcome-time.
     Value: !Ref QuestionLogTable

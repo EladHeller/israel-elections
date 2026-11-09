@@ -5,7 +5,9 @@ import { test } from 'node:test';
 
 const template = readFileSync('infra/CD/t00.cf.yaml', 'utf8');
 const source = template.split('FunctionCode: !Sub |\n')[1].split('\n  CDN:')[0]
-  .replaceAll('${LatestElectionId}', '26');
+  .replaceAll('${EnableQuestionAnswers}', 'true').replaceAll('${LatestElectionId}', '26')
+  .replaceAll('${ScenarioApiDomain}', '')
+  .replace("import cf from 'cloudfront';", '');
 const handler = runInNewContext(`${source}\nhandler`);
 
 test('CloudFront rewrites screen URLs without losing query parameters', () => {
@@ -130,7 +132,7 @@ test('only exact supported sharing agents receive question metadata, without ori
     assert.equal(response.headers['cache-control'].value, 'no-store');
     assert.match(response.body, new RegExp(`<meta property="og:title" content="${question.replace('?', '\\?')}">`));
     assert.ok(response.body.includes('בחירות לכנסת ה־26'));
-    assert.ok(response.body.includes('https://elections.eladheller.com/social/elections-preview-v1.png'));
+    assert.ok(response.body.includes('https://elections.eladheller.com/social/question-26-v2.png'));
     assert.ok(response.body.includes(`https://elections.eladheller.com/questions/26?q=${encodeURIComponent(question)}`));
     assert.ok(response.body.includes('name="twitter:title"'));
   }
@@ -167,7 +169,7 @@ test('browser fetch metadata vetoes even an exact crawler agent', () => {
 
 test('malformed, missing, duplicate, oversized and control-character questions use the static site', () => {
   for (const q of [undefined, { value: '' }, { value: '+' }, { value: '%ZZ' }, { value: '%E0%A4' },
-    { value: 'a'.repeat(513) }, { value: '%20'.repeat(1400) }, { value: '%00bad' }, { value: '%0Abad' },
+    { value: 'a'.repeat(601) }, { value: '%20'.repeat(1400) }, { value: '%00bad' }, { value: '%0Abad' },
     { value: 'one', multiValue: [{ value: 'one' }, { value: 'two' }] }]) {
     const request = previewRequest();
     Object.assign(request, { querystring: q ? { q } : {} });
@@ -206,12 +208,17 @@ test('crawler HEAD has metadata headers but no body; other routes and methods ke
   const response = handler({ request });
   assert.equal(response.statusCode, 200);
   assert.equal(response.body, '');
-  for (const uri of ['/results/26', '/simulator/26', '/research/26', '/localities/26', '/summary', '/']) {
+  for (const uri of ['/results/26', '/simulator/26', '/research/26', '/localities/26', '/']) {
     const other = previewRequest();
     other.uri = uri;
-    assert.equal(handler({ request: other }), other);
-    assert.equal(other.uri, '/index.html');
+    const result = handler({ request: other });
+    assert.equal(result.statusCode, 200);
+    assert.ok(result.body.includes('/social/elections-26-v2.png'));
+    assert.ok(!result.body.includes(question));
   }
+  const summary = { ...previewRequest(), uri: '/summary' };
+  assert.equal(handler({ request: summary }), summary);
+  assert.equal(summary.uri, '/index.html');
   for (const uri of ['/questions/27', '/questions/0', '/questions/026']) {
     assert.equal(handler({ request: { ...previewRequest(), uri } }).statusCode, 404);
   }
@@ -230,4 +237,31 @@ test('ambiguous or missing request headers fall back and edge source stays below
     assert.equal(request.uri, '/index.html');
   }
   assert.ok(Buffer.byteLength(source, 'utf8') < 10_240);
+});
+
+test('only verified-by-signature question fetches select the API origin and a separate canonical cache key', () => {
+  const selections: string[] = [];
+  const apiSource = template.split('FunctionCode: !Sub |\n')[1].split('\n  CDN:')[0]
+    .replaceAll('${EnableQuestionAnswers}', 'true').replaceAll('${LatestElectionId}', '26').replaceAll('${ScenarioApiDomain}', 'api.example.com')
+    .replace("import cf from 'cloudfront';", '');
+  const route = runInNewContext(`${apiSource}\nhandler`, { cf: { selectRequestOriginById: (id: string) => selections.push(id) } });
+  for (const agent of crawlerAgents) {
+    const request = { ...previewRequest(agent), cookies: { tracking: { value: 'unused' } } };
+    request.querystring.q.value = encodeURIComponent(question).replaceAll('%20', '+');
+    assert.equal(route({ request }), request);
+    assert.equal(request.uri, '/api/question-preview/v1/26');
+    assert.equal(request.querystring.q.value, encodeURIComponent(question));
+    assert.equal(Object.keys(request.cookies).length, 0);
+  }
+  assert.equal(selections.length, crawlerAgents.length);
+  assert.ok(selections.every(id => id === 'scenario-api'));
+  for (const agent of ['Mozilla/5.0 Chrome/142.0', 'Mozilla/5.0 WhatsApp/2.24.6.77 A', 'UnknownBot']) {
+    const request = previewRequest(agent);
+    route({ request });
+    assert.equal(request.uri, '/index.html');
+  }
+  const navigation = { ...previewRequest(), headers: { ...previewRequest().headers, 'sec-fetch-mode': { value: 'navigate' } } };
+  route({ request: navigation }); assert.equal(navigation.uri, '/index.html');
+  assert.equal(selections.length, crawlerAgents.length);
+  assert.ok(Buffer.byteLength(apiSource) < 10_240);
 });
