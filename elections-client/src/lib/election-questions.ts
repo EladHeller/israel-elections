@@ -34,7 +34,13 @@ export const normalizeQuestion = (value: string): string => value.normalize('NFK
 // shorthand is shown back to the user using the full list name before calculation.
 const listAliases: Record<string, string[]> = { 'רע"ם': ['רעמ'], 'הציונות הדתית וזהות': ['הציונות הדתית'], 'נעם לישראל': ['נועם', 'נעם'], 'המילואימניקים והכלכלית': ['הכלכלית', 'כלכלית'], 'הכלכלית החדשה': ['הכלכלית', 'כלכלית'] };
 const aliases = ['הליכוד', 'ליכוד', 'שס', 'יהדות התורה', 'יש עתיד', 'ישראל ביתנו', 'הציונות הדתית', 'עמך ישראל', 'נועם', 'נעם', 'הדמוקרטים', 'כחול לבן', 'רעם', 'הרשימה המשותפת'];
-export function resolveParties(text: string, context: QuestionContext): { text: string; parties: string[]; ambiguous: boolean } {
+// The vocabulary is shared by hundreds of parser calls while building completions.
+// Validate the signature so callers that mutate a context still get fresh aliases.
+const partyVocabulary = new WeakMap<PartyNames, { signature: string; candidates: Map<string, Set<string>>; pattern: RegExp }>();
+function preparePartyVocabulary(context: QuestionContext) {
+  const signature = JSON.stringify(Object.keys(context.votes).map(id => [id, context.names[id]]));
+  const cached = partyVocabulary.get(context.names);
+  if (cached?.signature === signature) return cached;
   const candidates = new Map<string, Set<string>>();
   const add = (alias: string, party: string) => {
     const normalized = normalizeQuestion(alias);
@@ -50,18 +56,24 @@ export function resolveParties(text: string, context: QuestionContext): { text: 
         || normalizeQuestion(name).replace(/^ה/, '') === normalizeQuestion(alias).replace(/^ה/, '')) add(alias, party);
     }
   }
-  const parties: string[] = [];
-  let ambiguous = false;
   // Resolve in textual order; longest alternatives prevent a short ballot letter
   // consuming part of a multiword list name. Prefer an exact name over a prefix.
   for (const [alias, ids] of [...candidates]) {
     if (alias.startsWith('ה') && alias.length > 2) for (const id of ids) add(alias.slice(1), id);
   }
-  if (!candidates.size) return { text, parties, ambiguous };
-  const syntaxWords = new Set(['מה', 'אם', 'לא', 'כל', 'את', 'של', 'בין', 'בלי', 'ללא', 'היה', 'היו', 'קולות', 'אחוז', 'החסימה']);
   const alternatives = [...candidates.keys()].sort((a, b) => b.length - a.length)
     .map(alias => alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const pattern = new RegExp(`(^| )(?:(${alternatives})|([ובל])(${alternatives}))(?=$| )`, 'g');
+  const vocabulary = { signature, candidates, pattern };
+  partyVocabulary.set(context.names, vocabulary);
+  return vocabulary;
+}
+const syntaxWords = new Set(['מה', 'אם', 'לא', 'כל', 'את', 'של', 'בין', 'בלי', 'ללא', 'היה', 'היו', 'קולות', 'אחוז', 'החסימה']);
+export function resolveParties(text: string, context: QuestionContext): { text: string; parties: string[]; ambiguous: boolean } {
+  const { candidates, pattern } = preparePartyVocabulary(context);
+  const parties: string[] = [];
+  let ambiguous = false;
+  if (!candidates.size) return { text, parties, ambiguous };
   text = text.replace(pattern, (match, space: string, exact: string, prefix: string, prefixed: string) => {
     if (syntaxWords.has(exact || `${prefix}${prefixed}`)) return match;
     const ids = candidates.get(exact || prefixed)!;

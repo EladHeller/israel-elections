@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { QuestionContext } from '../lib/election-questions';
 import { createQuestionCompletions } from '../lib/question-completions';
 import { emptyQuestionPlaces, questionEntities, replaceQuestionEntity, type QuestionPlaces } from '../lib/question-entities';
@@ -19,10 +19,12 @@ export default function QuestionInput({ value, onChange, context, busy, disabled
   const [active, setActive] = useState(-1);
   const [editing, setEditing] = useState(false);
   const complete = useMemo(() => context ? createQuestionCompletions(context, places) : null, [context, places.localities, places.stations]);
-  const entities = useMemo(() => context ? questionEntities(value, context, places) : [], [value, context, places.localities, places.stations]);
+  // Keep the controlled textbox urgent; suggestions may catch up after it paints.
+  const deferredValue = useDeferredValue(value);
+  const entities = useMemo(() => context && !editing && !disabled ? questionEntities(value, context, places) : [], [value, context, editing, disabled, places.localities, places.stations]);
   const tokenized = !editing && entities.length > 0 && !disabled;
-  const suggestions = complete?.(value) ?? { label: '', options: [] };
-  const expanded = open && !disabled && suggestions.options.length > 0;
+  const suggestions = useMemo(() => complete?.(deferredValue) ?? { label: '', options: [] }, [complete, deferredValue]);
+  const expanded = open && !disabled && deferredValue === value && suggestions.options.length > 0;
   const index = active < suggestions.options.length ? active : -1;
   useEffect(() => { selected.current?.scrollIntoView?.({ block: 'nearest' }); }, [index]);
   useEffect(() => {
