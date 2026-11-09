@@ -5,12 +5,9 @@ import {
   type computeProximity,
   type SeatRace,
 } from '../lib/proximity';
-import { numberFormat } from '../lib/ui-helpers';
+import { numberFormat, percentageFormat } from '../lib/ui-helpers';
 
-const percentFormat = new Intl.NumberFormat('he-IL', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 3,
-});
+const percentFormat = percentageFormat;
 const percent = (share: number) => `${percentFormat.format(share * 100)}%`;
 
 interface Props {

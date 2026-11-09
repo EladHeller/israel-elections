@@ -1,3 +1,4 @@
+import { percentageFormat } from './ui-helpers';
 import { parseVoteChange } from './question-vote-change';
 import { localityHref } from './locality-results';
 import type { ElectionConfig, PartyNames, ScenarioState, VoteData } from '../types';
@@ -149,7 +150,7 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
       if (threshold && query.threshold === undefined) {
         const value = Number(threshold[1]);
         if (value > 100) return fail('אחוז החסימה חייב להיות בין 0 ל־100.');
-        query.threshold = value / 100; descriptions.push(`אחוז חסימה ${value}%`); continue;
+        query.threshold = value / 100; descriptions.push(`אחוז חסימה ${percentageFormat.format(value)}%`); continue;
       }
       if (/^(?:בלי|ללא|לא היו) הסכמי עודפים$/.test(remainder) && !query.withoutAgreements) {
         query.withoutAgreements = true; descriptions.push('ללא הסכמי עודפים'); continue;
@@ -162,7 +163,7 @@ export function parseElectionQuestion(input: string, context: QuestionContext): 
         if (fraction <= 0 || fraction > 1) return fail('העברת קולות חייבת להיות מעל 0% ועד 100%.');
         if (query.voteChanges?.some(entry => [parties[Number(transfer[1])], parties[Number(transfer[3])]].includes(entry.party))) return fail('יש לציין שינוי אחד בלבד לכל רשימה.');
         query.transfer = { to: parties[Number(transfer[1])], from: parties[Number(transfer[3])], fraction };
-        descriptions.push(`העברת ${fraction * 100}% מקולות ${label(query.transfer.from)} אל ${label(query.transfer.to)} (הפחתה מהמקור)`); continue;
+        descriptions.push(`העברת ${percentageFormat.format(fraction * 100)}% מקולות ${label(query.transfer.from)} אל ${label(query.transfer.to)} (הפחתה מהמקור)`); continue;
       }
       return fail(unsupported.error);
     }
@@ -195,7 +196,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     }).sort((a, b) => b.share - a.share || b.count - a.count || a.place.id.localeCompare(b.place.id) || a.party.localeCompare(b.party));
     return { note: 'התוצאות מוצגות לפי שיעור התמיכה במקום. רוב פירושו יותר מ־50% מהקולות הכשרים; מקום ראשון יכול לכלול תיקו. המעמד הארצי נקבע לפי התוצאות הארציות.', columns: ['מקום', 'רשימה', 'קולות', 'אחוז', 'מיקום'], rowLinks: winners.map(({ place }) => context.electionId ? [{ href: localityHref(context.electionId, place), label: 'תוצאות המקום' }] : []), rows: winners.map(({ place, party, count, share, tied }) => [
       `${place.name}${place.pollingStation ? ` — קלפי ${place.pollingStation}${place.split !== undefined ? ` / פיצול ${place.split}` : ''}` : ''}`,
-      label(party), count, `${(share * 100).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}%`, tied ? 'תיקו במקום הראשון' : 'מקום ראשון',
+      label(party), count, `${percentageFormat.format(share * 100)}%`, tied ? 'תיקו במקום הראשון' : 'מקום ראשון',
     ]) };
   }
   if (query.kind === 'rank') {
@@ -203,7 +204,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
     if (!places) throw new Error('נתוני היישובים או הקלפיות אינם זמינים לבחירות אלו.');
     const ranked = rankLocalities(places, query.party, query.order).slice(0, query.limit);
     return { note: 'אחוזים מחושבים מתוך הקולות הכשרים במקום; מקומות ללא קולות לרשימה אינם נכללים. אין סינון מינימום.', columns: ['מקום', 'קולות', 'אחוז'], rowLinks: ranked.map(place => context.electionId ? [{ href: localityHref(context.electionId, place), label: 'תוצאות המקום' }] : []), rows: ranked.map(row => [
-      `${row.name}${row.pollingStation ? ` — קלפי ${row.pollingStation}${row.split !== undefined ? ` / פיצול ${row.split}` : ''}` : ''}`, row.partyVotes, `${row.percentage.toFixed(2)}%`,
+      `${row.name}${row.pollingStation ? ` — קלפי ${row.pollingStation}${row.split !== undefined ? ` / פיצול ${row.split}` : ''}` : ''}`, row.partyVotes, `${percentageFormat.format(row.percentage)}%`,
     ]) };
   }
   if (query.kind === 'gap') {
@@ -238,7 +239,7 @@ export function executeElectionQuestion(query: QuestionQuery, context: QuestionC
   }
   if (query.kind === 'results') {
     query.parties.forEach(known);
-    return { note: 'אחוז מתוך כלל הקולות הכשרים. מנדטים מחושבים במנוע האתר לפי כללי הבחירות שנבחרו.', columns: ['רשימה', 'קולות', 'אחוז', 'מנדטים'], rows: query.parties.map(party => [label(party), votes[party].votes, `${(votes[party].votes / total * 100).toFixed(2)}%`, baseline[party]?.mandats ?? 0]) };
+    return { note: 'אחוז מתוך כלל הקולות הכשרים. מנדטים מחושבים במנוע האתר לפי כללי הבחירות שנבחרו.', columns: ['רשימה', 'קולות', 'אחוז', 'מנדטים'], rows: query.parties.map(party => [label(party), votes[party].votes, `${percentageFormat.format(votes[party].votes / total * 100)}%`, baseline[party]?.mandats ?? 0]) };
   }
   const changed = structuredClone(votes);
   const voteChanges = [...(query.voteChanges ?? []), ...(query.voteChange ? [query.voteChange] : [])];

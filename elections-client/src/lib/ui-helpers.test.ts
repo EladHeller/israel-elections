@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { algorithmLabel, formatTime, getStablePartyColor, numberFormat } from './ui-helpers';
+import { algorithmLabel, formatTime, getStablePartyColor, numberFormat, percentageFormat } from './ui-helpers';
 
 test('formats the ballot counts and local update times used by the dashboard', () => {
   assert.equal(numberFormat.format(160000), '160,000');
@@ -18,4 +18,11 @@ test('party colors stay stable across repeated lookups and distinguish party key
   assert.match(getStablePartyColor(''), /^hsl\(/);
   assert.equal(algorithmLabel('baderOffer'), 'שיטת בדר־עופר');
   assert.equal(algorithmLabel('ceilRound'), 'עיגול כלפי מעלה');
+});
+
+
+test('percentages round to at most two decimal places and omit trailing zeros', () => {
+  for (const [value, expected] of [[83.709273, '83.71'], [47.309833, '47.31'], [35.194942, '35.19'], [3.25, '3.25'], [2.5, '2.5'], [40, '40'], [0, '0'], [100, '100'], [99.999, '100']] as const) {
+    assert.equal(percentageFormat.format(value), expected);
+  }
 });
