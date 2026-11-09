@@ -44,7 +44,7 @@ test('closest races rank by proportional margin or vote count, retain ties and s
   const before = structuredClone(places);
   let rows = execute(q('closest'), context, places).rows;
   assert.equal(rows.length, 4); assert.match(String(rows[0][0]), /מקום a — קלפי 1.1 \/ פיצול 0.*תיקו/);
-  assert.match(String(rows[2][0]), /מקום c.*2 קולות.*0.20%/);
+  assert.match(String(rows[2][0]), /מקום c.*2 קולות.*0.2%/);
   assert.match(prose('closest', places, { byVotes: true }), /מספר|קולות/);
   rows = execute(q('closest', { limit: 1, minimum: 1000 }), context, places).rows;
   assert.equal(rows.length, 1); assert.match(String(rows[0][0]), /מקום c/);
@@ -55,17 +55,17 @@ test('closest races rank by proportional margin or vote count, retain ties and s
 test('similarity uses all national and local lists and total variation distance', () => {
   const places = [place('same', { א: 60, ב: 30, ג: 10 }), place('different', { א: 100 }), place('other', { אחר: 100 })];
   const rows = execute(q('similarity'), context, places).rows;
-  assert.match(String(rows[0][0]), /מקום same.*100.00%/);
-  assert.match(String(rows[1][0]), /מקום different.*60.00%/);
-  assert.match(String(rows[2][0]), /מקום other.*0.00%/);
+  assert.match(String(rows[0][0]), /מקום same.*100%/);
+  assert.match(String(rows[1][0]), /מקום different.*60%/);
+  assert.match(String(rows[2][0]), /מקום other.*0%/);
   const ties = execute(q('similarity'), context, [place('b', { א: 100 }), place('a', { א: 100 })]).rows;
   assert.match(String(ties[0][0]), /מקום a/);
 });
 
 test('turnout uses all voters including invalid ballots and excludes missing or contradictory metadata', () => {
   const places = [place('b', { א: 100 }, { eligibleVoters: 200, voters: 120 }), place('a', { א: 100 }, { eligibleVoters: 200, voters: 120 }), place('high', { א: 150 }, { eligibleVoters: 200, voters: 190 }), place('missing', { א: 100 }), ...[NaN, 0, -1, 1.5, Infinity].map((eligibleVoters, index) => place(`bad${index}`, { א: 100 }, { eligibleVoters, voters: 100 })), place('over', { א: 100 }, { eligibleVoters: 100, voters: 101 }), place('under', { א: 100 }, { eligibleVoters: 200, voters: 90 })];
-  assert.match(String(execute(q('turnout-high'), context, places).rows[0][0]), /high.*95.00%.*190.*200/);
-  assert.match(String(execute(q('turnout-low'), context, places).rows[0][0]), /מקום a.*60.00%/);
+  assert.match(String(execute(q('turnout-high'), context, places).rows[0][0]), /high.*95%.*190.*200/);
+  assert.match(String(execute(q('turnout-low'), context, places).rows[0][0]), /מקום a.*60%/);
   assert.equal(execute(q('turnout-low'), context, places).rows.length, 3);
   assert.throws(() => execute(q('turnout-high'), context, [places[3]]), /בעלי זכות/);
   assert.equal(execute(q('turnout-high'), context, []).rows.length, 0);
@@ -86,7 +86,7 @@ test('turnout CSV metadata aggregates rows, accepts historical headers and prese
 });
 
 test('winner questions distinguish locality names and station numbers, show ties and uncontested places, and reject ambiguity', () => {
-  assert.match(prose('winner', [place('1', { א: 60, ב: 40 })], { place: 'מקום 1' }), /הליכוד.*60.*60.00%.*20 קולות/);
+  assert.match(prose('winner', [place('1', { א: 60, ב: 40 })], { place: 'מקום 1' }), /הליכוד.*60.*60%.*20 קולות/);
   assert.match(prose('winner', [place('1', { א: 50, ב: 50 }, { pollingStation: '1' })], { place: 'מקום 1', station: '01' }), /בתיקו.*אפס|בתיקו.*0 קולות/);
   assert.match(prose('winner', [place('1', { א: 100 }, { pollingStation: '1', split: 1 })], { place: 'מקום 1', station: '1' }), /פיצול 1.*100 קולות/);
   assert.match(prose('winner', [place('1', { א: 100 })], { place: 'מקום 1' }, { ...context, names: {} }), /א במקום הראשון/);
@@ -98,7 +98,7 @@ test('winner questions distinguish locality names and station numbers, show ties
 });
 
 test('national questions count only below-threshold valid votes and local support without a minimum filter', () => {
-  assert.match(prose('wasted'), /100 קולות.*10.00%/);
+  assert.match(prose('wasted'), /100 קולות.*10%/);
   assert.match(prose('wasted', undefined, {}, { ...context, config: { ...context.config, blockPercentage: 0.1 } }), /0 קולות/);
   const places = [place('1', { א: 1 }), place('2', { ב: 10 }), place('3', { א: 100 })];
   assert.match(prose('coverage', places, { party: 'א' }), /2 מתוך 3/);
@@ -133,8 +133,8 @@ test('previous-election comparisons use exact names and stable locality identity
   const places = [place('a', { א: 70, ב: 30 }), place('b', { א: 30, ב: 70 }), place('c', { א: 80, ב: 20 }), place('renamed', { א: 100 }), place('small', { א: 100 }), place('zero', { א: 100 }), place('same', { א: 100 }), place('missing-party', { ב: 100 }), place('absent', { א: 100 }), place('tie', { א: 70, ב: 30 }), place('fall', { א: 20, ב: 80 })];
   const previous = { id: '25', names: { ז: 'הליכוד' }, places: [place('a', { ז: 50, ב: 50 }), place('b', { ז: 50, ב: 50 }), place('c', { ז: 60, ב: 140 }), place('renamed', { ז: 10, ב: 90 }, { name: 'שם אחר' }), place('small', { ז: 1 }), place('zero', {}), place('same', { ז: 100 }), place('missing-party', { ב: 100 }), place('tie', { ז: 50, ב: 50 }), place('fall', { ז: 50, ב: 50 })] };
   const ctx = { ...context, previous }; const before = structuredClone(ctx);
-  assert.match(String(execute(q('strengthened', { party: 'א' }), ctx, places).rows[0][0]), /מקום c.*50.00 נקודות אחוז/);
-  assert.match(prose('weakened', places, { party: 'א' }, ctx), /מקום b.*20.00 נקודות אחוז/);
+  assert.match(String(execute(q('strengthened', { party: 'א' }), ctx, places).rows[0][0]), /מקום c.*50 נקודות אחוז/);
+  assert.match(prose('weakened', places, { party: 'א' }, ctx), /מקום b.*20 נקודות אחוז/);
   assert.match(String(execute(q('strengthened', { party: 'א', byVotes: true }), ctx, places).rows[0][0]), /מקום a.*20 קולות/);
   assert.match(prose('weakened', places, { party: 'א', byVotes: true }, ctx), /20 קולות/);
   assert.match(execute(q('strengthened', { party: 'א' }), ctx, places).note, /25/);

@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { numberFormat } from '../lib/ui-helpers';
+import { numberFormat, percentageFormat } from '../lib/ui-helpers';
 import { buildCalcSteps, type CalcSteps, type AgreementSplit } from '../lib/calcSteps';
 import type { VoteData } from '../types';
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
-const pctFmt = new Intl.NumberFormat('he-IL', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 3,
-});
+const pctFmt = percentageFormat;
 const ratioFmt = new Intl.NumberFormat('he-IL', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 1,

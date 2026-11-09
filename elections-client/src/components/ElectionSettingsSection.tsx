@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { algorithmLabel, numberFormat } from '../lib/ui-helpers';
+import { algorithmLabel, numberFormat, percentageFormat } from '../lib/ui-helpers';
 import type { ElectionConfig } from '../types';
 
 interface ElectionSettingsSectionProps {
@@ -49,7 +49,7 @@ const ElectionSettingsSection: React.FC<ElectionSettingsSectionProps> = ({
             <span className="block-percentage-suffix">%</span>
           </div>
         ) : (
-          <strong>{(activeConfig.blockPercentage * 100).toFixed(2)}%</strong>
+          <strong>{percentageFormat.format(activeConfig.blockPercentage * 100)}%</strong>
         )}
         {blockThreshold !== null && (
           <span><bdi>{numberFormat.format(blockThreshold)}</bdi> קולות</span>

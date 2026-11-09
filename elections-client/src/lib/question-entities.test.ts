@@ -13,6 +13,23 @@ const places: QuestionPlaces = { localities: [{ id: '1', name: 'ירושלים',
     { id: '["1","2",null]', name: 'ירושלים', pollingStation: '2', validVotes: 100, votes: { מחל: 60, שס: 40 } },
     { id: '["2","7",null]', name: 'תל אביב-יפו', pollingStation: '7', validVotes: 200, votes: { מחל: 150, שס: 50 } }] };
 
+test('the word עם stays plain text while the Raam list name remains editable', () => {
+  const raamContext = { ...context, votes: { ...context.votes, עם: { votes: 1000, mandats: 4 } }, names: { ...context.names, עם: 'רע"ם' } };
+  const input = 'באילו 5 יישובים היה הכי צמוד עם לפחות 1000 קולות כשרים?';
+  const entities = questionEntities(input, raamContext);
+  assert.deepEqual(entities.map(entity => entity.kind), ['number', 'number']);
+  assert.deepEqual(entities.map(entity => input.slice(entity.start, entity.end)), ['5', '1000']);
+  assert.equal(entities[1].numeric?.label, 'מינימום קולות');
+  assert.ok(!('error' in parseElectionQuestion(input, raamContext)));
+  for (const name of ['רעם', 'רע"ם', 'רע״ם']) {
+    const question = `כמה קולות קיבלה ${name}?`;
+    const party = questionEntities(question, raamContext).find(entity => entity.kind === 'party');
+    assert.equal(party?.id, 'עם', name);
+    assert.equal(question.slice(party!.start, party!.end), name);
+    assert.equal(replaceQuestionEntity(question, party!, 'מחל', raamContext), 'כמה קולות קיבלה הליכוד?');
+  }
+});
+
 test('locality names complete supported questions, including direct ב prefixes, and stations stay within the city', () => {
   const complete = createQuestionCompletions(context, places);
   for (const text of ['איזו רשימה קבלה הכי הרבה קולות ב', 'איזו רשימה קיבלה הכי הרבה קולות ביישוב ', 'מי ניצחה ביישוב ', 'כמה קולות קיבלה הליכוד ביישוב ', 'כמה קולות קיבלה מחל ב']) {

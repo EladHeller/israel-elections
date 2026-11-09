@@ -9,12 +9,8 @@ import { questionHref } from '../lib/question-link';
 import BetaBadge from './BetaBadge';
 import { useQuestionPlaces } from '../hooks/use-question-places';
 import { useElectionData } from '../hooks/use-election-data';
-import partyNamesAll from '../data/party-names.json';
-import { insightNeedsPlaces } from '../lib/question-insights';
-import { hasLocalityData, pollingStationSource } from '../lib/locality-availability';
-import { parseLocalities, parsePollingStations } from '../lib/party-research';
-import { executeElectionQuestion, parseElectionQuestion, type Answer, type AnswerLink, type QuestionQuery } from '../lib/election-questions';
-import type { PreviousElection } from '../lib/question-insights';
+import { parseElectionQuestion, type Answer, type AnswerLink, type QuestionQuery } from '../lib/election-questions';
+import { executeQuestionWithData } from '../lib/question-execution';
 import { recordQuestion, type QuestionOutcome } from '../lib/question-log';
 import { phaseHasResults } from '../lib/election-manifest';
 import { questionAnswerLinks } from '../lib/question-answer-links';
@@ -86,26 +82,15 @@ function QuestionScreen({ electionId, initialQuestion }: { electionId: string; i
       if ('error' in parsed) {
         outcome = 'unsupported'; setError(parsed.error); return;
       }
-      let places;
-      if (parsed.query.kind === 'rank' || parsed.query.kind === 'below-threshold-winners' || insightNeedsPlaces(parsed.query)) {
-        const source = ('level' in parsed.query && parsed.query.level === 'stations') ? pollingStationSource(electionId) : hasLocalityData(electionId) ? `/data/${electionId}/elections.csv` : null;
-        if (!source) throw new Error('אין נתוני מקומות לבחירות אלו. אפשר לשאול על התוצאות הארציות או לבחור מערכת אחרת.');
-        const response = await fetch(source, { cache: 'no-store', signal: controller.signal });
-        if (!response.ok) throw new Error('לא הצלחתי לטעון את נתוני המקומות. אפשר לנסות שוב.');
-        places = (('level' in parsed.query && parsed.query.level === 'stations') ? parsePollingStations : parseLocalities)(await response.text());
-      }
-      let previous: PreviousElection | undefined;
-      const comparison = (parsed.query.kind === 'comparison' || parsed.query.kind === 'comparison-scenario') && parsed.query.source
-        ? await loadComparisonElection(parsed.query.source, controller.signal) : undefined;
-      if (parsed.query.kind === 'insight' && ['strengthened', 'weakened'].includes(parsed.query.metric)) {
-        const id = String(Number(electionId) - 1);
-        if (!hasLocalityData(id)) throw new Error('אין נתוני יישובים למערכת הבחירות הקודמת.');
-        const response = await fetch(`/data/${id}/elections.csv`, { cache: 'no-store', signal: controller.signal });
-        if (!response.ok) throw new Error('לא הצלחתי לטעון את נתוני הבחירות הקודמות.');
-        previous = { id, names: (partyNamesAll as Record<string, Record<string, string>>)[id] ?? {}, places: parseLocalities(await response.text()) };
-      }
+      const answer = await executeQuestionWithData(parsed.query, context, {
+        text: async (source, failureMessage = 'לא הצלחתי לטעון את נתוני המקומות. אפשר לנסות שוב.') => {
+          const response = await fetch(source, { cache: 'no-store', signal: controller.signal });
+          if (!response.ok) throw new Error(failureMessage);
+          return response.text();
+        },
+        comparison: id => loadComparisonElection(id, controller.signal),
+      });
       if (controller.signal.aborted) return;
-      const answer = executeElectionQuestion(parsed.query, { ...context, previous, comparison }, places);
       outcome = answer.rows.length ? 'answered' : 'empty';
       let scenarioHref: string | undefined;
       let scenarioLinkFailed = false;

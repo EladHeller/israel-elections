@@ -39,6 +39,11 @@ Parameters:
       - production
       - develop
 
+  EnableQuestionAnswers:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+
   ScenarioApiDomain:
     Type: String
     Default: ""
@@ -95,6 +100,69 @@ Resources:
         Comment: Rewrite screen routes and return 404 for unknown pages
         Runtime: cloudfront-js-2.0
       FunctionCode: !Sub |
+        import cf from 'cloudfront';
+        function escapeHtml(value) {
+          return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function sharingCrawler(request) {
+          var headers = request.headers || {};
+          if (Object.keys(headers).some(function (name) { return name.indexOf('sec-fetch-') === 0; })) return false;
+          var agent = headers['user-agent'];
+          return !!agent && !agent.multiValue && /^(facebookexternalhit\/1\.1(?: \(\+https?:\/\/www\.facebook\.com\/externalhit_uatext\.php\))?|WhatsApp\/2\.[0-9]+\.[0-9]+(?:\.[0-9]+)?(?: [Ai])?|Twitterbot\/1\.0)$/.test(agent.value);
+        }
+        function electionPreview(request, electionId) {
+          if (!sharingCrawler(request)) return;
+          var host = (request.headers || {}).host;
+          if (!host || host.multiValue || !/^[a-z0-9.-]+$/.test(host.value)) return;
+          var origin = 'https://' + host.value;
+          var title = 'הכנסת ה־' + electionId;
+          var image = origin + '/social/elections-' + electionId + '-v2.png';
+          var body = '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>' + title + '</title>'
+            + '<meta property="og:type" content="website"><meta property="og:title" content="' + title + '"><meta property="og:description" content="תוצאות הבחירות, גושים וסימולטור מנדטים.">'
+            + '<meta property="og:image" content="' + image + '"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+            + '<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="' + title + '"><meta name="twitter:image" content="' + image + '"></head><body><h1>' + title + '</h1></body></html>';
+          return { statusCode: 200, headers: { 'content-type': { value: 'text/html; charset=utf-8' }, 'cache-control': { value: 'no-store' } }, body: request.method === 'HEAD' ? '' : body };
+        }
+        function questionPreview(request, electionId) {
+          if (!sharingCrawler(request)) return;
+          var headers = request.headers || {};
+          var parameter = (request.querystring || {}).q;
+          var host = headers.host;
+          if (!parameter || parameter.multiValue || !host || host.multiValue || !/^[a-z0-9.-]+$/.test(host.value)) return;
+          if (!parameter.value || parameter.value.length > 4096) return;
+          var question;
+          try { question = decodeURIComponent(parameter.value.replace(/\+/g, ' ')); } catch (_) { return; }
+          if (!question || question.length > 600 || /[\u0000-\u001f\u007f]/.test(question)) return;
+          question = question.trim();
+          if (!question) return;
+          if ('${EnableQuestionAnswers}' === 'true' && '${ScenarioApiDomain}') {
+            cf.selectRequestOriginById('scenario-api');
+            request.uri = '/api/question-preview/v1/' + electionId;
+            request.querystring = { q: { value: encodeURIComponent(question) } };
+            request.cookies = {};
+            return request;
+          }
+          var title = escapeHtml(question);
+          var description = 'בחירות לכנסת ה־' + electionId + ' — פתחו את השאלה ובדקו את התוצאות או את התרחיש.';
+          var origin = 'https://' + host.value;
+          var url = escapeHtml(origin + request.uri + '?q=' + encodeURIComponent(question));
+          var image = origin + '/social/question-' + electionId + '-v2.png';
+          var body = '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + title + '</title>'
+            + '<meta name="description" content="' + description + '"><meta property="og:type" content="website"><meta property="og:locale" content="he_IL"><meta property="og:site_name" content="בחירות לכנסת">'
+            + '<meta property="og:title" content="' + title + '"><meta property="og:description" content="' + description + '"><meta property="og:url" content="' + url + '">'
+            + '<meta property="og:image" content="' + image + '"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+            + '<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="' + title + '"><meta name="twitter:description" content="' + description + '"><meta name="twitter:image" content="' + image + '">'
+            + '</head><body><h1>' + title + '</h1><p>' + description + '</p><a href="' + url + '">פתיחת השאלה באתר הבחירות</a></body></html>';
+          return {
+            statusCode: 200,
+            headers: {
+              'content-type': { value: 'text/html; charset=utf-8' },
+              'cache-control': { value: 'no-store' },
+              'x-content-type-options': { value: 'nosniff' }
+            },
+            body: request.method === 'HEAD' ? '' : body
+          };
+        }
         function handler(event) {
           var request = event.request;
           var uri = request.uri;
@@ -102,6 +170,13 @@ Resources:
           if ((request.method !== 'GET' && request.method !== 'HEAD') || isResource) return request;
           var election = /^\/(results|simulator|research|localities|questions)\/([1-9][0-9]*)\/?$/.exec(uri);
           if (uri === '/' || /^\/questions\/?$/.test(uri) || /^\/summary\/?$/.test(uri) || (election && Number(election[2]) <= ${LatestElectionId})) {
+            if (/^\/questions(?:\/|$)/.test(uri)) {
+              var preview = questionPreview(request, election ? election[2] : '${LatestElectionId}');
+              if (preview) return preview;
+            } else if (uri !== '/summary' && uri !== '/summary/') {
+              var general = electionPreview(request, election ? election[2] : '${LatestElectionId}');
+              if (general) return general;
+            }
             request.uri = '/index.html';
           } else {
             return {
@@ -123,6 +198,26 @@ Resources:
         Enabled: true
         Aliases: !If [ IsProd, [ !Sub '${SubDomain}.${DomainName}' ], !Ref "AWS::NoValue" ]
         CacheBehaviors:
+          - !If
+            - HasScenarioApi
+            - PathPattern: /api/question-preview/*
+              TargetOriginId: scenario-api
+              ViewerProtocolPolicy: redirect-to-https
+              Compress: true
+              AllowedMethods:
+                - GET
+                - HEAD
+              CachedMethods:
+                - GET
+                - HEAD
+              MinTTL: 0
+              DefaultTTL: 0
+              MaxTTL: 31536000
+              ForwardedValues:
+                QueryString: true
+                Cookies:
+                  Forward: none
+            - !Ref "AWS::NoValue"
           - !If
             - HasScenarioApi
             - PathPattern: /api/*

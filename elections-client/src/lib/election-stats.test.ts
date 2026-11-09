@@ -22,7 +22,7 @@ test('counting turnout shows at least the sum of valid and invalid votes', () =>
   assert.match(render({ totalVotes: undefined }), /<bdi>5,716,673<\/bdi> מצביעים/);
   assert.match(render({ invalidVotes: undefined }), /<bdi>5,695,682<\/bdi> מצביעים/);
   assert.match(render({ totalVotes: undefined, invalidVotes: undefined }), /<bdi>5,690,685<\/bdi> מצביעים/);
-  assert.match(render(), /77\.70%/);
+  assert.match(render(), /77\.7%/);
   assert.match(render(), /0\.45%/);
 });
 

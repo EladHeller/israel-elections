@@ -34,16 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Cache node modules
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-node-modules-v1
-        with:
-          path: ~/.npm
-          key: deploy-cache-node-modules-v1-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-
-      - name: Install dependencies
-        run: npm ci
+      - name: Set up dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -57,6 +49,8 @@ jobs:
         run: bash scripts/teardown-ec2-crawler.sh
 
       - name: Build and Deploy
+        env:
+          CLIENT_DEPENDENCIES_INSTALLED: 'true'
         run: |
           export NODE_ENV=${{ needs.env_detect.outputs.env_name }}
           export REGION=${{ secrets.AWS_REGION }}

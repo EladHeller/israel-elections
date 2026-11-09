@@ -60,7 +60,8 @@ export function questionEntities(input: string, context: QuestionContext, places
     const resolved = resolveParties(normalizeQuestion(name), context);
     return { id, name, text: !resolved.ambiguous && resolved.text === '@0' && resolved.parties[0] === id ? name : id };
   });
-  const reserved = new Set(['מה', 'אם', 'לא', 'כל', 'את', 'של', 'בין', 'בלי', 'ללא', 'היה', 'היו', 'קולות', 'אחוז', 'החסימה']);
+  // Common syntax words can also be ballot letters (e.g. עם for רע״ם).
+  const reserved = new Set(['מה', 'אם', 'עם', 'לא', 'כל', 'את', 'של', 'בין', 'בלי', 'ללא', 'היה', 'היו', 'קולות', 'אחוז', 'החסימה']);
   const candidates = parties.flatMap(option => [option.text, option.id, ...(option.name.startsWith('ה') ? [option.name.slice(1)] : [])]
     .map(normalizeQuestion).filter(name => name && !reserved.has(name)).map(name => ({ name, option })))
     .sort((a, b) => b.name.length - a.name.length);

@@ -1,3 +1,4 @@
+import { percentageFormat } from '../lib/ui-helpers';
 import React from 'react';
 import { numberFormat } from '../lib/ui-helpers';
 
@@ -31,7 +32,7 @@ const VoteDistributionSection: React.FC<VoteDistributionSectionProps> = ({
       <div
         className="vote-distribution-bar"
         role="img"
-        aria-label={`${participatingPercent.toFixed(2)}% משתתפים בחלוקת המנדטים, ${nonParticipatingPercent.toFixed(2)}% מתחת לאחוז החסימה`}
+        aria-label={`${percentageFormat.format(participatingPercent)}% משתתפים בחלוקת המנדטים, ${percentageFormat.format(nonParticipatingPercent)}% מתחת לאחוז החסימה`}
       >
         <span className="participating-votes-fill" style={{ width: `${participatingPercent}%` }} />
         <span className="non-participating-votes-fill" style={{ width: `${nonParticipatingPercent}%` }} />
@@ -41,7 +42,7 @@ const VoteDistributionSection: React.FC<VoteDistributionSectionProps> = ({
           <dt className="non-participating-label">מתחת לאחוז החסימה</dt>
           <dd>
             <bdi>{numberFormat.format(nonParticipatingVotes)}</bdi>
-            <span className="summary-caption"> ({nonParticipatingPercent.toFixed(2)}%)</span>
+            <span className="summary-caption"> ({percentageFormat.format(nonParticipatingPercent)}%)</span>
           </dd>
         </div>
         {isEdited && (
