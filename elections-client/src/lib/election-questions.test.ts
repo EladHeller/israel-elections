@@ -38,10 +38,10 @@ test('below-threshold local winners distinguish strict majorities from first pla
   const majority = query('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה רוב הקולות');
   const plurality = query('באילו קלפיות רשימה שלא עברה את אחוז החסימה קיבלה הכי הרבה קולות');
   const before = structuredClone(places);
-  assert.deepEqual(execute(majority, context, places).rows, [['רוב — קלפי 3 / פיצול 0', 'עמך ישראל', 60, '60.00%', 'מקום ראשון']]);
+  assert.deepEqual(execute(majority, context, places).rows, [['רוב — קלפי 3 / פיצול 0', 'עמך ישראל', 60, '60%', 'מקום ראשון']]);
   const rows = execute(plurality, context, places).rows;
   assert.equal(rows.length, 4);
-  assert.deepEqual(rows.find(row => row[0] === 'תיקו'), ['תיקו', 'עמך ישראל', 45, '45.00%', 'תיקו במקום הראשון']);
+  assert.deepEqual(rows.find(row => row[0] === 'תיקו'), ['תיקו', 'עמך ישראל', 45, '45%', 'תיקו במקום הראשון']);
   assert.ok(rows.some(row => row[0] === 'מוביל — קלפי 2'));
   assert.equal(execute(plurality, { ...context, config: { ...context.config, blockPercentage: 0.19 } }, places).rows.length, 0);
   assert.equal(execute(majority, context, []).rows.length, 0);
@@ -240,7 +240,7 @@ test('scenario grammar composes threshold, agreements and one conservative vote 
 
 test('answers reuse seat allocation, rank by votes versus share, preserve polling split and guard missing data', () => {
   const results = execute(query('השווה בין הליכוד לעמך ישראל'), context);
-  assert.deepEqual(results.rows.map(row => row.slice(0, 3)), [['הליכוד', 500, '50.00%'], ['עמך ישראל', 190, '19.00%']]);
+  assert.deepEqual(results.rows.map(row => row.slice(0, 3)), [['הליכוד', 500, '50%'], ['עמך ישראל', 190, '19%']]);
   const places: LocalityVotes[] = [ { id: '1', name: 'גדול', validVotes: 1000, votes: { מחל: 100 } }, { id: '2', name: 'קטן', validVotes: 10, votes: { מחל: 9 }, pollingStation: '2', split: 1 }, { id: '3', name: 'ריק', validVotes: 10, votes: {} }, { id: '4', name: 'אחר', validVotes: 10, votes: { מחל: 8 }, pollingStation: '1' } ];
   const q = query('באיזה יישוב הליכוד קיבלה הכי הרבה קולות');
   assert.equal(execute(q, context, places).rows[0][0], 'גדול');
@@ -312,7 +312,7 @@ test('unanswered production and develop questions and related Hebrew phrasings g
     const { q, answer } = answered(wording);
     assert.deepEqual(q, { kind: 'rank', party: 'מחל', level: 'stations', order: 'percentage', limit: 1 });
     assert.match(String(answer.rows[0][0]), /ירושלים.*קלפי 1/);
-    assert.equal(answer.rows[0][2], '60.00%');
+    assert.equal(answer.rows[0][2], '60%');
   }
   for (const subject of ['איזו מפלגה', 'איזו רשימה', 'איזה מפלגה']) for (const verb of ['קבלה', 'קיבלה', 'קיבל']) {
     const { q, answer } = answered(`${subject} ${verb} הכי הרבה קולות בירושלים`);
@@ -332,4 +332,17 @@ test('unanswered production and develop questions and related Hebrew phrasings g
   for (const text of ['באיזה עיר קיבל הליכוד הכי הרבה קולות וגם שס', 'באיזו קלפי קיבל הליכוד אחוז הכי גבוה מהקולות בחיפה', 'עוד כמה קולות ש״ס הייתה מקבלת מנדט נוסף וגם הליכוד', 'בכמה אחוזים עלתה הליכוד מהבחירות הקודמות וגם שס']) rejected(text, ctx);
   const ambiguous = { ...ctx, names: { ...ctx.names, יז: 'הכלכלית החדשה' }, votes: { ...ctx.votes, יז: { votes: 1, mandats: 0 } } };
   rejected('כמה קולות היו חסרים לכלכלית לעבור את אחוז החסימה', ambiguous);
+});
+
+
+test('local winner percentages round to at most two decimals without changing vote counts or ranking', () => {
+  const places: LocalityVotes[] = [
+    { id: '1', name: 'נוה', validVotes: 399, votes: { ך: 334, מחל: 65 } },
+    { id: '2', name: 'מצפה', validVotes: 539, votes: { ך: 255, מחל: 200, ט: 84 } },
+    { id: '3', name: 'שלם', validVotes: 100, votes: { ך: 40, מחל: 35, ט: 25 } },
+  ];
+  const answer = execute({ kind: 'below-threshold-winners', level: 'localities', measure: 'plurality' }, context, places);
+  assert.deepEqual(answer.rows.map(row => [row[0], row[2], row[3]]), [
+    ['נוה', 334, '83.71%'], ['מצפה', 255, '47.31%'], ['שלם', 40, '40%'],
+  ]);
 });

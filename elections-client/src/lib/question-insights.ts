@@ -1,3 +1,4 @@
+import { percentageFormat } from './ui-helpers';
 import { localityHref } from './locality-results';
 import type { Answer, QuestionContext, QuestionParse, QuestionQuery } from './election-questions';
 import { normalizeQuestion } from './election-questions';
@@ -11,7 +12,7 @@ export interface PreviousElection { id: string; names: PartyNames; places: Local
 const units = '(יישובים|ישובים|קלפיות|יישוב|ישוב|קלפי)';
 const isStation = (text: string) => /קלפי/.test(text);
 const placeLabel = (place: LocalityVotes) => `${place.name}${place.pollingStation ? ` — קלפי ${place.pollingStation}${place.split !== undefined ? ` / פיצול ${place.split}` : ''}` : ''}`;
-const pct = (value: number) => `${value.toFixed(2)}%`;
+const pct = (value: number) => `${percentageFormat.format(value)}%`;
 const count = (value: number) => value.toLocaleString('he-IL');
 
 export function parseInsight(text: string, parties: string[]): QuestionParse | null {
@@ -152,7 +153,7 @@ export function executeInsight(query: InsightQuery, context: QuestionContext, pl
       const delta = query.byVotes ? after - before : 100 * (after / place.validVotes - before / old.validVotes);
       return (query.metric === 'strengthened' ? delta > 0 : delta < 0) ? [{ place, delta }] : [];
     }).sort((a, b) => (query.metric === 'strengthened' ? b.delta - a.delta : a.delta - b.delta) || a.place.id.localeCompare(b.place.id)).slice(0, query.limit);
-    return answer(changes.map(({ place, delta }) => `${placeLabel(place)}: ${label(query.party!)} ${delta > 0 ? 'עלתה' : 'ירדה'} ב־${query.byVotes ? count(Math.abs(delta)) + ' קולות' : Math.abs(delta).toFixed(2) + ' נקודות אחוז'}.`), `השוואה לבחירות ${previous.id}, לפי שם רשימה זהה וסמל יישוב ושם זהים בלבד. שינוי בהרכב רשימה או בגבולות היישוב אינו מזוהה; לא כל היישובים בהכרח נכללים.`, changes.map(row => row.place));
+    return answer(changes.map(({ place, delta }) => `${placeLabel(place)}: ${label(query.party!)} ${delta > 0 ? 'עלתה' : 'ירדה'} ב־${query.byVotes ? count(Math.abs(delta)) + ' קולות' : percentageFormat.format(Math.abs(delta)) + ' נקודות אחוז'}.`), `השוואה לבחירות ${previous.id}, לפי שם רשימה זהה וסמל יישוב ושם זהים בלבד. שינוי בהרכב רשימה או בגבולות היישוב אינו מזוהה; לא כל היישובים בהכרח נכללים.`, changes.map(row => row.place));
   }
   if (query.metric === 'turnout-high' || query.metric === 'turnout-low') {
     const valid = eligible.filter(place => Number.isSafeInteger(place.eligibleVoters) && place.eligibleVoters! > 0 && Number.isSafeInteger(place.voters) && place.voters! >= place.validVotes && place.voters! <= place.eligibleVoters!);

@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 import { sortSummaryRows, type SummaryRow, type SummarySortKey } from '../lib/all-elections-sort';
 import electionsConfigAll from '../data/elections-config.json';
 import electionsValid from '../data/elections-valid.json';
-import { numberFormat } from '../lib/ui-helpers';
+import { numberFormat, percentageFormat } from '../lib/ui-helpers';
 
-const percentFormat = new Intl.NumberFormat('he-IL', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+const percentFormat = percentageFormat;
 
 const formatPercent = (value: number | null): string =>
   Number.isFinite(value) ? `${percentFormat.format(value as number)}%` : '—';

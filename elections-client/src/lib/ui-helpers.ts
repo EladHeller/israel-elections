@@ -1,3 +1,5 @@
+export const percentageFormat = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 2 });
+
 export const numberFormat = new Intl.NumberFormat('he-IL');
 
 const PARTY_COLORS_CACHE: Record<string, string> = {};

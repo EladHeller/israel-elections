@@ -138,12 +138,12 @@ test('statistics use counted ballots for invalid percentages and preserve histor
     validVotes: 49, isSimulator: false, ...props,
   }));
   const partial = renderStats({ isCounting: true, countedVotes: 50, totalVotes: 1000, invalidVotes: 1 });
-  assert.match(partial, /2.00%/);
+  assert.match(partial, /2%/);
   assert.match(partial, /1,000<\/bdi> מצביעים/);
   assert.doesNotMatch(partial, /אומדן|אמדן/);
   assert.match(partial, /קולות פסולים שנספרו/);
-  assert.doesNotMatch(renderStats({ isCounting: true, totalVotes: 1000 }), /95.10%/);
-  assert.match(renderStats({ totalVotes: 50, invalidVotes: 1, turnoutPercentage: 65 }), /65.00%/);
+  assert.doesNotMatch(renderStats({ isCounting: true, totalVotes: 1000 }), /95.1%/);
+  assert.match(renderStats({ totalVotes: 50, invalidVotes: 1, turnoutPercentage: 65 }), /65%/);
   assert.match(renderStats({ totalVotes: 50, invalidVotes: 1, isDemo: true }), /הצבעה בדמו/);
   assert.match(renderStats({ isSimulator: true }), /הצבעה בפועל/);
 });

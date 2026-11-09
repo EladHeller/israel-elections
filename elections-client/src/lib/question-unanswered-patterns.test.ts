@@ -72,9 +72,9 @@ test('local votes use the named locality or station, report zero, and reject mis
   ];
   const q = query('כמה קולות קיבלה רע"ם בנתניה?');
   assert.ok(insightNeedsPlaces(q));
-  assert.match(String(executeElectionQuestion(q, context, places).rows[0][0]), /רע"ם קיבלה 7 קולות.*7.00%/);
-  assert.match(String(executeElectionQuestion(query('כמה קולות קבלה הליכוד בתל אביב'), context, places).rows[0][0]), /80 קולות.*40.00%/);
-  assert.match(String(executeElectionQuestion(query('כמה קולות קיבלה רע"ם בתל אביב'), context, places).rows[0][0]), /0 קולות.*0.00%/);
+  assert.match(String(executeElectionQuestion(q, context, places).rows[0][0]), /רע"ם קיבלה 7 קולות.*7%/);
+  assert.match(String(executeElectionQuestion(query('כמה קולות קבלה הליכוד בתל אביב'), context, places).rows[0][0]), /80 קולות.*40%/);
+  assert.match(String(executeElectionQuestion(query('כמה קולות קיבלה רע"ם בתל אביב'), context, places).rows[0][0]), /0 קולות.*0%/);
   const fullCityName = [{ ...places[1], name: 'תל אביב - יפו' }];
   assert.match(String(executeElectionQuestion(query('כמה קולות קבלה הליכוד בתל אביב'), context, fullCityName).rows[0][0]), /תל אביב - יפו.*80 קולות/);
   assert.throws(() => executeElectionQuestion(query('כמה קולות קבלה הליכוד בתל אביב'), context, [...fullCityName, fullCityName[0]]), /חד משמעי/);
@@ -111,7 +111,7 @@ test('eligible-voter ranking differs from turnout, includes places without valid
   ];
   assert.match(String(executeElectionQuestion(q, context, places).rows[0][0]), /גדולה.*2,000 בעלי זכות/);
   const turnout = query('באיזה קלפי שיעור ההצבעה היה הכי גבוה');
-  assert.match(String(executeElectionQuestion(turnout, context, places).rows[0][0]), /מצביעה.*90.00%/);
+  assert.match(String(executeElectionQuestion(turnout, context, places).rows[0][0]), /מצביעה.*90%/);
   const plural = query('באילו קלפיות יש הכי הרבה בעלי זכות בחירה');
   assert.equal(executeElectionQuestion(plural, context, places).rows.length, 2);
   const locality = query('באיזה יישוב יש הכי הרבה בעלי זכות הצבעה');
