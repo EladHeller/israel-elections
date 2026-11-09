@@ -1,0 +1,39 @@
+name: Install dependencies
+description: Restore installed root and client dependencies, installing only on an exact cache miss.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: '24'
+        package-manager-cache: false
+
+    - name: Identify dependency runtime
+      id: runtime
+      shell: bash
+      run: |
+        echo "node=$(node --version)" >> "$GITHUB_OUTPUT"
+        echo "npm=$(npm --version)" >> "$GITHUB_OUTPUT"
+        source /etc/os-release
+        echo "os=$ID-$VERSION_ID" >> "$GITHUB_OUTPUT"
+
+    # Installed modules must match both manifests and lockfiles exactly.
+    # Do not add restore-keys: a partial match must run npm ci again.
+    - name: Cache installed dependencies
+      id: dependencies
+      uses: actions/cache@v6
+      with:
+        path: |
+          node_modules
+          elections-client/node_modules
+        key: node-modules-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.runtime.outputs.os }}-${{ steps.runtime.outputs.node }}-npm${{ steps.runtime.outputs.npm }}-${{ hashFiles('package.json', 'package-lock.json', 'elections-client/package.json', 'elections-client/package-lock.json') }}
+
+    - name: Install root dependencies
+      if: steps.dependencies.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci
+
+    - name: Install client dependencies
+      if: steps.dependencies.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci --prefix elections-client
