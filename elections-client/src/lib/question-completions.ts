@@ -95,18 +95,58 @@ export function createQuestionCompletions(context: QuestionContext, places: Ques
     add(branch.prefix, branch.prefix ? 'איך ממשיכים את השאלה?' : 'איך מתחילה השאלה?', branch.children);
   }
 
-  const prepared = branches.map(branch => ({ ...branch, base: normalizeQuestion(branch.prefix),
+  const prepare = (items: Branch[]) => items.map(branch => ({ ...branch, base: normalizeQuestion(branch.prefix),
     children: branch.children.map(option => ({ ...option, normalized: normalizeQuestion(option.value) }))
   })).sort((a, b) => b.prefix.length - a.prefix.length);
+  const prepared = prepare(branches);
   const fallback = prepared.find(branch => branch.prefix === '')!;
+  const lookup = (text: string, choices = prepared) => {
+    const normalized = normalizeQuestion(text);
+    const branch = choices.find(({ base, prefix }) => normalized === base || normalized.startsWith(`${base} `)
+      || (prefix.endsWith(' ל') && normalized.startsWith(base)));
+    const selected = branch ?? (choices === prepared ? fallback : undefined);
+    return { label: selected?.label ?? '', options: (selected?.children ?? [])
+      .filter(option => option.normalized !== normalized && option.normalized.startsWith(normalized)) };
+  };
+  const chainable = (text: string) => {
+    const parsed = parseElectionQuestion(text, context);
+    return !('error' in parsed) && (parsed.query.kind === 'scenario'
+      || parsed.query.kind === 'comparison-scenario' && parsed.query.mode === 'zero' && parsed.query.target.type === 'list');
+  };
+  // Reuse supported single-condition choices, then let the parser reject conflicts with the existing scenario.
+  const atoms = [...new Set([...catalog, ...branches.flatMap(branch => branch.children.map(option => option.value))].map(normalizeQuestion))].filter(text => text.startsWith(`${scenario} `)
+    && !text.includes(' וגם ') && chainable(text));
+  const validAddition = (prefix: string, text: string) => {
+    const combined = `${prefix} ${text.slice(scenario.length).trimStart()}`;
+    const parsed = parseElectionQuestion(combined, context);
+    return !('error' in parsed) && parsed.query.kind === 'scenario';
+  };
+  let cachedPrefix = '';
+  let continuations: ReturnType<typeof prepare> = [];
+  const afterConjunction = (prefix: string, tail: string) => {
+    if (prefix !== cachedPrefix) {
+      cachedPrefix = prefix;
+      const valid = atoms.filter(text => validAddition(prefix, text));
+      continuations = prepare(completionCatalog(valid, parties.map(token)).map(branch => ({ ...branch, label: 'בחרו תנאי נוסף' })));
+    }
+    return lookup(`${scenario} ${tail}`.trim(), continuations).options.map(option => ({ ...option,
+      value: `${prefix} ${option.value.slice(scenario.length).trimStart()}` }));
+  };
   return (input: string): { label: string; options: QuestionCompletion[] } => {
+    if (input.length > 600) return { label: '', options: [] };
     const geographic = placeCompletions(input, context, places);
     if (geographic) return geographic;
-    const normalized = normalizeQuestion(input);
-    const branch = prepared.find(({ base, prefix }) => normalized === base || normalized.startsWith(`${base} `)
-      || (prefix.endsWith(' ל') && normalized.startsWith(base))) ?? fallback;
-    const options = branch.children.filter(option => option.normalized !== normalized && option.normalized.startsWith(normalized));
-    return { label: branch.label, options };
+    const clean = input.trim().replace(/[?？!]+$/, '').trimEnd();
+    const conjunction = [...clean.matchAll(/\s+וגם(?:\s+|$)/g)].at(-1);
+    const suggestions = conjunction
+      ? { label: 'בחרו תנאי נוסף', options: afterConjunction(clean.slice(0, conjunction.index! + conjunction[0].length).trimEnd(),
+        clean.slice(conjunction.index! + conjunction[0].length)) }
+      : lookup(input);
+    const options: QuestionCompletion[] = suggestions.options.filter(option => option.value.length <= 600);
+    if (chainable(clean) && atoms.some(text => validAddition(`${clean} וגם`, text)) && `${clean} וגם `.length <= 600) {
+      options.push({ label: 'וגם', value: `${clean} וגם `, detail: 'הוספת תנאי לתרחיש' });
+    }
+    return { label: suggestions.label, options };
   };
 
 }
