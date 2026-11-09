@@ -326,6 +326,20 @@ Resources:
       RouteKey: "HEAD /api/question-preview/v1/{election}"
       Target: !Join [/, [integrations, !Ref QuestionPreviewIntegration]]
 
+  QuestionPreviewImageGetRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "GET /api/question-preview/v1/{election}/image"
+      Target: !Join [/, [integrations, !Ref QuestionPreviewIntegration]]
+
+  QuestionPreviewImageHeadRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ScenarioApi
+      RouteKey: "HEAD /api/question-preview/v1/{election}/image"
+      Target: !Join [/, [integrations, !Ref QuestionPreviewIntegration]]
+
   QuestionPreviewPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -374,6 +388,8 @@ Resources:
       - QuestionLogRoute
       - QuestionPreviewGetRoute
       - QuestionPreviewHeadRoute
+      - QuestionPreviewImageGetRoute
+      - QuestionPreviewImageHeadRoute
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId: !Ref ScenarioApi

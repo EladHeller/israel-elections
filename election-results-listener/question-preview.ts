@@ -1,3 +1,4 @@
+import { answerImagePng } from '../preview-runtime/answer-image';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { parseElectionQuestion, type QuestionContext } from '../elections-client/src/lib/election-questions';
 import { executeQuestionWithData } from '../elections-client/src/lib/question-execution';
@@ -20,7 +21,7 @@ export function previewHtml(siteUrl: string, election: string, question: string,
   const title = escapeHtml(question);
   const description = escapeHtml(sentences.join(' ').slice(0, 300) + (sentences.join(' ').length > 300 ? '…' : ''));
   const url = escapeHtml(`${siteUrl}/questions/${election}?${new URLSearchParams({ q: question })}`);
-  const image = `${siteUrl}/social/question-${election}-v2.png`;
+  const image = escapeHtml(`${siteUrl}/api/question-preview/v1/${election}/image?${new URLSearchParams({ q: question })}`);
   return '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
     + `<title>${title}</title><meta name="description" content="${description}"><meta property="og:type" content="website"><meta property="og:locale" content="he_IL"><meta property="og:site_name" content="בחירות לכנסת">`
     + `<meta property="og:title" content="${title}"><meta property="og:description" content="${description}"><meta property="og:url" content="${url}"><meta property="og:image" content="${image}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">`
@@ -31,7 +32,7 @@ export function previewHtml(siteUrl: string, election: string, question: string,
 export function createPreviewHandler(read: ReadText, siteUrl: string) {
   return async (event: PreviewEvent) => {
     const method = event.requestContext?.http?.method;
-    const match = /^\/api\/question-preview\/v1\/([1-9][0-9]*)$/.exec(event.rawPath ?? '');
+    const match = /^\/api\/question-preview\/v1\/([1-9][0-9]*)(\/image)?$/.exec(event.rawPath ?? '');
     const params = new URLSearchParams(event.rawQueryString);
     const rawQuestion = params.get('q');
     const question = rawQuestion?.trim();
@@ -72,12 +73,25 @@ export function createPreviewHandler(read: ReadText, siteUrl: string) {
         });
         sentences = questionAnswerText(answer, parsed.query.kind);
         answered = sentences.length > 0;
-        if (answered && answer.note) sentences.push(answer.note);
+
       }
     } catch {
       console.error('Question preview unavailable');
     }
     const ttl = answered ? manifests[election]?.phase === 'counting' ? 30 : 86400 : 30;
+    if (match![2]) {
+      try {
+        return {
+          statusCode: 200,
+          headers: { 'content-type': 'image/png', 'cache-control': `public, max-age=0, s-maxage=${ttl}`, 'x-content-type-options': 'nosniff' },
+          isBase64Encoded: true,
+          body: method === 'HEAD' ? '' : answerImagePng(election, question, sentences).toString('base64'),
+        };
+      } catch {
+        console.error('Question preview image unavailable');
+        return { statusCode: 302, headers: { location: `${siteUrl}/social/question-${election}-v2.png`, 'cache-control': 'public, max-age=0, s-maxage=30' }, body: '' };
+      }
+    }
     return {
       statusCode: 200,
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': `public, max-age=0, s-maxage=${ttl}`, 'x-content-type-options': 'nosniff' },

@@ -20,7 +20,7 @@ test('answers national, scenario, geographic and comparison links using deployed
     const response = await preview(event(question));
     assert.equal(response.statusCode, 200, question);
     assert.match(response.body, expected, question);
-    assert.match(response.body, /og:image.*https:\/\/dev.example.com\/social\/question-26-v2.png/);
+    assert.match(response.body, /og:image.*https:\/\/dev.example.com\/api\/question-preview\/v1\/26\/image\?q=/);
     assert.match(response.headers['cache-control'], /s-maxage=86400/);
     assert.ok(!response.body.includes('elections-26-v2.png'));
     assert.ok(response.body.includes('/questions/26?q='));

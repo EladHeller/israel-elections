@@ -13,8 +13,9 @@ The Vite build generates 1200×630 PNGs from each election's checked-in
 `realResults`, using its own list names. General election previews show the
 Knesset number and the three leading lists, including ties at third place.
 No bloc assignment is inferred. The image does not depict simulator edits.
-Question previews use a separate image containing only the Knesset number;
-real election results must not look like the answer to a hypothetical question.
+Question previews render the question and its calculated answer. Unsupported
+questions show only the question. The neutral static Knesset image is a fallback
+if rendering fails; real results never stand in for a hypothetical answer.
 
 Images are emitted under `/social/elections-{id}-v2.png` and
 `/social/question-{id}-v2.png`. The SVG renderer runs only at build time and uses
@@ -46,7 +47,14 @@ must not retain mutable election data. The handler does not record question
 attempts or create shared scenarios.
 
 The question becomes the Open Graph/Twitter title and a bounded answer summary
-becomes the description. The body contains the full answer text and a link to
+becomes the description. Engine notes are omitted from previews. The answer
+is also typeset as a dynamic 1200×630 SVG and rasterized to PNG with Resvg,
+using the bundled Hebrew font. Social clients receive a PNG image rather than
+requiring SVG support. Questions and answers wrap within fixed bounds; longer
+text ends in an ellipsis. The image URL preserves the canonical question and
+has its own query-aware CloudFront behavior, with the same cache lifetime as
+the answer HTML. Ordinary page loads remain static. The build copies the font
+into the compiled runtime; the renderer is a production dependency. The body contains the full answer text and a link to
 the existing question page. Unsupported questions, empty results and data
 failures return question-only metadata, without inventing an answer. During
 initial provisioning or backend updates, answer routing is enabled only after
