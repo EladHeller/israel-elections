@@ -19,7 +19,7 @@
     "monitor:local:uninstall": "zsh ./scripts/uninstall-local-election-monitor.sh",
     "test:ci": "npm run type-check && npm run test:coverage && npm run check-coverage && npm run lint:test",
     "build:client": "cd elections-client && npm ci && npm run build",
-    "build:preview": "tsc -p tsconfig.preview.json"
+    "build:preview": "tsc -p tsconfig.preview.json && node scripts/prepare-preview-runtime.cjs"
   },
   "author": "",
   "license": "MIT",
