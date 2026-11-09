@@ -16,22 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Cache node modules
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-node-modules-v1
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-
-      - name: Install modules
-        run: npm ci
-
-      - name: Install client modules
-        run: npm ci --prefix elections-client
+      - name: Set up dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Type check
         run: npm run type-check

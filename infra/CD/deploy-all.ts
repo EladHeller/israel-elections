@@ -138,7 +138,11 @@ async function buildAndZip(siteUrl: string) {
   await exec('npm run build');
 
   console.log('Building frontend...');
-  await exec('npm run build:client', { env: { ...process.env, VITE_SITE_URL: siteUrl } });
+  // CI already restored or installed the client dependencies. Keep local deploys self-contained.
+  const clientBuild = process.env.CLIENT_DEPENDENCIES_INSTALLED === 'true'
+    ? 'npm run build --prefix elections-client'
+    : 'npm run build:client';
+  await exec(clientBuild, { env: { ...process.env, VITE_SITE_URL: siteUrl } });
 
   console.log('Creating zips...');
   // Backend zip
