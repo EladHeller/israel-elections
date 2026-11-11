@@ -77,7 +77,7 @@ test('empty and zero vote data produce no suggestions', () => {
 });
 
 test('ranking respects distance bands before majority importance', () => {
-  const scenario = (distance: number, goals: string[], delta = 10): AutomaticScenario => ({ distance, goals, delta, relativeDistance: 0.01, seatDeltas: {}, blocDeltas: {} });
+  const scenario = (distance: number, goals: string[], delta = 10): AutomaticScenario => ({ party: 'a', distance, goals, delta, relativeDistance: 0.01, seatDeltas: {}, blocDeltas: {} });
   const near = scenario(0.0001, ['transfer:right:left']);
   const farMajority = scenario(0.006, ['majority:right:gain']);
   assert.ok(compareScenarios(near, farMajority) < 0);
@@ -109,6 +109,6 @@ test('majority loss, unassigned lists, tiny vote counts and the maximum threshol
   const withoutAssignment = analyzeScenarios({ voteData: data([500, 500]), config, blocs, partyToBloc: { a: null, b: undefined } });
   assert.equal(withoutAssignment.votes.length, 0);
   assert.deepEqual(analyzeScenarios({ voteData: data([1]), config, blocs }).votes, []);
-  const threshold: AutomaticScenario = { delta: 0, distance: 0, relativeDistance: 0, goals: [], seatDeltas: {}, blocDeltas: {} };
+  const threshold: AutomaticScenario = { threshold: 0, delta: 0, distance: 0, relativeDistance: 0, goals: [], seatDeltas: {}, blocDeltas: {} };
   assert.equal(compareScenarios(threshold, { ...threshold }), 0);
 });

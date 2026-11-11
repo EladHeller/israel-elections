@@ -22,7 +22,7 @@ function ScenarioExplorer({ scenarios, baseline, input, getPartyName, opening, o
   opening: boolean;
   onOpen: (scenario: AutomaticScenario) => void;
 }) {
-  const [selectedKey, setSelectedKey] = useState(() => scenarioKey(scenarios[0]));
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showScenario, setShowScenario] = useState(false);
   const scenario = scenarios.find(item => scenarioKey(item) === selectedKey) ?? scenarios[0];
   const titleId = useId();
@@ -43,18 +43,18 @@ function ScenarioExplorer({ scenarios, baseline, input, getPartyName, opening, o
           <button key={scenarioKey(item)} type="button" className="ui-button ui-button-quiet"
             aria-controls={cardId} aria-pressed={item === scenario}
             onClick={() => { setSelectedKey(scenarioKey(item)); setShowScenario(true); }}>
-            {item.party ? <><strong>{getPartyName(item.party)}</strong>
+            {item.party !== undefined ? <><strong>{getPartyName(item.party)}</strong>
               <span><bdi>{item.delta > 0 ? '+' : '−'}{numberFormat.format(Math.abs(item.delta))}</bdi> קולות</span></>
               : item.threshold === 0 ? <strong>ללא אחוז חסימה</strong>
-                : <><strong>אחוז חסימה</strong><span><bdi>{percent(item.threshold ?? 0)}%</bdi></span></>}
+                : <><strong>אחוז חסימה</strong><span><bdi>{percent(item.threshold)}%</bdi></span></>}
           </button>
         ))}
       </div>
       <article className="scenario-card" id={cardId} aria-labelledby={titleId}
         key={scenarioKey(scenario)} data-outcome={showScenario ? 'scenario' : 'actual'}>
         <header className="scenario-card-header">
-          <h3 id={titleId}>{party ? <>אילו {getPartyName(party)} הייתה מקבלת <bdi>{numberFormat.format(Math.abs(delta))}</bdi> קולות {delta > 0 ? 'נוספים' : 'פחות'}</>
-            : threshold === 0 ? 'אילו לא היה אחוז חסימה' : <>אילו אחוז החסימה היה <bdi>{percent(threshold ?? 0)}%</bdi></>}</h3>
+          <h3 id={titleId}>{party !== undefined ? <>אילו {getPartyName(party)} הייתה מקבלת <bdi>{numberFormat.format(Math.abs(delta))}</bdi> קולות {delta > 0 ? 'נוספים' : 'פחות'}</>
+            : threshold === 0 ? 'אילו לא היה אחוז חסימה' : <>אילו אחוז החסימה היה <bdi>{percent(threshold)}%</bdi></>}</h3>
           <div className="scenario-compare" role="group" aria-label="השוואת תוצאות">
             <button type="button" className="ui-button ui-button-quiet" aria-pressed={!showScenario} onClick={() => setShowScenario(false)}>בפועל</button>
             <button type="button" className="ui-button ui-button-quiet" aria-pressed={showScenario} onClick={() => setShowScenario(true)}>בתרחיש</button>

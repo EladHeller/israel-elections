@@ -44,9 +44,9 @@ export default function ScenarioOutcome({ scenario, baseline, input, getPartyNam
   const losses = losing.reduce((total, [, change]) => total - change, 0);
   const reallocated = gains > 0 && gains === losses;
 
-  const blocName = (key: string) => input.blocs.blocks[key]?.label || key;
+  const blocName = (key: string) => input.blocs.blocks[key].label;
   const blocs = Object.entries(blocDeltas).map(([key, change]) => ({
-    key, label: blocName(key), before: baseline.blocs[key] ?? 0, change, combined: false,
+    key, label: blocName(key), before: baseline.blocs[key], change, combined: false,
   }));
   const combined = computeBlocOverview(input.blocs, baseline.blocs).flatMap(({ key, complementaryKeys, combinedSeats }) => {
     if (!complementaryKeys.length) return [];
@@ -61,14 +61,15 @@ export default function ScenarioOutcome({ scenario, baseline, input, getPartyNam
     }];
   });
 
-  const votes = party ? input.voteData[party].votes + (showScenario ? delta : 0) : 0;
-  const shownThreshold = showScenario ? threshold ?? input.config.blockPercentage : input.config.blockPercentage;
+  const inputValue = party !== undefined
+    ? numberFormat.format(input.voteData[party].votes + (showScenario ? delta : 0))
+    : `${percentageFormat.format((showScenario ? threshold : input.config.blockPercentage) * 100)}%`;
   return (
     <>
       <div className="scenario-input">
         <span>{party ? `קולות ל${getPartyName(party)}` : 'אחוז החסימה'}</span>
         <strong className="scenario-value" key={String(showScenario)}>
-          <bdi>{party ? numberFormat.format(votes) : `${percentageFormat.format(shownThreshold * 100)}%`}</bdi>
+          <bdi>{inputValue}</bdi>
         </strong>
       </div>
       <div className="scenario-seats">

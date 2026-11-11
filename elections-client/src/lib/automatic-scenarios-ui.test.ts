@@ -4,13 +4,14 @@ import React from 'react';
 import { create, act } from 'react-test-renderer';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import AutomaticScenarios from '../components/AutomaticScenarios';
+import ScenarioOutcome from '../components/ScenarioOutcome';
 import PartyResearch from '../components/PartyResearch';
 import { decodeSharedScenario } from './shared-scenario';
 import { useBlocPreferences } from '../hooks/use-bloc-preferences';
 import type { AnalysisInput, AutomaticScenario, ScenarioAnalysis } from './automatic-scenarios';
 
 const input: AnalysisInput = {
-  voteData: { a: { votes: 500, mandats: 0 }, b: { votes: 500, mandats: 0 } },
+  voteData: { a: { votes: 500, mandats: 0 }, b: { votes: 500, mandats: 0 }, c: { votes: 9, mandats: 0 } },
   config: { algorithm: 'baderOffer', blockPercentage: 0.0325, agreements: [] },
   blocs: { blocks: { right: { label: 'ימין', color: 'blue', parties: ['a'] }, left: { label: 'שמאל', color: 'red', parties: ['b'] } } },
 };
@@ -42,14 +43,14 @@ test('the selected scenario compares exact results and opens a frozen simulator 
   let renderer!: ReturnType<typeof create>;
   t.after(async () => { await act(async () => renderer?.unmount()); if (previous) Object.defineProperty(globalThis, 'Worker', previous); else delete (globalThis as any).Worker; });
   const element = (props = {}) => React.createElement(MemoryRouter, {}, React.createElement(AutomaticScenarios, {
-    ...input, election: '25', getPartyName: key => key === 'a' ? 'רשימה א' : 'רשימה ב', ...props,
+    ...input, election: '25', getPartyName: key => ({ a: 'רשימה א', b: 'רשימה ב', c: 'רשימה ג' })[key] ?? key, ...props,
   }), React.createElement(Location));
   await act(async () => { renderer = create(element()); });
   assert.match(text(renderer), /מחשב תרחישים/);
   const worker = FakeWorker.instances.at(-1)!;
   assert.deepEqual(worker.payload.voteData, input.voteData);
-  const analysis = { baseline, votes: [scenario, { ...scenario, delta: -9, goals: ['party:lose'], seatDeltas: { a: -1, b: 1 }, blocDeltas: {} }],
-    thresholds: [{ ...scenario, party: undefined, delta: 0, threshold: 0, goals: [] },
+  const analysis: ScenarioAnalysis = { baseline, votes: [scenario, { ...scenario, delta: -9, goals: ['party:lose'], seatDeltas: { a: -1, b: 1 }, blocDeltas: {} }],
+    thresholds: [{ ...scenario, party: undefined, delta: 0, threshold: 0, goals: [], seatDeltas: { b: -1, c: 1 }, blocDeltas: { left: -1 } },
       { ...scenario, party: undefined, delta: 0, threshold: 0.03, goals: ['majority:right+left:lose'], seatDeltas: { a: -2, b: 2 } }] };
   await act(async () => worker.deliver(analysis));
   const card = () => renderer.root.findByType('article');
@@ -79,7 +80,10 @@ test('the selected scenario compares exact results and opens a frozen simulator 
   assert.match(text(renderer), /קולות פחות/);
   assert.match(text(renderer), /אין שינוי במאזן הגושים/);
   await act(async () => options()[2].props.onClick());
-  assert.equal(visibleValues()[0], '0%');
+  assert.deepEqual(visibleValues(), ['0%', '59', '1']);
+  assert.match(text(renderer), /רשימה ג/);
+  await act(async () => click('בפועל'));
+  assert.deepEqual(visibleValues(), ['3.25%', '60', '0']);
   await act(async () => options()[3].props.onClick());
   assert.deepEqual(visibleValues(), ['3%', '58', '62']);
   assert.match(text(renderer), /ביטול רוב לימין \+ שמאל/);
@@ -94,7 +98,7 @@ test('the selected scenario compares exact results and opens a frozen simulator 
   const updated = FakeWorker.instances.at(-1)!;
   await act(async () => updated.deliver(analysis));
   assert.match(text(renderer), /מתעדכנים עם הספירה/);
-  assert.equal(options().length, 4, 'thresholds affecting the selected list are included');
+  assert.equal(options().length, 3, 'thresholds that affect only other lists are omitted');
   await act(async () => click('פתיחה בסימולטור'));
   assert.match(text(renderer), /פתיחת התרחיש נכשלה/);
   await act(async () => updated.deliver(empty));
@@ -112,6 +116,48 @@ test('the selected scenario compares exact results and opens a frozen simulator 
   Object.defineProperty(globalThis, 'Worker', { configurable: true, value: class { constructor() { throw new Error('Unavailable'); } } });
   await act(async () => renderer.update(element({ party: 'b' })));
   assert.match(text(renderer), /חישוב התרחישים נכשל/);
+});
+
+test('the blocking majority stays at 61 for an internal transfer and disappears when a seat leaves', () => {
+  const settings: AnalysisInput = {
+    ...input,
+    blocs: { blocks: {
+      ...input.blocs.blocks,
+      arab: { label: 'המפלגות הערביות', color: 'green', parties: ['c'], complementaryTo: 'left' },
+    } },
+  };
+  const props = {
+    input: settings,
+    baseline: { seats: { a: 59, b: 50, c: 11 }, blocs: { right: 59, left: 50, arab: 11 } },
+    getPartyName: (key: string) => key,
+    showScenario: true,
+  };
+  const renderer = create(React.createElement(ScenarioOutcome, {
+    ...props,
+    scenario: { ...scenario, party: 'c', delta: -9, seatDeltas: { c: -1, b: 1 }, blocDeltas: { arab: -1, left: 1 } },
+  }));
+  const blocRows = () => renderer.root.findAllByProps({ className: 'scenario-bloc' });
+  const combined = blocRows().at(-1)!;
+  assert.match(text(renderer), /שמאל עם המפלגות הערביות/);
+  assert.equal(combined.findByProps({ className: 'scenario-majority' }).children.join(''), 'רוב חוסם');
+  assert.equal(combined.findByType('strong').findByType('bdi').children.join(''), '61');
+  assert.equal(combined.findByProps({ className: 'is-loss' }).props.hidden, true);
+
+  renderer.update(React.createElement(ScenarioOutcome, {
+    ...props,
+    scenario: { ...scenario, seatDeltas: { b: -1, a: 1 }, blocDeltas: { left: -1, right: 1 } },
+  }));
+  const belowMajority = blocRows().at(-1)!;
+  assert.equal(belowMajority.findByType('strong').findByType('bdi').children.join(''), '60');
+  assert.equal(belowMajority.findAllByProps({ className: 'scenario-majority' }).length, 0);
+
+  renderer.update(React.createElement(ScenarioOutcome, {
+    ...props,
+    scenario: { ...scenario, delta: -9, seatDeltas: { a: -1, d: 1 }, blocDeltas: { right: -1 } },
+  }));
+  assert.equal(blocRows().length, 1);
+  assert.doesNotMatch(text(renderer), /שמאל עם המפלגות הערביות/);
+  renderer.unmount();
 });
 
 test('research loads national results for selected-list scenarios and retains local rankings', async t => {
