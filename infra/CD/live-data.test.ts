@@ -37,10 +37,16 @@ test('deployment preserves published results and initializes missing live files 
   assert.equal(created.filter(Boolean).length, 1);
 });
 
-test('live initialization fails rather than silently continuing on an S3 permission error', async context => {
-  const denied = Object.assign(new Error('Access denied'), { $metadata: { httpStatusCode: 403 } });
-  context.mock.method(S3Client.prototype, 'send', async () => { throw denied; });
-  await assert.rejects(upload('dev', 'data/26/allResults.json', 'package.json', undefined, true), denied);
+test('live initialization propagates errors other than an S3 precondition failure', async context => {
+  let reason: unknown;
+  context.mock.method(S3Client.prototype, 'send', async () => { throw reason; });
+  for (reason of [
+    null, new Error('Network error'), { $metadata: null }, { $metadata: 412 }, { $metadata: {} },
+    Object.assign(new Error('Access denied'), { $metadata: { httpStatusCode: 403 } }),
+  ]) {
+    await assert.rejects(upload('dev', 'data/26/allResults.json', 'package.json', undefined, true),
+      error => error === reason);
+  }
 });
 
 for (const phase of ['counting', 'final']) test(`deployment protects live data during ${phase} and publishes versioned final snapshots`, async () => {
