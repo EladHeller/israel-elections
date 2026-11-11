@@ -701,67 +701,10 @@ body {
   height: 18px;
 }
 
-.donut-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.blocs-display {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 32px;
-  margin-bottom: 24px;
-}
-
-.bloc-legend-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.donut {
-  width: 220px;
-  height: 220px;
-}
-
-.donut-value {
-  font-size: 30px;
-  font-weight: 700;
-  fill: var(--ink-90);
-}
-
-.donut-label {
-  font-size: 12px;
-  fill: var(--ink-50);
-}
-
-.legend {
-  display: grid;
-  gap: 8px;
-}
-
-.legend-item {
-  display: grid;
-  grid-template-columns: 16px 1fr auto;
-  align-items: center;
-  gap: 10px;
-}
-
 .legend-swatch {
   width: 12px;
   height: 12px;
   border-radius: 3px;
-}
-
-.legend-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-align: left;
-  font-weight: 700;
 }
 
 .bloc-editor {
@@ -1314,11 +1257,6 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .blocs-display {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
   .scenario-columns {
     grid-template-columns: 1fr;
   }
@@ -1769,10 +1707,6 @@ body {
 .party-bar-fill,
 .legend-swatch {
   background: color-mix(in srgb, var(--chart-color), white var(--chart-tint));
-}
-
-.donut-segment {
-  stroke: color-mix(in srgb, var(--chart-color), white var(--chart-tint));
 }
 
 .bloc-editor-columns.bloc-editor-all-groups {
