@@ -1,30 +1,59 @@
 .chamber-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(225px, 1fr);
-  align-items: center;
+  align-items: start;
   gap: clamp(14px, 3vw, 32px);
 }
 
 .chamber-stage {
-  --stage-ink: #f1f6ff;
-  --stage-muted: #aabbd3;
+  --stage-ink: var(--ink-90);
+  --stage-muted: var(--ink-50);
+  --stage-glow: #fff;
+  --stage-start: #f8fbff;
+  --stage-end: #e4edf9;
+  --stage-grid: #607caa18;
+  --floor: #dce8f6;
+  --floor-edge: #9badc6;
+  --floor-outline: #849ab8;
+  --terrace-line: #a6bad5;
+  --seat-neutral: #bdcbe0;
+  --seat-shadow: #8da1be;
+  --seat-depth: #304666;
+  --seat-tint: 7%;
+  --majority-mark: #805200;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid #3b5072;
+  border: 1px solid var(--ink-20);
   border-radius: 20px;
   color: var(--stage-ink);
   background:
-    radial-gradient(ellipse at 50% 55%, #253e64, transparent 70%),
-    linear-gradient(155deg, #182b48, #0c1526 72%);
-  box-shadow: inset 0 1px #ffffff19, 0 12px 24px #07162924;
+    radial-gradient(ellipse at 50% 55%, var(--stage-glow), transparent 70%),
+    linear-gradient(155deg, var(--stage-start), var(--stage-end) 72%);
+  box-shadow: inset 0 1px #ffffff39, 0 12px 24px #07162924;
+}
+
+:root[data-theme='dark'] .chamber-stage {
+  --stage-glow: #253e64;
+  --stage-start: #182b48;
+  --stage-end: #0c1526;
+  --stage-grid: #a6c5ff0c;
+  --floor: #101d33;
+  --floor-edge: #060b15;
+  --floor-outline: #5a779c;
+  --terrace-line: #364b6c;
+  --seat-neutral: #263650;
+  --seat-shadow: #050a15;
+  --seat-depth: #080e1c;
+  --seat-tint: 19%;
+  --majority-mark: #f5ce82;
 }
 
 .chamber-stage::before {
   position: absolute;
   z-index: -1;
   inset: 0;
-  background: repeating-linear-gradient(90deg, #a6c5ff0c 0 1px, transparent 1px 32px);
+  background: repeating-linear-gradient(90deg, var(--stage-grid) 0 1px, transparent 1px 32px);
   mask-image: linear-gradient(#000, transparent 65%);
   content: '';
 }
@@ -62,31 +91,31 @@
 }
 
 .chamber-floor {
-  fill: #101d33;
-  stroke: #5a779c;
+  fill: var(--floor);
+  stroke: var(--floor-outline);
   stroke-width: 1;
 }
 
 .chamber-floor-edge {
-  fill: #060b15;
-  stroke: #0d1525;
+  fill: var(--floor-edge);
+  stroke: var(--floor-edge);
   stroke-width: 2;
 }
 
 .chamber-terrace {
   fill: none;
-  stroke: #364b6c;
+  stroke: var(--terrace-line);
   stroke-width: 1;
 }
 
 .chamber-floor-line {
   fill: none;
-  stroke: #5a779c;
+  stroke: var(--floor-outline);
   stroke-width: 1;
 }
 
 .chamber-seat {
-  --seat-face: color-mix(in srgb, var(--seat-color, #526687), #e3efff 19%);
+  --seat-face: color-mix(in srgb, var(--seat-color, var(--seat-neutral)), #e3efff var(--seat-tint));
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -97,15 +126,15 @@
 }
 
 .chamber-seat.is-vacant {
-  --seat-face: #263650;
+  --seat-face: var(--seat-neutral);
 }
 
 .chamber-seat.is-dimmed {
-  --seat-face: color-mix(in srgb, var(--seat-color, #526687) 12%, #24324a);
+  --seat-face: color-mix(in srgb, var(--seat-color, var(--seat-neutral)) 12%, var(--seat-neutral));
 }
 
-.chamber-seat-shadow { fill: #050a15; }
-.chamber-seat-base { fill: color-mix(in srgb, var(--seat-face) 42%, #080e1c); }
+.chamber-seat-shadow { fill: var(--seat-shadow); }
+.chamber-seat-base { fill: color-mix(in srgb, var(--seat-face) 42%, var(--seat-depth)); }
 .chamber-seat-top {
   fill: var(--seat-face);
   stroke: color-mix(in srgb, var(--seat-face), #fff 32%);
@@ -157,11 +186,11 @@
   display: flex;
   height: 5px;
   border-radius: 8px;
-  background: #354764;
+  background: var(--chart-track);
 }
 
 .chamber-scale-track span {
-  background: color-mix(in srgb, var(--seat-color), #e3efff 19%);
+  background: color-mix(in srgb, var(--seat-color), #e3efff var(--seat-tint));
   transition: width 260ms ease;
 }
 
@@ -171,8 +200,8 @@
   position: absolute;
   inset-block: -3px;
   width: 2px;
-  background: #f5ce82;
-  box-shadow: 0 0 0 2px #12213a;
+  background: var(--majority-mark);
+  box-shadow: 0 0 0 2px var(--stage-end);
 }
 
 .chamber-scale-labels {
@@ -187,11 +216,21 @@
 .chamber-scale-labels span:nth-child(2) {
   position: absolute;
   transform: translateX(50%);
-  color: #f5ce82;
+  color: var(--majority-mark);
 }
 
 .chamber-controls { min-width: 0; }
 .chamber-filters { display: grid; gap: 5px; }
+.chamber-bloc { display: grid; gap: 3px; min-width: 0; }
+
+.chamber-breakdown {
+  display: block;
+  width: fit-content;
+  margin-top: 3px;
+  color: var(--ink-50);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
 
 .chamber-filter.ui-button {
   display: flex;
@@ -204,6 +243,13 @@
   color: var(--ink-90);
   border: 1px solid transparent;
   overflow-wrap: anywhere;
+}
+
+.chamber-filter-combined.ui-button {
+  margin-inline-start: 12px;
+  border-inline-start-color: var(--ink-20);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .chamber-filter.ui-button:hover { background: var(--surface-hover); }
@@ -221,8 +267,10 @@
 
 .chamber-filter .delta-chip { flex: none; }
 
+.chamber-swatches { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: none; }
+
 .chamber-swatch {
-  flex: 0 0 11px;
+  width: 11px;
   height: 11px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--seat-color), white var(--chart-tint));
@@ -243,6 +291,31 @@
 }
 
 .chamber-status strong { color: var(--ink-90); }
+
+.chamber-party-breakdown { display: grid; gap: 8px; margin-top: 12px; }
+
+.chamber-party-group {
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--ink-20);
+  border-inline-start: 3px solid color-mix(in srgb, var(--seat-color), white var(--chart-tint));
+  border-radius: 10px;
+  background: var(--surface-muted);
+  font-size: 13px;
+}
+
+.chamber-party-group h3 { margin: 0 0 4px; color: var(--ink-50); font-size: inherit; }
+.chamber-party-group p { margin: 4px 0; color: var(--ink-50); }
+.chamber-party-group ul { margin: 0; padding: 0; list-style: none; }
+.chamber-party-group li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-block: 4px;
+  overflow-wrap: anywhere;
+}
+.chamber-party-group li + li { border-block-start: 1px solid var(--ink-20); }
+.chamber-party-group strong { font-variant-numeric: tabular-nums; }
 
 @media (max-width: 720px) {
   .chamber-panel { padding: 16px; }
