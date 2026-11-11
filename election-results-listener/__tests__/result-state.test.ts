@@ -50,7 +50,7 @@ test('empty publication is allowed only for missing or zero-valued stored result
   ]) {
     await assert.rejects(assertCanPublishEmptyResults('data/26/allResults.json'), /cannot replace published votes/);
   }
-  for (stored of ['invalid json', 'null', '{}', '{"voteData":[]}', '{"voteData":{"a":{"votes":"2"}}}']) {
+  for (stored of ['invalid json', 'null', '{}', '{"voteData":[]}', '{"voteData":{"a":{"votes":"2"}}}', '{"voteData":{},"countedVotes":"1"}']) {
     await assert.rejects(assertCanPublishEmptyResults('data/26/allResults.json'));
   }
 });
