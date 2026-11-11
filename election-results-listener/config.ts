@@ -2,9 +2,16 @@ import convict from 'convict';
 import electionsConfig from './config-elections.json';
 import type { ElectionsConfig } from './types';
 
-const configSchema = convict({
+type EnvironmentConfig = {
+  currElections: number;
+  bucket: string;
+  distributionID: string;
+  region: string;
+};
+
+const configSchema = convict<EnvironmentConfig>({
   currElections: {
-    default: '26',
+    default: 26,
     env: 'CURR_ELECTIONS',
     format: 'nat',
   },
@@ -27,21 +34,13 @@ const configSchema = convict({
 
 export const getProperties = () => configSchema.getProperties();
 
-const properties = getProperties();
-type ServiceConfig = {
-  currElections: number,
-  bucket: string,
-  distributionID: string,
-  region: string,
-  electionsConfig: Record<string, ElectionsConfig>,
-  notPartiesKeys: string[],
-}
+type ServiceConfig = EnvironmentConfig & {
+  electionsConfig: Record<string, ElectionsConfig>;
+  notPartiesKeys: string[];
+};
 
 const config: ServiceConfig = {
-  currElections: properties.currElections,
-  bucket: properties.bucket,
-  distributionID: properties.distributionID,
-  region: properties.region,
+  ...getProperties(),
   electionsConfig,
   notPartiesKeys: ['חיצוניות', 'קלפי אחרת', 'ברזל', 'ריכוז', 'שופט', 'קלפי', 'סמל ועדה', 'סמל ישוב', 'שם ישוב', 'בזב', 'מצביעים', 'פסולים',
     'כשרים', ' שם ישוב', 'כתובת', 'מספר קלפי', 'ת. עדכון', 'סמל קלפי', 'בז\'\'ב', 'נפה', 'פיצול', 'בוחרים', '﻿סמל ועדה'],

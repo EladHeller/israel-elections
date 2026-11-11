@@ -3,19 +3,32 @@ import { computeBlocMap, computeBlocTotals } from './analytics';
 import type { BlocsConfig, ElectionConfig, ResultsMap, VoteData } from '../types';
 
 export const SCENARIO_LIMITS = { partyShare: 0.2, nationalShare: 0.01 };
-export interface AutomaticScenario {
-  party?: string;
+interface ScenarioChange {
   delta: number;
-  threshold?: number;
   seatDeltas: Record<string, number>;
   blocDeltas: Record<string, number>;
   goals: string[];
   distance: number;
   relativeDistance: number;
 }
+interface VoteScenario extends ScenarioChange {
+  party: string;
+  threshold?: never;
+}
+interface ThresholdScenario extends ScenarioChange {
+  party?: never;
+  threshold: number;
+}
+export type AutomaticScenario = VoteScenario | ThresholdScenario;
+
 export interface ScenarioAnalysis {
-  votes: AutomaticScenario[];
-  thresholds: AutomaticScenario[];
+  baseline: ScenarioBaseline;
+  votes: VoteScenario[];
+  thresholds: ThresholdScenario[];
+}
+export interface ScenarioBaseline {
+  seats: Record<string, number>;
+  blocs: Record<string, number>;
 }
 export interface AnalysisInput {
   voteData: VoteData;
@@ -121,7 +134,7 @@ export const compareScenarios = (a: AutomaticScenario, b: AutomaticScenario) =>
 
 export function analyzeScenarios({ voteData, config, blocs, partyToBloc = computeBlocMap(blocs), party }: AnalysisInput): ScenarioAnalysis {
   const total = Object.values(voteData).reduce((sum, data) => sum + data.votes, 0);
-  if (!total) return { votes: [], thresholds: [] };
+  if (!total) return { baseline: { seats: {}, blocs: {} }, votes: [], thresholds: [] };
   const baseline = calculate(voteData, config);
   const baseSeats = seats(baseline);
   const totals = (results: ResultsMap) => computeBlocTotals(results, blocs, Object.fromEntries(Object.entries(partyToBloc).map(([key, bloc]) => [key, bloc ?? null])));
@@ -146,7 +159,7 @@ export function analyzeScenarios({ voteData, config, blocs, partyToBloc = comput
     if (party && seatDeltas[party]) goals.push(`party:${seatDeltas[party] > 0 ? 'gain' : 'lose'}`);
     return { seatDeltas, blocDeltas, goals };
   };
-  const nearest = new Map<string, AutomaticScenario>();
+  const nearest = new Map<string, VoteScenario>();
   for (const [key, data] of Object.entries(voteData)) {
     if (party && key !== party) continue;
     const limit = Math.floor(Math.min(data.votes * SCENARIO_LIMITS.partyShare, total * SCENARIO_LIMITS.nationalShare));
@@ -155,7 +168,7 @@ export function analyzeScenarios({ voteData, config, blocs, partyToBloc = comput
       if (!delta) continue;
       const summary = summarize(calculate({ ...voteData, [key]: { ...data, votes: data.votes + delta } }, config));
       if (!summary.goals.length) continue;
-      const scenario: AutomaticScenario = { party: key, delta, ...summary,
+      const scenario: VoteScenario = { party: key, delta, ...summary,
         distance: Math.abs(delta) / total, relativeDistance: Math.abs(delta) / data.votes };
       for (const goal of summary.goals) {
         const goalKey = goal;
@@ -173,7 +186,7 @@ export function analyzeScenarios({ voteData, config, blocs, partyToBloc = comput
     thresholds.add(Math.floor(boundary) / 10_000);
     thresholds.add((Math.floor(boundary) + 1) / 10_000);
   }
-  const thresholdScenarios: AutomaticScenario[] = [];
+  const thresholdScenarios: ThresholdScenario[] = [];
   for (const threshold of thresholds) {
     if (threshold === config.blockPercentage || threshold > 1) continue;
     const thresholdResult = calculate(voteData, { ...config, blockPercentage: threshold });
@@ -182,10 +195,14 @@ export function analyzeScenarios({ voteData, config, blocs, partyToBloc = comput
     if (!Object.keys(summary.seatDeltas).length || (threshold !== 0 && !Object.keys(summary.blocDeltas).length)) continue;
     thresholdScenarios.push({ delta: 0, threshold, ...summary, distance: 0, relativeDistance: 0 });
   }
-  thresholdScenarios.sort((a, b) => Math.abs(a.threshold! - config.blockPercentage) - Math.abs(b.threshold! - config.blockPercentage));
+  thresholdScenarios.sort((a, b) => Math.abs(a.threshold - config.blockPercentage) - Math.abs(b.threshold - config.blockPercentage));
   const closest = thresholdScenarios[0];
   const noThreshold = thresholdScenarios.find(item => item.threshold === 0);
-  return { votes: candidates, thresholds: [...new Set([closest, noThreshold].filter((item): item is AutomaticScenario => !!item))] };
+  return {
+    baseline: { seats: baseSeats, blocs: baseBlocs },
+    votes: candidates,
+    thresholds: [...new Set([closest, noThreshold].filter((item): item is ThresholdScenario => !!item))],
+  };
 }
 
 export function selectScenarios(analysis: ScenarioAnalysis, partyView = false): AutomaticScenario[] {

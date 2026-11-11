@@ -18,7 +18,11 @@ async function uploadCsv(csvData: string, time: string) {
   await upload(`data/${currElections}/${time}_elections.csv`, csvData);
 }
 
-export async function uploadResults(results, elections: number, time: string = new Date().toISOString()) {
+export async function uploadResults(
+  results: ReturnType<typeof calcVotesResults> & { countedVotes?: number },
+  elections: number,
+  time: string = new Date().toISOString(),
+) {
   await upload(`data/${elections}/allResults.json`, JSON.stringify({ ...results, time }), elections === currElections);
   await invalidCache([`data/${elections}/allResults.json`], distributionID);
   await upload(`data/${elections}/${time}_allResults.json`, JSON.stringify({ ...results, time }));

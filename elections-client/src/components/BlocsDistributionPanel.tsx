@@ -1,98 +1,135 @@
-import React from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import BlocEditor from './BlocEditor';
 import UnassignedParties from './UnassignedParties';
+import { computeBlocOverview } from '../lib/bloc-overview';
 import type { BlocsConfig } from '../types';
+import './BlocsDistributionPanel.css';
 
-interface DeltaChipProps {
-  delta?: number | null;
+const seatCount = 120;
+const majority = 61;
+const unassignedKey = 'unassigned';
+const seatRows = [10, 14, 18, 22, 26, 30];
+const centerX = 300;
+const floorY = 196;
+const pitch = 0.56;
+
+const seats = seatRows.flatMap((count, row) => {
+  const radius = 112 + row * 28;
+  return Array.from({ length: count }, (_, column) => {
+    const angle = 0.055 + column / (count - 1) * (Math.PI - 0.11);
+    return {
+      id: `${row}-${column}`,
+      x: centerX + Math.cos(angle) * radius,
+      y: floorY - Math.sin(angle) * radius * pitch,
+      angle,
+      row,
+    };
+  });
+});
+
+// Fill each bloc as a continuous wedge, then paint the back rows first.
+const paintOrder = seats.sort((a, b) => a.angle - b.angle || b.row - a.row)
+  .map((seat, index) => ({ ...seat, index }))
+  .sort((a, b) => b.row - a.row);
+
+function terrace(radius: number, offset = 0) {
+  const y = floorY + offset;
+  return `M ${centerX - radius} ${y} A ${radius} ${radius * pitch} 0 0 1 ${centerX + radius} ${y}`;
 }
 
-const DeltaChip: React.FC<DeltaChipProps> = ({ delta }) => {
-  if (!delta) return null;
-  return (
-    <span className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>
-      {delta > 0 ? `+${delta}` : delta}
-    </span>
-  );
-};
-
-interface DonutProps {
-  data: number[];
-  total: number;
-  colors: string[];
-  labels: string[];
+interface SeatGroup {
+  key: string;
+  label: string;
+  count: number;
+  color: string;
+  delta?: number;
+  parties: PartySummary[];
 }
 
-const Donut: React.FC<DonutProps> = ({ data, total, colors, labels }) => {
-  const radius = 80;
-  const stroke = 22;
-  const circumference = 2 * Math.PI * radius;
+function Chamber({ groups, highlighted, selectedParty, onSelectParty, getPartyName }: {
+  groups: SeatGroup[];
+  highlighted: Set<string>;
+  selectedParty?: string;
+  onSelectParty: (party: string) => void;
+  getPartyName: (party: string) => string;
+}) {
+  const lightId = useId();
+  const mapRef = useRef<SVGSVGElement>(null);
+  const [hasEntered, setHasEntered] = useState(false);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || typeof IntersectionObserver === 'undefined') {
+      setHasEntered(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setHasEntered(true);
+      observer.disconnect();
+    }, { threshold: 0.25 });
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, []);
+
   let offset = 0;
+  const allocations = groups.flatMap((group) => group.parties.map((party) => {
+    const start = offset;
+    offset += party.mandats;
+    return { group, party, start, end: offset };
+  }));
 
   return (
-    <svg viewBox="0 0 220 220" className="donut">
-      <circle
-        cx="110"
-        cy="110"
-        r={radius}
-        fill="none"
-        stroke="var(--chart-track)"
-        strokeWidth={stroke}
-      />
-      {data.map((value, i) => {
-        const length = (value / total) * circumference;
-        const dash = `${length} ${circumference - length}`;
-        const dashOffset = circumference - offset;
-        offset += length;
-        return (
-          <circle
-            key={labels[i]}
-            cx="110"
-            cy="110"
-            r={radius}
-            fill="none"
-            className="donut-segment"
-            style={{ '--chart-color': colors[i] } as React.CSSProperties}
-            strokeWidth={stroke}
-            strokeDasharray={dash}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-          />
-        );
-      })}
-      <text x="110" y="106" textAnchor="middle" className="donut-value">
-        {total}
-      </text>
-      <text x="110" y="130" textAnchor="middle" className="donut-label">
-        מנדטים
-      </text>
+    <svg ref={mapRef} className={`chamber-map${hasEntered ? ' has-entered' : ''}`} viewBox="0 0 600 235" role="group" aria-label="מושבי המליאה לפי רשימה">
+      <defs>
+        <linearGradient id={lightId} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#fff" stopOpacity=".28" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path className="chamber-floor-edge" d={terrace(270, 8)} />
+      <path className="chamber-floor" d={terrace(270)} />
+      {[98, 126, 154, 182, 210, 238, 268].map((radius) =>
+        <path key={radius} className="chamber-terrace" d={terrace(radius)} />)}
+      <path className="chamber-floor-line" d="M30 196H191 M409 196H570" />
+      {allocations.map(({ group, party, start, end }) => (
+        <g key={party.party} className="chamber-party-region" role="button" tabIndex={0}
+          aria-label={`${getPartyName(party.party)}, ${party.mandats} מנדטים`}
+          aria-pressed={selectedParty === party.party}
+          onClick={() => onSelectParty(party.party)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onSelectParty(party.party);
+            }
+          }}>
+          <title>{getPartyName(party.party)}</title>
+          {paintOrder.filter(({ index }) => index >= start && index < end).map(({ id, x, y, angle, row }) => (
+            <g key={id} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}>
+              <ellipse className="chamber-seat-hit" rx="12" ry="9" />
+              <g
+                className={`chamber-seat${(selectedParty ? selectedParty !== party.party : highlighted.size && !highlighted.has(group.key)) ? ' is-dimmed' : ''}`}
+                style={{
+                  '--seat-color': group.color,
+                  '--seat-delay': `${(5 - row) * 63 + (1 - Math.sin(angle)) * 240}ms`,
+                } as React.CSSProperties}
+              >
+                <ellipse className="chamber-seat-shadow" cy="5" rx="9.5" ry="5.5" />
+                <ellipse className="chamber-seat-base" cy="3" rx="8.2" ry="5.2" />
+                <ellipse className="chamber-seat-top" rx="8.2" ry="5.2" />
+                <ellipse className="chamber-seat-light" rx="8.2" ry="5.2" fill={`url(#${lightId})`} />
+              </g>
+            </g>
+          ))}
+        </g>
+      ))}
+      {paintOrder.filter(({ index }) => index >= offset).map(({ id, x, y }) => (
+        <ellipse key={id} className="chamber-vacant-seat" cx={x} cy={y} rx="8.2" ry="5.2" />
+      ))}
+
     </svg>
   );
-};
-
-interface BlocLegendProps {
-  blocs: BlocsConfig;
-  totals: Record<string, number>;
-  deltas: Record<string, number>;
 }
-
-const BlocLegend: React.FC<BlocLegendProps> = ({ blocs, totals, deltas }) => (
-  <div className="legend">
-    {blocs.order?.map((key) => (
-      <div key={key} className="legend-item">
-        <span
-          className="legend-swatch"
-          style={{ '--chart-color': blocs.blocks[key].color } as React.CSSProperties}
-        />
-        <span>{blocs.blocks[key].label}</span>
-        <span className="legend-value">
-          {totals[key] || 0}
-          <DeltaChip delta={deltas[key]} />
-        </span>
-      </div>
-    ))}
-  </div>
-);
 
 interface PartySummary {
   party: string;
@@ -103,9 +140,6 @@ interface PartySummary {
 interface BlocsDistributionPanelProps {
   editable: boolean;
   blocs: BlocsConfig;
-  blocData: number[];
-  blocColors: string[];
-  blocLabels: string[];
   blocTotals: Record<string, number>;
   blocSeatDeltas: Record<string, number>;
   partyToBloc: Record<string, string | null | undefined>;
@@ -114,40 +148,169 @@ interface BlocsDistributionPanelProps {
   mandateParties: PartySummary[];
 }
 
-export const BlocsDistributionPanel: React.FC<BlocsDistributionPanelProps> = ({
-  editable,
-  blocs,
-  blocData,
-  blocColors,
-  blocLabels,
-  blocTotals,
-  blocSeatDeltas,
-  partyToBloc,
-  onPartyBlocChange,
-  getPartyName,
-  mandateParties,
-}) => (
-  <div className="panel">
-    <h2>חלוקת גושים</h2>
-    <div className="blocs-display">
-      <div className="donut-wrap">
-        <Donut data={blocData} total={120} colors={blocColors} labels={blocLabels} />
-      </div>
-      <div className="bloc-legend-container">
-        <BlocLegend blocs={blocs} totals={blocTotals} deltas={blocSeatDeltas} />
-      </div>
-    </div>
-    <UnassignedParties parties={mandateParties.filter(({ party }) => !partyToBloc[party])}
-      getPartyName={getPartyName} />
-    {editable && (
-      <BlocEditor
-        blocs={blocs}
-        partyToBloc={partyToBloc}
-        parties={mandateParties.map(({ party }) => party)}
-        onPartyBlocChange={onPartyBlocChange}
-        getPartyName={getPartyName}
-      />
-    )}
-  </div>
-);
+type Selection = { key: string; combined: boolean };
 
+function BlocFilter({ label, count, delta, colors, pressed, onClick, breakdown }: {
+  label: string;
+  count: number;
+  delta?: number;
+  colors: string[];
+  pressed: boolean;
+  onClick: () => void;
+  breakdown?: string;
+}) {
+  return (
+    <button type="button" className={`ui-button ui-button-quiet chamber-filter${breakdown ? ' chamber-filter-combined' : ''}`}
+      aria-pressed={pressed} onClick={onClick}>
+      <span className="chamber-swatches" aria-hidden="true">
+        {colors.length ? colors.map((color, index) =>
+          <span key={index} className="chamber-swatch" style={{ '--seat-color': color } as React.CSSProperties} />
+        ) : <span className="chamber-swatch chamber-swatch-all" />}
+      </span>
+      <span>
+        {label}
+        {breakdown && <small className="chamber-breakdown" dir="ltr">{breakdown}</small>}
+      </span>
+      <strong>{count}</strong>
+      {!!delta && <span dir="ltr" className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>
+        {delta > 0 ? `+${delta}` : delta}
+      </span>}
+    </button>
+  );
+}
+
+export function BlocsDistributionPanel({
+  editable, blocs, blocTotals, blocSeatDeltas, partyToBloc, onPartyBlocChange, getPartyName, mandateParties,
+}: BlocsDistributionPanelProps) {
+  const [partySelection, setPartySelection] = useState<string | null>(null);
+  const selectedParty = mandateParties.find(({ party }) => party === partySelection);
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const headingId = useId();
+  const overview = computeBlocOverview(blocs, blocTotals);
+  const groupsByKey = new Map<string, SeatGroup>(
+    (blocs.order || Object.keys(blocs.blocks)).map((key) => [key, {
+      key,
+      label: blocs.blocks[key].label,
+      color: blocs.blocks[key].color,
+      count: blocTotals[key] || 0,
+      delta: blocSeatDeltas[key],
+      parties: [],
+    }]),
+  );
+  const unassigned: PartySummary[] = [];
+  for (const party of mandateParties) {
+    const group = groupsByKey.get(partyToBloc[party.party] ?? '');
+    (group?.parties ?? unassigned).push(party);
+  }
+  const unassignedSeats = unassigned.reduce((sum, party) => sum + party.mandats, 0);
+  if (unassignedSeats) {
+    groupsByKey.set(unassignedKey, {
+      key: unassignedKey, label: 'ללא שיוך', color: '#899bb4', count: unassignedSeats, parties: unassigned,
+    });
+  }
+  const groupedKeys = overview.flatMap(({ key, complementaryKeys }) => [key, ...complementaryKeys]);
+  const groups = [...new Set([...groupedKeys, ...groupsByKey.keys()])].map((key) => groupsByKey.get(key)!);
+  const selected = selection && groupsByKey.get(selection.key);
+  const complementKeys = selection?.combined
+    ? overview.find(({ key }) => key === selection.key)?.complementaryKeys ?? []
+    : [];
+  const highlighted = new Set(selected ? [selected.key, ...complementKeys] : []);
+  const activeGroups = groups.filter(({ key }) => highlighted.has(key));
+  const selectedPartyGroup = groups.find(({ parties }) => parties.some(({ party }) => party === selectedParty?.party));
+  const scaleGroups = selectedParty && selectedPartyGroup
+    ? [{ ...selectedPartyGroup, count: selectedParty.mandats }]
+    : selected ? activeGroups : groups;
+  const total = groups.reduce((sum, group) => sum + group.count, 0);
+  const activeSeats = activeGroups.reduce((sum, group) => sum + group.count, 0);
+  const complementLabels = activeGroups.filter((group) => group !== selected).map(({ label }) => label).join(' ו');
+  const majorityLabel = selection?.combined ? 'רוב חוסם' : 'רוב';
+  const majorityStatus = selected && selected.key !== unassignedKey
+    ? activeSeats >= majority ? `יש ${majorityLabel}` : `חסרים ${majority - activeSeats} ל${majorityLabel}`
+    : '';
+  const select = (key: string, combined = false) => {
+    setPartySelection(null);
+    setSelection((current) => current?.key === key && current.combined === combined ? null : { key, combined });
+  };
+  const filter = ({ key, label, color, count, delta }: SeatGroup) => (
+    <BlocFilter label={label} colors={[color]} count={count} delta={delta}
+      pressed={selected && selected.key === key ? !selection?.combined : false} onClick={() => select(key)} />
+  );
+
+  return (
+    <section className="panel chamber-panel" aria-labelledby={headingId}>
+      <div className="chamber-layout">
+        <div className="chamber-stage">
+          <header className="chamber-heading">
+            <h2 id={headingId}>חלוקת גושים</h2>
+            <span>כל מושב מייצג מנדט</span>
+          </header>
+          <div className="chamber-scene">
+            <Chamber groups={groups} highlighted={highlighted} selectedParty={selectedParty?.party}
+              getPartyName={getPartyName}
+              onSelectParty={(party) => setPartySelection((current) => current === party ? null : party)} />
+            <div className="chamber-readout" aria-hidden="true">
+              <strong key={selectedParty?.mandats ?? (selected ? activeSeats : total)}>{selectedParty?.mandats ?? (selected ? activeSeats : total)}</strong>
+              <span>מנדטים</span>
+            </div>
+          </div>
+          <div className="chamber-scale" role="img" aria-label={`סרגל מנדטים מ־0 עד ${seatCount}, רוב ב־${majority}`}>
+            <div className="chamber-scale-track" aria-hidden="true">
+              {scaleGroups.map((group) => (
+                <span key={group.key}
+                  style={{ '--seat-color': group.color, width: `${group.count / seatCount * 100}%` } as React.CSSProperties} />
+              ))}
+              <i style={{ insetInlineStart: `${majority / seatCount * 100}%` }} />
+            </div>
+            <div className="chamber-scale-labels" aria-hidden="true">
+              <span>0</span>
+              <span style={{ insetInlineStart: `${majority / seatCount * 100}%` }}>{majority} לרוב</span>
+              <span>{seatCount}</span>
+            </div>
+          </div>
+          <div className="chamber-seat-detail" role="status">
+            {selectedParty
+              ? <><strong>{getPartyName(selectedParty.party)}</strong><span>{selectedParty.mandats} מנדטים</span></>
+              : <span>לחצו על מושב להצגת הרשימה</span>}
+          </div>
+        </div>
+        <div className="chamber-controls">
+          <div className="chamber-filters" role="group" aria-label="בחירת גוש במליאה">
+            <BlocFilter label="כל המליאה" colors={[]} count={total} pressed={!selected} onClick={() => { setSelection(null); setPartySelection(null); }} />
+            {overview.map(({ key, complementaryKeys, ownSeats, combinedSeats }) => {
+              const group = groupsByKey.get(key)!;
+              const complements = complementaryKeys.map((other) => groupsByKey.get(other)!);
+              const extraSeats = combinedSeats - ownSeats;
+              return (
+                <div key={key} className="chamber-bloc">
+                  {filter(group)}
+                  {complements.length > 0 && (
+                    <BlocFilter
+                      label={`${combinedSeats >= majority ? 'רוב חוסם עם' : 'עם'} ${complements.map(({ label }) => label).join(' ו')}`}
+                      colors={[group.color, ...complements.map(({ color }) => color)]}
+                      count={combinedSeats}
+                      delta={[group, ...complements].reduce((sum, { delta }) => sum + (delta ?? 0), 0)}
+                      breakdown={`${ownSeats} + ${extraSeats}`}
+                      pressed={selected === group && selection?.combined === true}
+                      onClick={() => select(key, true)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+            {unassignedSeats > 0 && filter(groupsByKey.get(unassignedKey)!)}
+          </div>
+          <p className="chamber-status" role="status">
+            {selected
+              ? `${selected.label}${complementLabels ? ` עם ${complementLabels}` : ''} · ${activeSeats} מנדטים`
+              : `${total} מתוך ${seatCount} מנדטים חולקו.`}
+            {majorityStatus && <> · <strong>{majorityStatus}</strong></>}
+          </p>
+        </div>
+      </div>
+      <UnassignedParties parties={unassigned} getPartyName={getPartyName} />
+      {editable && <BlocEditor blocs={blocs} partyToBloc={partyToBloc}
+        parties={mandateParties.map(({ party }) => party)} onPartyBlocChange={onPartyBlocChange}
+        getPartyName={getPartyName} />}
+    </section>
+  );
+}

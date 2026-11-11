@@ -38,6 +38,8 @@ test('every returned vote scenario obeys both distance limits and includes every
   const before = calcVotesResults(voteData, config.blockPercentage, config.agreements, config.algorithm).realResults;
   const result = analyzeScenarios({ voteData, config, blocs });
   assert.ok(result.votes.length);
+  assert.deepEqual(result.baseline.seats, Object.fromEntries(Object.entries(before).map(([party, { mandats }]) => [party, mandats])));
+  assert.equal(result.baseline.blocs.right, (before.a?.mandats ?? 0) + (before.b?.mandats ?? 0));
   for (const scenario of result.votes) {
     assert.ok(scenario.distance <= 0.01);
     assert.ok(scenario.relativeDistance <= 0.2);
@@ -69,12 +71,13 @@ test('party view finds nearest gain and loss even when no bloc changes; does not
 });
 
 test('empty and zero vote data produce no suggestions', () => {
-  assert.deepEqual(analyzeScenarios({ voteData: {}, config, blocs }), { votes: [], thresholds: [] });
-  assert.deepEqual(analyzeScenarios({ voteData: data([0, 0]), config, blocs }), { votes: [], thresholds: [] });
+  const empty = { baseline: { seats: {}, blocs: {} }, votes: [], thresholds: [] };
+  assert.deepEqual(analyzeScenarios({ voteData: {}, config, blocs }), empty);
+  assert.deepEqual(analyzeScenarios({ voteData: data([0, 0]), config, blocs }), empty);
 });
 
 test('ranking respects distance bands before majority importance', () => {
-  const scenario = (distance: number, goals: string[], delta = 10): AutomaticScenario => ({ distance, goals, delta, relativeDistance: 0.01, seatDeltas: {}, blocDeltas: {} });
+  const scenario = (distance: number, goals: string[], delta = 10): AutomaticScenario => ({ party: 'a', distance, goals, delta, relativeDistance: 0.01, seatDeltas: {}, blocDeltas: {} });
   const near = scenario(0.0001, ['transfer:right:left']);
   const farMajority = scenario(0.006, ['majority:right:gain']);
   assert.ok(compareScenarios(near, farMajority) < 0);
@@ -106,6 +109,6 @@ test('majority loss, unassigned lists, tiny vote counts and the maximum threshol
   const withoutAssignment = analyzeScenarios({ voteData: data([500, 500]), config, blocs, partyToBloc: { a: null, b: undefined } });
   assert.equal(withoutAssignment.votes.length, 0);
   assert.deepEqual(analyzeScenarios({ voteData: data([1]), config, blocs }).votes, []);
-  const threshold: AutomaticScenario = { delta: 0, distance: 0, relativeDistance: 0, goals: [], seatDeltas: {}, blocDeltas: {} };
+  const threshold: AutomaticScenario = { threshold: 0, delta: 0, distance: 0, relativeDistance: 0, goals: [], seatDeltas: {}, blocDeltas: {} };
   assert.equal(compareScenarios(threshold, { ...threshold }), 0);
 });

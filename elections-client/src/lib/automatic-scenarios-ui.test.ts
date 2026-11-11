@@ -4,18 +4,21 @@ import React from 'react';
 import { create, act } from 'react-test-renderer';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import AutomaticScenarios from '../components/AutomaticScenarios';
+import ScenarioOutcome from '../components/ScenarioOutcome';
 import PartyResearch from '../components/PartyResearch';
 import { decodeSharedScenario } from './shared-scenario';
 import { useBlocPreferences } from '../hooks/use-bloc-preferences';
 import type { AnalysisInput, AutomaticScenario, ScenarioAnalysis } from './automatic-scenarios';
 
 const input: AnalysisInput = {
-  voteData: { a: { votes: 500, mandats: 0 }, b: { votes: 500, mandats: 0 } },
+  voteData: { a: { votes: 500, mandats: 0 }, b: { votes: 500, mandats: 0 }, c: { votes: 9, mandats: 0 } },
   config: { algorithm: 'baderOffer', blockPercentage: 0.0325, agreements: [] },
   blocs: { blocks: { right: { label: 'ימין', color: 'blue', parties: ['a'] }, left: { label: 'שמאל', color: 'red', parties: ['b'] } } },
 };
 const scenario: AutomaticScenario = { party: 'a', delta: 9, distance: 0.009, relativeDistance: 0.018,
   seatDeltas: { a: 1, b: -1 }, blocDeltas: { right: 1, left: -1 }, goals: ['majority:right:gain', 'transfer:left:right', 'party:gain'] };
+const baseline = { seats: { a: 60, b: 60 }, blocs: { right: 60, left: 60 } };
+const empty = { baseline, votes: [], thresholds: [] };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function Location() { const location = useLocation(); return React.createElement('output', {}, location.pathname + location.hash); }
 function text(renderer: ReturnType<typeof create>): string {
@@ -34,41 +37,37 @@ class FakeWorker {
   deliver(analysis: ScenarioAnalysis) { this.onmessage({ data: { analysis } }); }
 }
 
-test('scenario cards open a complete frozen snapshot, handle failures, retry and cancel stale workers', async t => {
+test('the selected scenario compares exact results and opens a frozen simulator snapshot', async t => {
   const previous = Object.getOwnPropertyDescriptor(globalThis, 'Worker');
   Object.defineProperty(globalThis, 'Worker', { configurable: true, value: FakeWorker });
   let renderer!: ReturnType<typeof create>;
   t.after(async () => { await act(async () => renderer?.unmount()); if (previous) Object.defineProperty(globalThis, 'Worker', previous); else delete (globalThis as any).Worker; });
   const element = (props = {}) => React.createElement(MemoryRouter, {}, React.createElement(AutomaticScenarios, {
-    ...input, election: '25', getPartyName: key => key === 'a' ? 'רשימה א' : 'רשימה ב', ...props,
+    ...input, election: '25', getPartyName: key => ({ a: 'רשימה א', b: 'רשימה ב', c: 'רשימה ג' })[key] ?? key, ...props,
   }), React.createElement(Location));
   await act(async () => { renderer = create(element()); });
   assert.match(text(renderer), /מחשב תרחישים/);
   const worker = FakeWorker.instances.at(-1)!;
   assert.deepEqual(worker.payload.voteData, input.voteData);
-  const analysis = { votes: [scenario, { ...scenario, delta: -9, goals: ['party:lose'], blocDeltas: {} },
-    { ...scenario, party: undefined, goals: [], blocDeltas: {} }],
-  thresholds: [{ ...scenario, party: undefined, delta: 0, threshold: 0, goals: [] },
-    { ...scenario, party: undefined, delta: 0, threshold: 0.03, goals: ['majority:right+left:lose'], seatDeltas: { b: 1 } }] };
+  const analysis: ScenarioAnalysis = { baseline, votes: [scenario, { ...scenario, delta: -9, goals: ['party:lose'], seatDeltas: { a: -1, b: 1 }, blocDeltas: {} }],
+    thresholds: [{ ...scenario, party: undefined, delta: 0, threshold: 0, goals: [], seatDeltas: { b: -1, c: 1 }, blocDeltas: { left: -1 } },
+      { ...scenario, party: undefined, delta: 0, threshold: 0.03, goals: ['majority:right+left:lose'], seatDeltas: { a: -2, b: 2 } }] };
   await act(async () => worker.deliver(analysis));
-  assert.equal(renderer.root.findAllByType('article').length, 5);
-  const first = renderer.root.findAllByType('article')[0];
-  assert.match(first.findByType('h3').children.map(child => typeof child === 'string' ? child : '').join(''), /אילו/);
-  assert.equal(first.findAllByType('ul').length, 0);
-  assert.equal(first.findAllByType('details').length, 1);
-  assert.equal(first.findByType('details').props.open, undefined, 'supporting details start collapsed');
-  const deltas = first.findByProps({ 'aria-label': 'השינוי במנדטים לפי רשימה' });
-  assert.equal(deltas.findByProps({ className: 'gain' }).findByType('bdi').children.join(''), '+1');
-  assert.equal(deltas.findByProps({ className: 'lose' }).findByType('bdi').children.join(''), '−1');
-  assert.match(text(renderer), /קולות נוספים/);
-  assert.match(text(renderer), /קולות פחות/);
-
+  const card = () => renderer.root.findByType('article');
+  const visibleValues = () => card().findAllByProps({ className: 'scenario-value' })
+    .map(node => node.type === 'strong' ? node.findByType('bdi').children.join('') : node.children.join(''));
+  const click = (label: string) => renderer.root.findAllByType('button').find(node => node.children.includes(label))!.props.onClick();
+  const options = () => renderer.root.findByProps({ 'aria-label': 'בחירת תרחיש' }).findAllByType('button');
+  assert.equal(card().findByType('details').props.open, undefined, 'supporting details start collapsed');
+  assert.deepEqual(visibleValues(), ['500', '60', '60']);
+  assert.ok(card().findAllByProps({ className: 'scenario-delta' }).every(node => node.props.hidden));
+  await act(async () => click('בתרחיש'));
+  assert.deepEqual(visibleValues(), ['509', '59', '61']);
+  assert.deepEqual(card().findAllByProps({ className: 'scenario-delta' }).map(node => node.children.join('')), ['−1', '+1']);
   assert.match(text(renderer), /יצירת רוב לימין/);
-  assert.match(text(renderer), /ביטול רוב לימין \+ שמאל/);
-  assert.match(text(renderer), /תוספת מנדט/);
-  assert.match(text(renderer), /אובדן מנדט/);
-  const open = (index: number) => renderer.root.findAllByType('article')[index].findByType('button').props.onClick();
-  await act(async () => { await open(0); });
+  await act(async () => click('בפועל'));
+  assert.deepEqual(visibleValues(), ['500', '60', '60']);
+  await act(async () => click('פתיחה בסימולטור'));
   const location = renderer.root.findByType('output').children.join('');
   assert.ok(location.startsWith('/simulator/25#scenario='));
   const snapshot = await decodeSharedScenario(location.split('#scenario=')[1], '25');
@@ -76,21 +75,33 @@ test('scenario cards open a complete frozen snapshot, handle failures, retry and
   assert.equal(snapshot.base.voteData.a.votes, 500);
   assert.equal(snapshot.base.voteData.a.name, 'רשימה א');
   assert.deepEqual(snapshot.scenario.voteData.b, snapshot.base.voteData.b);
-  await act(async () => { await open(4); });
+  await act(async () => options()[1].props.onClick());
+  assert.deepEqual(visibleValues(), ['491', '59', '61']);
+  assert.match(text(renderer), /קולות פחות/);
+  assert.match(text(renderer), /אין שינוי במאזן הגושים/);
+  await act(async () => options()[2].props.onClick());
+  assert.deepEqual(visibleValues(), ['0%', '59', '1']);
+  assert.match(text(renderer), /רשימה ג/);
+  await act(async () => click('בפועל'));
+  assert.deepEqual(visibleValues(), ['3.25%', '60', '0']);
+  await act(async () => options()[3].props.onClick());
+  assert.deepEqual(visibleValues(), ['3%', '58', '62']);
+  assert.match(text(renderer), /ביטול רוב לימין \+ שמאל/);
+  await act(async () => click('פתיחה בסימולטור'));
   const thresholdSnapshot = await decodeSharedScenario(renderer.root.findByType('output').children.join('').split('#scenario=')[1], '25');
   assert.equal(thresholdSnapshot.scenario.config.blockPercentage, 0.03);
   assert.deepEqual(thresholdSnapshot.scenario.voteData, thresholdSnapshot.base.voteData);
   await act(async () => renderer.update(element({ election: 'invalid', party: 'a', counting: true, demo: true })));
   assert.equal(worker.stopped, true);
-  await act(async () => worker.deliver({ votes: [], thresholds: [] }));
+  await act(async () => worker.deliver(empty));
   assert.match(text(renderer), /מחשב תרחישים/);
   const updated = FakeWorker.instances.at(-1)!;
   await act(async () => updated.deliver(analysis));
   assert.match(text(renderer), /מתעדכנים עם הספירה/);
-  assert.doesNotMatch(text(renderer), /אחוז חסימה של 3%/);
-  await act(async () => { await open(0); });
+  assert.equal(options().length, 3, 'thresholds that affect only other lists are omitted');
+  await act(async () => click('פתיחה בסימולטור'));
   assert.match(text(renderer), /פתיחת התרחיש נכשלה/);
-  await act(async () => updated.deliver({ votes: [], thresholds: [] }));
+  await act(async () => updated.deliver(empty));
   assert.match(text(renderer), /לא נמצאו/);
   let prevented = false;
   await act(async () => updated.onerror({ preventDefault() { prevented = true; } }));
@@ -100,11 +111,53 @@ test('scenario cards open a complete frozen snapshot, handle failures, retry and
   assert.equal(updated.stopped, true);
   await act(async () => updated.onerror({ preventDefault() {} }));
   const retry = FakeWorker.instances.at(-1)!;
-  await act(async () => retry.deliver({ votes: [{ ...scenario, goals: ['majority:missing:gain'] }], thresholds: [] }));
+  await act(async () => retry.deliver({ ...empty, votes: [{ ...scenario, goals: ['majority:missing:gain'] }] }));
   assert.match(text(renderer), /missing/);
   Object.defineProperty(globalThis, 'Worker', { configurable: true, value: class { constructor() { throw new Error('Unavailable'); } } });
   await act(async () => renderer.update(element({ party: 'b' })));
   assert.match(text(renderer), /חישוב התרחישים נכשל/);
+});
+
+test('the blocking majority stays at 61 for an internal transfer and disappears when a seat leaves', () => {
+  const settings: AnalysisInput = {
+    ...input,
+    blocs: { blocks: {
+      ...input.blocs.blocks,
+      arab: { label: 'המפלגות הערביות', color: 'green', parties: ['c'], complementaryTo: 'left' },
+    } },
+  };
+  const props = {
+    input: settings,
+    baseline: { seats: { a: 59, b: 50, c: 11 }, blocs: { right: 59, left: 50, arab: 11 } },
+    getPartyName: (key: string) => key,
+    showScenario: true,
+  };
+  const renderer = create(React.createElement(ScenarioOutcome, {
+    ...props,
+    scenario: { ...scenario, party: 'c', delta: -9, seatDeltas: { c: -1, b: 1 }, blocDeltas: { arab: -1, left: 1 } },
+  }));
+  const blocRows = () => renderer.root.findAllByProps({ className: 'scenario-bloc' });
+  const combined = blocRows().at(-1)!;
+  assert.match(text(renderer), /שמאל עם המפלגות הערביות/);
+  assert.equal(combined.findByProps({ className: 'scenario-majority' }).children.join(''), 'רוב חוסם');
+  assert.equal(combined.findByType('strong').findByType('bdi').children.join(''), '61');
+  assert.equal(combined.findByProps({ className: 'is-loss' }).props.hidden, true);
+
+  renderer.update(React.createElement(ScenarioOutcome, {
+    ...props,
+    scenario: { ...scenario, seatDeltas: { b: -1, a: 1 }, blocDeltas: { left: -1, right: 1 } },
+  }));
+  const belowMajority = blocRows().at(-1)!;
+  assert.equal(belowMajority.findByType('strong').findByType('bdi').children.join(''), '60');
+  assert.equal(belowMajority.findAllByProps({ className: 'scenario-majority' }).length, 0);
+
+  renderer.update(React.createElement(ScenarioOutcome, {
+    ...props,
+    scenario: { ...scenario, delta: -9, seatDeltas: { a: -1, d: 1 }, blocDeltas: { right: -1 } },
+  }));
+  assert.equal(blocRows().length, 1);
+  assert.doesNotMatch(text(renderer), /שמאל עם המפלגות הערביות/);
+  renderer.unmount();
 });
 
 test('research loads national results for selected-list scenarios and retains local rankings', async t => {

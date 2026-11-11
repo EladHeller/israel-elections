@@ -333,10 +333,6 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
     <RemainingVotesPanel races={remainingRaces} remainingVotes={remainingVotes} getPartyName={getPartyName} />
   ) : null;
 
-  const blocEntries = (blocs.order || Object.keys(blocs.blocks))
-    .map((key) => ({ ...blocs.blocks[key], value: blocTotals[key] || 0 }))
-    .filter(({ value }) => value > 0);
-
   const partyPanel = (
     <section className="grid grid-single">
       <PartyPanel
@@ -498,11 +494,8 @@ function ElectionScreen({ electionId, viewMode, shared }: { electionId?: string;
           {automaticScenarios}
           {agreements}
           <section className="grid grid-single">
-            <BlocsDistributionPanel
+            <BlocsDistributionPanel key={currentElection}
               editable blocs={blocs}
-              blocData={blocEntries.map(({ value }) => value)}
-              blocColors={blocEntries.map(({ color }) => color)}
-              blocLabels={blocEntries.map(({ label }) => label)}
               blocTotals={blocTotals} blocSeatDeltas={blocSeatDeltas}
               partyToBloc={partyToBloc}
               onPartyBlocChange={(party, blocKey) => isLatestElection ? assignParty(party, blocKey) : setHistoricalAssignments((previous) => ({

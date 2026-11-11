@@ -1,14 +1,29 @@
-const { csvMonitor, uploadResults } = require('./csv-monitor');
-const { calcVotesResults } = require('./calc-elections');
-const { electionsConfig } = require('./config');
+import { csvMonitor, uploadResults } from './csv-monitor';
+import { calcVotesResults } from './calc-elections';
+import config from './config';
+import { isRecord, isVoteData } from './types';
 
-const handler = async (req) => {
+type HandlerEvent = { source?: string; body?: string };
+
+export async function handler(req: HandlerEvent) {
   if (req.source === 'aws.events') {
     return csvMonitor();
   }
   try {
-    const { voteData, blockPercentage, agreements } = JSON.parse(req.body);
-    const res = calcVotesResults(voteData, blockPercentage, agreements);
+    if (typeof req.body !== 'string') throw new Error('Missing request body');
+    const payload: unknown = JSON.parse(req.body);
+    if (!isRecord(payload)) throw new Error('Invalid election calculation payload');
+    const { voteData, blockPercentage, agreements } = payload;
+    if (!isVoteData(voteData)
+      || (blockPercentage != null && typeof blockPercentage !== 'number')
+      || (agreements != null && (!Array.isArray(agreements) || !agreements.every(
+        (agreement: unknown): agreement is string[] =>
+          Array.isArray(agreement) && agreement.every(letter => typeof letter === 'string'),
+      )))
+    ) {
+      throw new Error('Invalid election calculation payload');
+    }
+    const res = calcVotesResults(voteData, blockPercentage ?? undefined, agreements ?? undefined);
     return {
       statusCode: 200,
       body: JSON.stringify(res),
@@ -28,20 +43,12 @@ const handler = async (req) => {
       },
     };
   }
-};
+}
 
-const calcOldElectionsResults = async (electionsIndex) => {
-  const {
-    agreements, algorithm, blockPercentage, voteData,
-  } = electionsConfig[electionsIndex];
-  const votesData = Object.fromEntries(
-    Object.entries(voteData).map(([k, votes]) => [k, { votes }]),
-  );
-  const res = calcVotesResults(votesData, blockPercentage, agreements, algorithm);
+export async function calcOldElectionsResults(electionsIndex: number) {
+  const election = config.electionsConfig[electionsIndex];
+  if (!election?.voteData) throw new Error(`No historical vote data for election ${electionsIndex}`);
+  const { agreements, algorithm, blockPercentage, voteData } = election;
+  const res = calcVotesResults(voteData, blockPercentage, agreements, algorithm);
   await uploadResults(res, electionsIndex);
-};
-
-module.exports = {
-  handler,
-  calcOldElectionsResults,
-};
+}
