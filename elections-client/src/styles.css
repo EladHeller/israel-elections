@@ -163,6 +163,15 @@
   box-sizing: border-box;
 }
 
+/* Keep browser tap highlights and text selection off interactive controls. */
+button,
+summary,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 body {
   margin: 0;
   font-family: 'Assistant', sans-serif;
