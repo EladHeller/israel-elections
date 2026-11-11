@@ -13,16 +13,14 @@ const chunk = 1024 * 1024 * 5; // 5MB
 
 const md5 = (data: Buffer) => crypto.createHash('md5').update(data).digest('hex');
 
-const flat = (arr: any[]) => [].concat(...arr);
-
 export interface FileData {
   file: string;
   size: number;
 }
 
 export async function getAllDirsFiles(files: string[], basePath?: string): Promise<FileData[]> {
-  return flat(await Promise.all(
-    files.flatMap(async (file) => {
+  return (await Promise.all(
+    files.map(async (file) => {
       const currPath = basePath ? `${basePath}/${file}` : file;
       const stat = await fs.lstat(currPath);
       if (stat.isDirectory()) {
@@ -30,9 +28,9 @@ export async function getAllDirsFiles(files: string[], basePath?: string): Promi
         return getAllDirsFiles(dirFiles, currPath);
       }
 
-      return { file: currPath, size: stat.size };
+      return [{ file: currPath, size: stat.size }];
     }),
-  ));
+  )).flat();
 }
 
 async function getEtagOfFile(stream: Buffer): Promise<string> {
@@ -65,7 +63,9 @@ export async function upload(bucket: string, key: string, filePath: string, acl?
       console.log(`${key} initialized`);
       return true;
     } catch (error) {
-      if (error?.$metadata?.httpStatusCode !== 412) throw error;
+      const metadata = error && typeof error === 'object' && '$metadata' in error ? error.$metadata : undefined;
+      if (!metadata || typeof metadata !== 'object' || !('httpStatusCode' in metadata)
+        || metadata.httpStatusCode !== 412) throw error;
       console.log(`${key} already exists; preserving live data`);
       return false;
     }

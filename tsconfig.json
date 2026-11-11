@@ -5,8 +5,7 @@
         "skipLibCheck": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
-        "strict": false,
-        "strictNullChecks": true,
+        "strict": true,
         "types": ["node"],
         "rootDir": "election-results-listener",
         "outDir": "dist"
