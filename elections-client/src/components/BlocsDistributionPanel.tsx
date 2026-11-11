@@ -302,28 +302,9 @@ export function BlocsDistributionPanel({
           <p className="chamber-status" role="status">
             {selected
               ? `${selected.label}${complementLabels ? ` עם ${complementLabels}` : ''} · ${activeSeats} מנדטים`
-              : `${total} מתוך ${seatCount} מנדטים חולקו. בחרו גוש להצגת הרשימות.`}
+              : `${total} מתוך ${seatCount} מנדטים חולקו.`}
             {majorityStatus && <> · <strong>{majorityStatus}</strong></>}
           </p>
-          {selected && (
-            <div className="chamber-party-breakdown">
-              {activeGroups.map(({ key, label, parties, color }) => (
-                <div key={key} className="chamber-party-group" style={{ '--seat-color': color } as React.CSSProperties}>
-                  <h3>{activeGroups.length > 1 ? label : 'הרשימות'}</h3>
-                  {parties.length ? (
-                    <ul aria-label={`מנדטים לפי רשימה: ${label}`}>
-                      {parties.map(({ party, mandats }) => (
-                        <li key={party}>
-                          <span>{getPartyName(party)}</span>
-                          <strong>{mandats}</strong>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p>אין רשימות עם מנדטים</p>}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
       <UnassignedParties parties={unassigned} getPartyName={getPartyName} />

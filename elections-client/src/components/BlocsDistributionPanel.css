@@ -276,31 +276,6 @@
 
 .chamber-status strong { color: var(--ink-90); }
 
-.chamber-party-breakdown { display: grid; gap: 8px; margin-top: 12px; }
-
-.chamber-party-group {
-  min-width: 0;
-  padding: 9px 12px;
-  border: 1px solid var(--ink-20);
-  border-inline-start: 3px solid color-mix(in srgb, var(--seat-color), white var(--chart-tint));
-  border-radius: 10px;
-  background: var(--surface-muted);
-  font-size: 13px;
-}
-
-.chamber-party-group h3 { margin: 0 0 4px; color: var(--ink-50); font-size: inherit; }
-.chamber-party-group p { margin: 4px 0; color: var(--ink-50); }
-.chamber-party-group ul { margin: 0; padding: 0; list-style: none; }
-.chamber-party-group li {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding-block: 4px;
-  overflow-wrap: anywhere;
-}
-.chamber-party-group li + li { border-block-start: 1px solid var(--ink-20); }
-.chamber-party-group strong { font-variant-numeric: tabular-nums; }
-
 @media (max-width: 720px) {
   .chamber-panel { padding: 16px; }
   .chamber-layout { grid-template-columns: minmax(0, 1fr); }
