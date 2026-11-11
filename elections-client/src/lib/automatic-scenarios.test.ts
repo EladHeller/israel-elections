@@ -38,6 +38,8 @@ test('every returned vote scenario obeys both distance limits and includes every
   const before = calcVotesResults(voteData, config.blockPercentage, config.agreements, config.algorithm).realResults;
   const result = analyzeScenarios({ voteData, config, blocs });
   assert.ok(result.votes.length);
+  assert.deepEqual(result.baseline.seats, Object.fromEntries(Object.entries(before).map(([party, { mandats }]) => [party, mandats])));
+  assert.equal(result.baseline.blocs.right, (before.a?.mandats ?? 0) + (before.b?.mandats ?? 0));
   for (const scenario of result.votes) {
     assert.ok(scenario.distance <= 0.01);
     assert.ok(scenario.relativeDistance <= 0.2);
@@ -69,8 +71,9 @@ test('party view finds nearest gain and loss even when no bloc changes; does not
 });
 
 test('empty and zero vote data produce no suggestions', () => {
-  assert.deepEqual(analyzeScenarios({ voteData: {}, config, blocs }), { votes: [], thresholds: [] });
-  assert.deepEqual(analyzeScenarios({ voteData: data([0, 0]), config, blocs }), { votes: [], thresholds: [] });
+  const empty = { baseline: { seats: {}, blocs: {} }, votes: [], thresholds: [] };
+  assert.deepEqual(analyzeScenarios({ voteData: {}, config, blocs }), empty);
+  assert.deepEqual(analyzeScenarios({ voteData: data([0, 0]), config, blocs }), empty);
 });
 
 test('ranking respects distance bands before majority importance', () => {

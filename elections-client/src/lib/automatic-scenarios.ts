@@ -14,8 +14,13 @@ export interface AutomaticScenario {
   relativeDistance: number;
 }
 export interface ScenarioAnalysis {
+  baseline: ScenarioBaseline;
   votes: AutomaticScenario[];
   thresholds: AutomaticScenario[];
+}
+export interface ScenarioBaseline {
+  seats: Record<string, number>;
+  blocs: Record<string, number>;
 }
 export interface AnalysisInput {
   voteData: VoteData;
@@ -121,7 +126,7 @@ export const compareScenarios = (a: AutomaticScenario, b: AutomaticScenario) =>
 
 export function analyzeScenarios({ voteData, config, blocs, partyToBloc = computeBlocMap(blocs), party }: AnalysisInput): ScenarioAnalysis {
   const total = Object.values(voteData).reduce((sum, data) => sum + data.votes, 0);
-  if (!total) return { votes: [], thresholds: [] };
+  if (!total) return { baseline: { seats: {}, blocs: {} }, votes: [], thresholds: [] };
   const baseline = calculate(voteData, config);
   const baseSeats = seats(baseline);
   const totals = (results: ResultsMap) => computeBlocTotals(results, blocs, Object.fromEntries(Object.entries(partyToBloc).map(([key, bloc]) => [key, bloc ?? null])));
@@ -185,7 +190,11 @@ export function analyzeScenarios({ voteData, config, blocs, partyToBloc = comput
   thresholdScenarios.sort((a, b) => Math.abs(a.threshold! - config.blockPercentage) - Math.abs(b.threshold! - config.blockPercentage));
   const closest = thresholdScenarios[0];
   const noThreshold = thresholdScenarios.find(item => item.threshold === 0);
-  return { votes: candidates, thresholds: [...new Set([closest, noThreshold].filter((item): item is AutomaticScenario => !!item))] };
+  return {
+    baseline: { seats: baseSeats, blocs: baseBlocs },
+    votes: candidates,
+    thresholds: [...new Set([closest, noThreshold].filter((item): item is AutomaticScenario => !!item))],
+  };
 }
 
 export function selectScenarios(analysis: ScenarioAnalysis, partyView = false): AutomaticScenario[] {
