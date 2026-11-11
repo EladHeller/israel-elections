@@ -11,7 +11,6 @@
   --stage-glow: #fff;
   --stage-start: #f8fbff;
   --stage-end: #e4edf9;
-  --stage-grid: #607caa18;
   --floor: #dce8f6;
   --floor-edge: #9badc6;
   --floor-outline: #849ab8;
@@ -37,7 +36,6 @@
   --stage-glow: #253e64;
   --stage-start: #182b48;
   --stage-end: #0c1526;
-  --stage-grid: #a6c5ff0c;
   --floor: #101d33;
   --floor-edge: #060b15;
   --floor-outline: #5a779c;
@@ -47,15 +45,6 @@
   --seat-depth: #080e1c;
   --seat-tint: 19%;
   --majority-mark: #f5ce82;
-}
-
-.chamber-stage::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: repeating-linear-gradient(90deg, var(--stage-grid) 0 1px, transparent 1px 32px);
-  mask-image: linear-gradient(#000, transparent 65%);
-  content: '';
 }
 
 .chamber-heading {
@@ -125,10 +114,6 @@
   }
 }
 
-.chamber-seat.is-vacant {
-  --seat-face: var(--seat-neutral);
-}
-
 .chamber-seat.is-dimmed {
   --seat-face: color-mix(in srgb, var(--seat-color, var(--seat-neutral)) 12%, var(--seat-neutral));
 }
@@ -141,7 +126,6 @@
   stroke-width: .65;
 }
 .chamber-seat-base, .chamber-seat-top { transition: fill 220ms ease, stroke 220ms ease; }
-.chamber-seat.is-vacant .chamber-seat-light,
 .chamber-seat.is-dimmed .chamber-seat-light { opacity: .18; }
 
 @keyframes chamber-seat-rise {
@@ -326,3 +310,25 @@
   .chamber-readout strong { animation: none; }
   .chamber-seat-base, .chamber-seat-top, .chamber-scale-track span { transition: none; }
 }
+
+:root:not([data-theme='dark']) .chamber-terrace { stroke: transparent; }
+.chamber-party-region { cursor: pointer; outline: none; }
+.chamber-seat-hit { fill: transparent; }
+.chamber-party-region:focus-visible .chamber-seat-top {
+  stroke: var(--stage-ink);
+  stroke-width: 2;
+}
+.chamber-party-region:hover .chamber-seat-top { stroke-width: 1.8; }
+.chamber-vacant-seat { fill: var(--seat-neutral); }
+.chamber-seat-detail {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-height: 22px;
+  padding: 0 16px 16px;
+  color: var(--stage-muted);
+  font-size: 13px;
+}
+.chamber-seat-detail strong { color: var(--stage-ink); }

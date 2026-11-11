@@ -46,7 +46,13 @@ interface SeatGroup {
   parties: PartySummary[];
 }
 
-function Chamber({ groups, highlighted }: { groups: SeatGroup[]; highlighted: Set<string> }) {
+function Chamber({ groups, highlighted, selectedParty, onSelectParty, getPartyName }: {
+  groups: SeatGroup[];
+  highlighted: Set<string>;
+  selectedParty?: string;
+  onSelectParty: (party: string) => void;
+  getPartyName: (party: string) => string;
+}) {
   const lightId = useId();
   const mapRef = useRef<SVGSVGElement>(null);
   const [hasEntered, setHasEntered] = useState(false);
@@ -66,10 +72,15 @@ function Chamber({ groups, highlighted }: { groups: SeatGroup[]; highlighted: Se
     return () => observer.disconnect();
   }, []);
 
-  const allocations = groups.flatMap((group) => Array<SeatGroup>(group.count).fill(group));
+  let offset = 0;
+  const allocations = groups.flatMap((group) => group.parties.map((party) => {
+    const start = offset;
+    offset += party.mandats;
+    return { group, party, start, end: offset };
+  }));
 
   return (
-    <svg ref={mapRef} className={`chamber-map${hasEntered ? ' has-entered' : ''}`} viewBox="0 0 600 235" aria-hidden="true">
+    <svg ref={mapRef} className={`chamber-map${hasEntered ? ' has-entered' : ''}`} viewBox="0 0 600 235" role="group" aria-label="מושבי המליאה לפי רשימה">
       <defs>
         <linearGradient id={lightId} x1="0" y1="0" x2="0" y2="1">
           <stop stopColor="#fff" stopOpacity=".28" />
@@ -81,25 +92,41 @@ function Chamber({ groups, highlighted }: { groups: SeatGroup[]; highlighted: Se
       {[98, 126, 154, 182, 210, 238, 268].map((radius) =>
         <path key={radius} className="chamber-terrace" d={terrace(radius)} />)}
       <path className="chamber-floor-line" d="M30 196H191 M409 196H570" />
-      {paintOrder.map(({ id, x, y, angle, row, index }) => {
-        const group = allocations[index];
-        return (
-          <g key={id} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}>
-            <g
-              className={`chamber-seat${group ? '' : ' is-vacant'}${highlighted.size && (!group || !highlighted.has(group.key)) ? ' is-dimmed' : ''}`}
-              style={{
-                '--seat-color': group?.color,
-                '--seat-delay': `${(5 - row) * 63 + (1 - Math.sin(angle)) * 240}ms`,
-              } as React.CSSProperties}
-            >
-              <ellipse className="chamber-seat-shadow" cy="5" rx="9.5" ry="5.5" />
-              <ellipse className="chamber-seat-base" cy="3" rx="8.2" ry="5.2" />
-              <ellipse className="chamber-seat-top" rx="8.2" ry="5.2" />
-              <ellipse className="chamber-seat-light" rx="8.2" ry="5.2" fill={`url(#${lightId})`} />
+      {allocations.map(({ group, party, start, end }) => (
+        <g key={party.party} className="chamber-party-region" role="button" tabIndex={0}
+          aria-label={`${getPartyName(party.party)}, ${party.mandats} מנדטים`}
+          aria-pressed={selectedParty === party.party}
+          onClick={() => onSelectParty(party.party)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onSelectParty(party.party);
+            }
+          }}>
+          <title>{getPartyName(party.party)}</title>
+          {paintOrder.filter(({ index }) => index >= start && index < end).map(({ id, x, y, angle, row }) => (
+            <g key={id} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}>
+              <ellipse className="chamber-seat-hit" rx="12" ry="9" />
+              <g
+                className={`chamber-seat${(selectedParty ? selectedParty !== party.party : highlighted.size && !highlighted.has(group.key)) ? ' is-dimmed' : ''}`}
+                style={{
+                  '--seat-color': group.color,
+                  '--seat-delay': `${(5 - row) * 63 + (1 - Math.sin(angle)) * 240}ms`,
+                } as React.CSSProperties}
+              >
+                <ellipse className="chamber-seat-shadow" cy="5" rx="9.5" ry="5.5" />
+                <ellipse className="chamber-seat-base" cy="3" rx="8.2" ry="5.2" />
+                <ellipse className="chamber-seat-top" rx="8.2" ry="5.2" />
+                <ellipse className="chamber-seat-light" rx="8.2" ry="5.2" fill={`url(#${lightId})`} />
+              </g>
             </g>
-          </g>
-        );
-      })}
+          ))}
+        </g>
+      ))}
+      {paintOrder.filter(({ index }) => index >= offset).map(({ id, x, y }) => (
+        <ellipse key={id} className="chamber-vacant-seat" cx={x} cy={y} rx="8.2" ry="5.2" />
+      ))}
+
     </svg>
   );
 }
@@ -155,6 +182,8 @@ function BlocFilter({ label, count, delta, colors, pressed, onClick, breakdown }
 export function BlocsDistributionPanel({
   editable, blocs, blocTotals, blocSeatDeltas, partyToBloc, onPartyBlocChange, getPartyName, mandateParties,
 }: BlocsDistributionPanelProps) {
+  const [partySelection, setPartySelection] = useState<string | null>(null);
+  const selectedParty = mandateParties.find(({ party }) => party === partySelection);
   const [selection, setSelection] = useState<Selection | null>(null);
   const headingId = useId();
   const overview = computeBlocOverview(blocs, blocTotals);
@@ -187,6 +216,10 @@ export function BlocsDistributionPanel({
     : [];
   const highlighted = new Set(selected ? [selected.key, ...complementKeys] : []);
   const activeGroups = groups.filter(({ key }) => highlighted.has(key));
+  const selectedPartyGroup = groups.find(({ parties }) => parties.some(({ party }) => party === selectedParty?.party));
+  const scaleGroups = selectedParty && selectedPartyGroup
+    ? [{ ...selectedPartyGroup, count: selectedParty.mandats }]
+    : selected ? activeGroups : groups;
   const total = groups.reduce((sum, group) => sum + group.count, 0);
   const activeSeats = activeGroups.reduce((sum, group) => sum + group.count, 0);
   const complementLabels = activeGroups.filter((group) => group !== selected).map(({ label }) => label).join(' ו');
@@ -194,8 +227,10 @@ export function BlocsDistributionPanel({
   const majorityStatus = selected && selected.key !== unassignedKey
     ? activeSeats >= majority ? `יש ${majorityLabel}` : `חסרים ${majority - activeSeats} ל${majorityLabel}`
     : '';
-  const select = (key: string, combined = false) =>
+  const select = (key: string, combined = false) => {
+    setPartySelection(null);
     setSelection((current) => current?.key === key && current.combined === combined ? null : { key, combined });
+  };
   const filter = ({ key, label, color, count, delta }: SeatGroup) => (
     <BlocFilter label={label} colors={[color]} count={count} delta={delta}
       pressed={selected && selected.key === key ? !selection?.combined : false} onClick={() => select(key)} />
@@ -210,15 +245,17 @@ export function BlocsDistributionPanel({
             <span>כל מושב מייצג מנדט</span>
           </header>
           <div className="chamber-scene">
-            <Chamber groups={groups} highlighted={highlighted} />
+            <Chamber groups={groups} highlighted={highlighted} selectedParty={selectedParty?.party}
+              getPartyName={getPartyName}
+              onSelectParty={(party) => setPartySelection((current) => current === party ? null : party)} />
             <div className="chamber-readout" aria-hidden="true">
-              <strong key={selected ? activeSeats : total}>{selected ? activeSeats : total}</strong>
+              <strong key={selectedParty?.mandats ?? (selected ? activeSeats : total)}>{selectedParty?.mandats ?? (selected ? activeSeats : total)}</strong>
               <span>מנדטים</span>
             </div>
           </div>
           <div className="chamber-scale" role="img" aria-label={`סרגל מנדטים מ־0 עד ${seatCount}, רוב ב־${majority}`}>
             <div className="chamber-scale-track" aria-hidden="true">
-              {(selected ? activeGroups : groups).map((group) => (
+              {scaleGroups.map((group) => (
                 <span key={group.key}
                   style={{ '--seat-color': group.color, width: `${group.count / seatCount * 100}%` } as React.CSSProperties} />
               ))}
@@ -230,10 +267,15 @@ export function BlocsDistributionPanel({
               <span>{seatCount}</span>
             </div>
           </div>
+          <div className="chamber-seat-detail" role="status">
+            {selectedParty
+              ? <><strong>{getPartyName(selectedParty.party)}</strong><span>{selectedParty.mandats} מנדטים</span></>
+              : <span>לחצו על מושב להצגת הרשימה</span>}
+          </div>
         </div>
         <div className="chamber-controls">
           <div className="chamber-filters" role="group" aria-label="בחירת גוש במליאה">
-            <BlocFilter label="כל המליאה" colors={[]} count={total} pressed={!selected} onClick={() => setSelection(null)} />
+            <BlocFilter label="כל המליאה" colors={[]} count={total} pressed={!selected} onClick={() => { setSelection(null); setPartySelection(null); }} />
             {overview.map(({ key, complementaryKeys, ownSeats, combinedSeats }) => {
               const group = groupsByKey.get(key)!;
               const complements = complementaryKeys.map((other) => groupsByKey.get(other)!);
