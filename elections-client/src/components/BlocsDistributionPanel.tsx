@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import BlocEditor from './BlocEditor';
 import UnassignedParties from './UnassignedParties';
+import { computeBlocOverview } from '../lib/bloc-overview';
 import type { BlocsConfig } from '../types';
 import './BlocsDistributionPanel.css';
 
@@ -42,9 +43,10 @@ interface SeatGroup {
   count: number;
   color: string;
   delta?: number;
+  parties: PartySummary[];
 }
 
-function Chamber({ groups, selected }: { groups: SeatGroup[]; selected: SeatGroup | undefined }) {
+function Chamber({ groups, highlighted }: { groups: SeatGroup[]; highlighted: Set<string> }) {
   const lightId = useId();
   const mapRef = useRef<SVGSVGElement>(null);
   const [hasEntered, setHasEntered] = useState(false);
@@ -84,7 +86,7 @@ function Chamber({ groups, selected }: { groups: SeatGroup[]; selected: SeatGrou
         return (
           <g key={id} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}>
             <g
-              className={`chamber-seat${group ? '' : ' is-vacant'}${selected && selected.key !== group?.key ? ' is-dimmed' : ''}`}
+              className={`chamber-seat${group ? '' : ' is-vacant'}${highlighted.size && (!group || !highlighted.has(group.key)) ? ' is-dimmed' : ''}`}
               style={{
                 '--seat-color': group?.color,
                 '--seat-delay': `${(5 - row) * 63 + (1 - Math.sin(angle)) * 240}ms`,
@@ -119,28 +121,85 @@ interface BlocsDistributionPanelProps {
   mandateParties: PartySummary[];
 }
 
+type Selection = { key: string; combined: boolean };
+
+function BlocFilter({ label, count, delta, colors, pressed, onClick, breakdown }: {
+  label: string;
+  count: number;
+  delta?: number;
+  colors: string[];
+  pressed: boolean;
+  onClick: () => void;
+  breakdown?: string;
+}) {
+  return (
+    <button type="button" className={`ui-button ui-button-quiet chamber-filter${breakdown ? ' chamber-filter-combined' : ''}`}
+      aria-pressed={pressed} onClick={onClick}>
+      <span className="chamber-swatches" aria-hidden="true">
+        {colors.length ? colors.map((color, index) =>
+          <span key={index} className="chamber-swatch" style={{ '--seat-color': color } as React.CSSProperties} />
+        ) : <span className="chamber-swatch chamber-swatch-all" />}
+      </span>
+      <span>
+        {label}
+        {breakdown && <small className="chamber-breakdown" dir="ltr">{breakdown}</small>}
+      </span>
+      <strong>{count}</strong>
+      {!!delta && <span dir="ltr" className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>
+        {delta > 0 ? `+${delta}` : delta}
+      </span>}
+    </button>
+  );
+}
+
 export function BlocsDistributionPanel({
   editable, blocs, blocTotals, blocSeatDeltas, partyToBloc, onPartyBlocChange, getPartyName, mandateParties,
 }: BlocsDistributionPanelProps) {
-  const [selection, setSelection] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
   const headingId = useId();
-  const unassigned = mandateParties.filter(({ party }) => !partyToBloc[party]);
-  const unassignedSeats = unassigned.reduce((sum, party) => sum + party.mandats, 0);
-  const groups: SeatGroup[] = (blocs.order || Object.keys(blocs.blocks)).map((key) => ({
-    key,
-    label: blocs.blocks[key].label,
-    color: blocs.blocks[key].color,
-    count: blocTotals[key] || 0,
-    delta: blocSeatDeltas[key],
-  }));
-  if (unassignedSeats) {
-    groups.push({ key: unassignedKey, label: 'ללא שיוך', color: '#899bb4', count: unassignedSeats });
+  const overview = computeBlocOverview(blocs, blocTotals);
+  const groupsByKey = new Map<string, SeatGroup>(
+    (blocs.order || Object.keys(blocs.blocks)).map((key) => [key, {
+      key,
+      label: blocs.blocks[key].label,
+      color: blocs.blocks[key].color,
+      count: blocTotals[key] || 0,
+      delta: blocSeatDeltas[key],
+      parties: [],
+    }]),
+  );
+  const unassigned: PartySummary[] = [];
+  for (const party of mandateParties) {
+    const group = groupsByKey.get(partyToBloc[party.party] ?? '');
+    (group?.parties ?? unassigned).push(party);
   }
-  const selected = groups.find(({ key }) => key === selection);
+  const unassignedSeats = unassigned.reduce((sum, party) => sum + party.mandats, 0);
+  if (unassignedSeats) {
+    groupsByKey.set(unassignedKey, {
+      key: unassignedKey, label: 'ללא שיוך', color: '#899bb4', count: unassignedSeats, parties: unassigned,
+    });
+  }
+  const groupedKeys = overview.flatMap(({ key, complementaryKeys }) => [key, ...complementaryKeys]);
+  const groups = [...new Set([...groupedKeys, ...groupsByKey.keys()])].map((key) => groupsByKey.get(key)!);
+  const selected = selection && groupsByKey.get(selection.key);
+  const complementKeys = selection?.combined
+    ? overview.find(({ key }) => key === selection.key)?.complementaryKeys ?? []
+    : [];
+  const highlighted = new Set(selected ? [selected.key, ...complementKeys] : []);
+  const activeGroups = groups.filter(({ key }) => highlighted.has(key));
   const total = groups.reduce((sum, group) => sum + group.count, 0);
+  const activeSeats = activeGroups.reduce((sum, group) => sum + group.count, 0);
+  const complementLabels = activeGroups.filter((group) => group !== selected).map(({ label }) => label).join(' ו');
+  const majorityLabel = selection?.combined ? 'רוב חוסם' : 'רוב';
   const majorityStatus = selected && selected.key !== unassignedKey
-    ? selected.count >= majority ? 'יש רוב' : `חסרים ${majority - selected.count} לרוב`
+    ? activeSeats >= majority ? `יש ${majorityLabel}` : `חסרים ${majority - activeSeats} ל${majorityLabel}`
     : '';
+  const select = (key: string, combined = false) =>
+    setSelection((current) => current?.key === key && current.combined === combined ? null : { key, combined });
+  const filter = ({ key, label, color, count, delta }: SeatGroup) => (
+    <BlocFilter label={label} colors={[color]} count={count} delta={delta}
+      pressed={selected && selected.key === key ? !selection?.combined : false} onClick={() => select(key)} />
+  );
 
   return (
     <section className="panel chamber-panel" aria-labelledby={headingId}>
@@ -151,15 +210,15 @@ export function BlocsDistributionPanel({
             <span>כל מושב מייצג מנדט</span>
           </header>
           <div className="chamber-scene">
-            <Chamber groups={groups} selected={selected} />
+            <Chamber groups={groups} highlighted={highlighted} />
             <div className="chamber-readout" aria-hidden="true">
-              <strong key={selected?.count ?? total}>{selected?.count ?? total}</strong>
+              <strong key={selected ? activeSeats : total}>{selected ? activeSeats : total}</strong>
               <span>מנדטים</span>
             </div>
           </div>
           <div className="chamber-scale" role="img" aria-label={`סרגל מנדטים מ־0 עד ${seatCount}, רוב ב־${majority}`}>
             <div className="chamber-scale-track" aria-hidden="true">
-              {(selected ? [selected] : groups).map((group) => (
+              {(selected ? activeGroups : groups).map((group) => (
                 <span key={group.key}
                   style={{ '--seat-color': group.color, width: `${group.count / seatCount * 100}%` } as React.CSSProperties} />
               ))}
@@ -174,29 +233,55 @@ export function BlocsDistributionPanel({
         </div>
         <div className="chamber-controls">
           <div className="chamber-filters" role="group" aria-label="בחירת גוש במליאה">
-            <button type="button" className="ui-button ui-button-quiet chamber-filter"
-              aria-pressed={!selected} onClick={() => setSelection(null)}>
-              <span className="chamber-swatch chamber-swatch-all" />
-              <span>כל המליאה</span>
-              <strong>{total}</strong>
-            </button>
-            {groups.map(({ key, label, color, count, delta }) => (
-              <button key={key} type="button" className="ui-button ui-button-quiet chamber-filter"
-                aria-pressed={selected?.key === key}
-                onClick={() => setSelection(selected?.key === key ? null : key)}>
-                <span className="chamber-swatch" style={{ '--seat-color': color } as React.CSSProperties} />
-                <span>{label}</span>
-                <strong>{count}</strong>
-                {!!delta && <span dir="ltr" className={`delta-chip ${delta > 0 ? 'gain' : 'lose'}`}>
-                  {delta > 0 ? `+${delta}` : delta}
-                </span>}
-              </button>
-            ))}
+            <BlocFilter label="כל המליאה" colors={[]} count={total} pressed={!selected} onClick={() => setSelection(null)} />
+            {overview.map(({ key, complementaryKeys, ownSeats, combinedSeats }) => {
+              const group = groupsByKey.get(key)!;
+              const complements = complementaryKeys.map((other) => groupsByKey.get(other)!);
+              const extraSeats = combinedSeats - ownSeats;
+              return (
+                <div key={key} className="chamber-bloc">
+                  {filter(group)}
+                  {complements.length > 0 && (
+                    <BlocFilter
+                      label={`${combinedSeats >= majority ? 'רוב חוסם עם' : 'עם'} ${complements.map(({ label }) => label).join(' ו')}`}
+                      colors={[group.color, ...complements.map(({ color }) => color)]}
+                      count={combinedSeats}
+                      delta={[group, ...complements].reduce((sum, { delta }) => sum + (delta ?? 0), 0)}
+                      breakdown={`${ownSeats} + ${extraSeats}`}
+                      pressed={selected === group && selection?.combined === true}
+                      onClick={() => select(key, true)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+            {unassignedSeats > 0 && filter(groupsByKey.get(unassignedKey)!)}
           </div>
           <p className="chamber-status" role="status">
-            {selected ? `${selected.label} · ${selected.count} מנדטים` : `${total} מתוך ${seatCount} מנדטים חולקו`}
+            {selected
+              ? `${selected.label}${complementLabels ? ` עם ${complementLabels}` : ''} · ${activeSeats} מנדטים`
+              : `${total} מתוך ${seatCount} מנדטים חולקו. בחרו גוש להצגת הרשימות.`}
             {majorityStatus && <> · <strong>{majorityStatus}</strong></>}
           </p>
+          {selected && (
+            <div className="chamber-party-breakdown">
+              {activeGroups.map(({ key, label, parties, color }) => (
+                <div key={key} className="chamber-party-group" style={{ '--seat-color': color } as React.CSSProperties}>
+                  <h3>{activeGroups.length > 1 ? label : 'הרשימות'}</h3>
+                  {parties.length ? (
+                    <ul aria-label={`מנדטים לפי רשימה: ${label}`}>
+                      {parties.map(({ party, mandats }) => (
+                        <li key={party}>
+                          <span>{getPartyName(party)}</span>
+                          <strong>{mandats}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p>אין רשימות עם מנדטים</p>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <UnassignedParties parties={unassigned} getPartyName={getPartyName} />
