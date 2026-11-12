@@ -83,6 +83,113 @@ test('theme toggles remain usable when storage fails and preserve the selected t
   }
 });
 
+test('theme switch drags settle in both directions without consuming taps or keyboard clicks', async t => {
+  const originals = ['document', 'localStorage'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)] as const);
+  const dataset = { theme: 'light' };
+  const stored: string[] = [];
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { documentElement: { dataset } } });
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { setItem: (_key: string, value: string) => stored.push(value) } });
+  let rtl = true;
+  let width = 88;
+  let visibleProgress: number | undefined;
+  const captures: number[] = [];
+  const target = {
+    get clientWidth() { return width; },
+    clientLeft: 1,
+    getBoundingClientRect: () => ({ left: 100 }),
+    matches: () => rtl,
+    setPointerCapture: (id: number) => captures.push(id),
+  };
+  const knob = {
+    offsetWidth: 34,
+    get offsetLeft() { return rtl ? width - this.offsetWidth - 5 : 5; },
+    getBoundingClientRect() {
+      const progress = visibleProgress ?? Number(dataset.theme === 'dark');
+      return { left: 101 + this.offsetLeft + (rtl ? -1 : 1) * (width - 44) * progress };
+    },
+  };
+  const renderer = create(React.createElement(ThemeToggle), {
+    createNodeMock: node => (node.props as { className?: string }).className === 'theme-toggle-carriage' ? knob : null,
+  });
+  t.after(() => {
+    renderer.unmount();
+    for (const [name, descriptor] of originals) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else Reflect.deleteProperty(globalThis, name);
+    }
+  });
+  const button = () => renderer.root.findByType('button');
+  const pointer = (handler: string, x: number, overrides = {}) => act(() => {
+    button().props[handler]({ currentTarget: target, isPrimary: true, button: 0, pointerId: 1, clientX: x, clientY: 40, ...overrides });
+  });
+  const click = (detail: number) => act(() => button().props.onClick({ detail }));
+  const progress = () => button().props.style?.['--switch-drag-progress'];
+
+  pointer('onPointerDown', 80, { isPrimary: false });
+  pointer('onPointerDown', 80, { button: 2 });
+  pointer('onPointerMove', 60);
+  pointer('onPointerUp', 60);
+  assert.deepEqual(captures, []);
+  pointer('onPointerDown', 80);
+  pointer('onPointerDown', 80, { pointerId: 2 });
+  pointer('onPointerMove', 60, { pointerId: 2 });
+  pointer('onPointerUp', 60, { pointerId: 2 });
+  pointer('onPointerMove', 77);
+  assert.equal(progress(), undefined);
+  pointer('onPointerUp', 77);
+  pointer('onLostPointerCapture', 77);
+  click(1);
+  assert.deepEqual(captures, [1]);
+  assert.deepEqual(stored, ['dark']);
+
+  pointer('onPointerDown', 30);
+  pointer('onPointerMove', 42);
+  assert.equal(progress(), 1 - 12 / 44);
+  pointer('onPointerUp', 42);
+  click(1);
+  assert.equal(progress(), undefined);
+  assert.deepEqual(stored, ['dark'], 'letting go before the midpoint keeps the current theme');
+
+  pointer('onPointerDown', 30);
+  pointer('onPointerMove', 90);
+  assert.equal(progress(), 0);
+  assert.equal(button().props['aria-checked'], true, 'the site theme changes on release');
+  pointer('onPointerUp', 90);
+  click(1);
+  assert.deepEqual(stored, ['dark', 'light'], 'the pointer click after a drag is consumed');
+
+  pointer('onPointerDown', 80);
+  pointer('onPointerMove', 30);
+  assert.equal(progress(), 1);
+  pointer('onPointerCancel', 30);
+  assert.equal(progress(), undefined);
+  assert.equal(dataset.theme, 'light');
+  click(0);
+  assert.equal(dataset.theme, 'dark', 'keyboard clicks still work after a cancelled pointer');
+
+  rtl = false;
+  visibleProgress = 0.75;
+  pointer('onPointerDown', 80);
+  pointer('onPointerMove', 69);
+  assert.equal(progress(), 0.5, 'a new drag picks up the knob at its visible position');
+  pointer('onLostPointerCapture', 69);
+  assert.equal(progress(), undefined);
+  visibleProgress = undefined;
+  pointer('onPointerDown', 80);
+  pointer('onPointerUp', 45);
+  click(1);
+  assert.deepEqual(stored, ['dark', 'light', 'dark', 'light']);
+  pointer('onPointerDown', 45);
+  pointer('onPointerUp', 45, { clientY: 75 });
+  click(1);
+  assert.equal(dataset.theme, 'light', 'vertical movement is not treated as a tap');
+
+  width = 44;
+  const previousCaptures = captures.length;
+  pointer('onPointerDown', 45);
+  assert.equal(captures.length, previousCaptures, 'a track with no travel does not capture the pointer');
+});
+
 test('header retains navigation, status and action content in research and summary modes', async () => {
   const original = Object.getOwnPropertyDescriptor(globalThis, 'document');
   Object.defineProperty(globalThis, 'document', { configurable: true, value: { documentElement: { dataset: {} } } });
