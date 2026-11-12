@@ -1,10 +1,33 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+
+type SwitchPointer = React.PointerEvent<HTMLButtonElement>;
+
+interface Drag {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  startProgress: number;
+  travel: number;
+  direction: 1 | -1;
+  moved: boolean;
+}
+
+const movedBeyondTap = (drag: Drag, event: SwitchPointer) =>
+  Math.max(Math.abs(event.clientX - drag.startX), Math.abs(event.clientY - drag.startY)) >= 5;
+
+const progressAt = (drag: Drag, x: number) => {
+  const offset = (x - drag.startX) * drag.direction;
+  return Math.min(1, Math.max(0, drag.startProgress + offset / drag.travel));
+};
 
 const ThemeToggle: React.FC = () => {
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.theme === 'dark');
+  const [dragProgress, setDragProgress] = useState<number | null>(null);
+  const carriage = useRef<HTMLSpanElement>(null);
+  const drag = useRef<Drag | null>(null);
+  const ignorePointerClick = useRef(false);
 
-  const toggleTheme = () => {
-    const nextIsDark = !isDark;
+  const applyTheme = (nextIsDark: boolean) => {
     const theme = nextIsDark ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
     setIsDark(nextIsDark);
@@ -15,12 +38,72 @@ const ThemeToggle: React.FC = () => {
     }
   };
 
+  const startDrag = (event: SwitchPointer) => {
+    if (!event.isPrimary || event.button !== 0 || drag.current) return;
+    ignorePointerClick.current = false;
+    const button = event.currentTarget;
+    const knob = carriage.current!;
+    const direction = button.matches(':dir(rtl)') ? -1 : 1;
+    const inset = direction === -1 ? button.clientWidth - knob.offsetLeft - knob.offsetWidth : knob.offsetLeft;
+    const travel = button.clientWidth - 2 * inset - knob.offsetWidth;
+    if (travel <= 0) return;
+
+    // Grab the visible position, even if a previous slide is still settling.
+    const restX = button.getBoundingClientRect().left + button.clientLeft + knob.offsetLeft;
+    const startProgress = (knob.getBoundingClientRect().left - restX) * direction / travel;
+    drag.current = {
+      pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+      startProgress, travel, direction, moved: false,
+    };
+    button.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = (event: SwitchPointer) => {
+    const current = drag.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    if (!current.moved && !movedBeyondTap(current, event)) return;
+    current.moved = true;
+    setDragProgress(progressAt(current, event.clientX));
+  };
+
+  const finishDrag = (event: SwitchPointer) => {
+    const current = drag.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    drag.current = null;
+    setDragProgress(null);
+    if (!current.moved && !movedBeyondTap(current, event)) return;
+    ignorePointerClick.current = true;
+    const nextIsDark = progressAt(current, event.clientX) >= 0.5;
+    if (nextIsDark !== isDark) applyTheme(nextIsDark);
+  };
+
+  const cancelDrag = (event: SwitchPointer) => {
+    if (drag.current?.pointerId !== event.pointerId) return;
+    drag.current = null;
+    ignorePointerClick.current = true;
+    setDragProgress(null);
+  };
+
+  const toggleTheme = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // The browser can dispatch a click after pointerup, including after a drag.
+    // Keyboard and assistive technology clicks have a detail of zero.
+    if (ignorePointerClick.current && event.detail !== 0) {
+      ignorePointerClick.current = false;
+      return;
+    }
+    applyTheme(!isDark);
+  };
+
   return (
-    <button type="button" className="theme-toggle" aria-label="מצב כהה" role="switch" aria-checked={isDark} onClick={toggleTheme}>
+    <button type="button" className="theme-toggle" aria-label="מצב כהה" role="switch" aria-checked={isDark}
+      data-dragging={dragProgress !== null ? '' : undefined}
+      style={dragProgress === null ? undefined : { '--switch-drag-progress': dragProgress } as React.CSSProperties}
+      onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={finishDrag}
+      onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag} onClick={toggleTheme}>
       <span className="theme-toggle-track" aria-hidden="true">
         <span className="theme-toggle-night" />
       </span>
-      <span className="theme-toggle-carriage" aria-hidden="true">
+      <span ref={carriage} className="theme-toggle-carriage" aria-hidden="true">
         <span className="theme-toggle-thumb">
           <span className="theme-toggle-rim" />
           <span className="theme-toggle-lens">
