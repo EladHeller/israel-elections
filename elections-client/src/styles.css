@@ -1070,34 +1070,36 @@ body {
   --margin-surface: var(--gain-background);
 }
 .mandate-margin-cell .mandate-margin-value {
-  display: inline-grid;
-  place-items: center;
-  max-width: 100%;
-  padding: 1px 4px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding: 0;
   color: var(--margin-ink);
   font-size: .89rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-.mandate-margin-table[data-editable='true'] .mandate-margin-value { min-height: 44px; }
 .mandate-margin-cell button.mandate-margin-value {
-  min-width: 44px;
-  padding: 4px;
-  background: var(--card);
-  border-color: var(--control-border);
+  background: transparent;
+  border: 0;
   border-radius: 8px;
 }
-.mandate-margin-cell[data-close='true'] .mandate-margin-value {
+.mandate-margin-value > bdi { padding-inline: 4px; border-radius: 5px; }
+.mandate-margin-cell[data-close='true'] .mandate-margin-value > bdi,
+.mandate-margin-cell button.mandate-margin-value:hover > bdi {
   background: var(--margin-surface);
-  border-radius: 8px;
+}
+.mandate-margin-cell[data-close='true'] .mandate-margin-value > bdi {
   font-weight: 800;
 }
 .mandate-margin-track {
-  display: block;
+  justify-self: stretch;
   position: relative;
   height: 6px;
-  margin-block-start: 3px;
   background: var(--chart-track);
 }
 .mandate-margin-cell[data-direction='gain'] .mandate-margin-track { border-start-start-radius: 8px; border-end-start-radius: 8px; }
