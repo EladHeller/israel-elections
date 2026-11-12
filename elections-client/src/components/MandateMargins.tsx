@@ -33,7 +33,13 @@ function MarginCell({ race, partyName, direction, scale, limit, order, onVoteDel
   const margin = race[direction];
   const gain = direction === 'gain';
   const formatted = margin === null ? '—' : `${gain ? '+' : '−'}${numberFormat.format(margin)}`;
-  const value = <bdi dir="ltr">{formatted}</bdi>;
+  const value = <>
+    <bdi dir="ltr">{formatted}</bdi>
+    <span className="mandate-margin-track" aria-hidden="true">
+      {margin !== null && <span className="mandate-margin-bar" key={order}
+        style={{ '--margin-width': `${margin / scale * 100}%` } as React.CSSProperties} />}
+    </span>
+  </>;
   const close = isCloseSeatMargin(margin, limit);
   return (
     <td className="mandate-margin-cell" data-direction={direction} data-close={close}>
@@ -44,10 +50,6 @@ function MarginCell({ race, partyName, direction, scale, limit, order, onVoteDel
           {value}
         </button>
       ) : <span className="mandate-margin-value">{value}</span>}
-      <span className="mandate-margin-track" aria-hidden="true">
-        {margin !== null && <span className="mandate-margin-bar" key={order}
-          style={{ '--margin-width': `${margin / scale * 100}%` } as React.CSSProperties} />}
-      </span>
       {!gain && race.loseCrossesThreshold && (
         <span className="mandate-threshold-loss">ירידה מתחת לאחוז החסימה</span>
       )}
@@ -96,7 +98,7 @@ export default function MandateMargins({ races, limit, getPartyName, onVoteDelta
         )}
       </div>
       <p className="mandate-margin-legend"><span aria-hidden="true" />קרובות במיוחד · עד <bdi>{numberFormat.format(limit)}</bdi> קולות (10% ממודד המנדט)</p>
-      <table className="mandate-margin-table" dir="rtl" style={axisStyle} data-editable={!!onVoteDelta}
+      <table className="mandate-margin-table" dir="rtl" style={axisStyle}
         aria-label="מרחק בקולות מהשגת מנדט ומאיבוד מנדט">
         <thead>
           <tr>
