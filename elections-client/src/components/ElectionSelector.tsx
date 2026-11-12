@@ -10,12 +10,23 @@ interface ElectionSelectorProps {
 const electionLabel = (electionId: string | null): string =>
   electionId ? `הכנסת ה־${electionId}` : 'בחירת כנסת';
 
-const ElectionSelector: React.FC<ElectionSelectorProps> = ({
+interface OptionSelectProps<Value extends string> {
+  label: string;
+  value: Value | null;
+  valueLabel: string;
+  options: { id: Value; name: string }[];
+  onChange: (value: Value) => void;
+  disabled?: boolean;
+}
+
+export function OptionSelect<Value extends string>({
+  label,
   value,
-  elections,
+  valueLabel,
+  options,
   onChange,
   disabled = false,
-}) => {
+}: OptionSelectProps<Value>) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -26,8 +37,8 @@ const ElectionSelector: React.FC<ElectionSelectorProps> = ({
   const valueId = `${id}-value`;
   const listboxId = `${id}-listbox`;
 
-  const selectedIndex = Math.max(0, elections.indexOf(value ?? ''));
-  const isDisabled = disabled || elections.length === 0;
+  const selectedIndex = Math.max(0, options.findIndex(option => option.id === value));
+  const isDisabled = disabled || options.length === 0;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -62,14 +73,14 @@ const ElectionSelector: React.FC<ElectionSelectorProps> = ({
     triggerRef.current?.focus();
   };
 
-  const selectElection = (electionId: string) => {
-    onChange(electionId);
+  const selectOption = (optionId: Value) => {
+    onChange(optionId);
     closeAndFocusTrigger();
   };
 
   const focusOption = (index: number) => {
-    if (elections.length === 0) return;
-    const normalizedIndex = (index + elections.length) % elections.length;
+    if (options.length === 0) return;
+    const normalizedIndex = (index + options.length) % options.length;
     setActiveIndex(normalizedIndex);
   };
 
@@ -92,7 +103,7 @@ const ElectionSelector: React.FC<ElectionSelectorProps> = ({
         break;
       case 'End':
         event.preventDefault();
-        focusOption(elections.length - 1);
+        focusOption(options.length - 1);
         break;
       case 'Escape':
         event.preventDefault();
@@ -113,7 +124,7 @@ const ElectionSelector: React.FC<ElectionSelectorProps> = ({
         }
       }}
     >
-      <span id={labelId}>כנסת</span>
+      <span id={labelId}>{label}</span>
       <div className={`election-selector ${isOpen ? 'is-open' : ''}`}>
         <button
           ref={triggerRef}
@@ -136,13 +147,13 @@ const ElectionSelector: React.FC<ElectionSelectorProps> = ({
               event.preventDefault();
               openAt(
                 event.key === 'ArrowUp'
-                  ? Math.max(0, elections.length - 1)
+                  ? Math.max(0, options.length - 1)
                   : selectedIndex,
               );
             }
           }}
         >
-          <span id={valueId}>{electionLabel(value)}</span>
+          <span id={valueId}>{valueLabel}</span>
           <span className="election-selector-chevron" aria-hidden="true" />
         </button>
 
@@ -153,23 +164,23 @@ const ElectionSelector: React.FC<ElectionSelectorProps> = ({
             role="listbox"
             aria-labelledby={labelId}
           >
-            {elections.map((election, index) => (
+            {options.map((option, index) => (
               <button
-                key={election}
+                key={option.id}
                 ref={(element) => {
                   optionRefs.current[index] = element;
                 }}
                 type="button"
                 role="option"
-                aria-selected={election === value}
-                className={election === value ? 'is-selected' : ''}
+                aria-selected={option.id === value}
+                className={option.id === value ? 'is-selected' : ''}
                 tabIndex={index === activeIndex ? 0 : -1}
                 onFocus={() => setActiveIndex(index)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
-                onClick={() => selectElection(election)}
+                onClick={() => selectOption(option.id)}
               >
-                <span>{electionLabel(election)}</span>
-                {election === value && <span aria-hidden="true">✓</span>}
+                <span>{option.name}</span>
+                {option.id === value && <span aria-hidden="true">✓</span>}
               </button>
             ))}
           </div>
@@ -177,6 +188,17 @@ const ElectionSelector: React.FC<ElectionSelectorProps> = ({
       </div>
     </div>
   );
-};
+}
 
-export default ElectionSelector;
+export default function ElectionSelector({ value, elections, onChange, disabled }: ElectionSelectorProps) {
+  return (
+    <OptionSelect
+      label="כנסת"
+      value={value}
+      valueLabel={electionLabel(value)}
+      options={elections.map(id => ({ id, name: electionLabel(id) }))}
+      onChange={onChange}
+      disabled={disabled}
+    />
+  );
+}

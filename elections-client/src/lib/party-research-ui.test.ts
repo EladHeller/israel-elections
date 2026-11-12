@@ -1,3 +1,4 @@
+import SearchableSelect from '../components/SearchableSelect';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
@@ -51,9 +52,9 @@ test('research route loads official CSV, selects a party, filters and refreshes 
     assert.match(text(renderer), /הספירה נמשכת/);
     assert.match(text(renderer), /קובץ נתוני היישובים עודכן/);
     assert.equal(renderer.root.findAllByType('table').length, 2);
-    assert.equal(renderer.root.findAllByType('select')[0].props.value, 'אמת');
-    await act(async () => { renderer.root.findAllByType('select')[0].props.onChange({ target: { value: 'מחל' } }); });
-    assert.equal(renderer.root.findAllByType('select')[0].props.value, 'מחל');
+    assert.equal(renderer.root.findByType(SearchableSelect).props.value, 'אמת');
+    await act(async () => { renderer.root.findByType(SearchableSelect).props.onChange('מחל'); });
+    assert.equal(renderer.root.findByType(SearchableSelect).props.value, 'מחל');
     await act(async () => { renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '50' } }); });
     assert.equal(renderer.root.findAllByType('tbody')[0].findAllByType('tr').length, 1);
     fail = true;
@@ -141,7 +142,7 @@ test('research paginates every locality, resets on list changes, handles empty f
     await act(async () => more().props.onClick()); assert.equal(rows().length, 80); assert.equal(more(), undefined);
     assert.ok(more('אחוז התמיכה'));
     await act(async () => more('אחוז התמיכה').props.onClick()); assert.equal(rows(1).length, 80); assert.equal(more('אחוז התמיכה'), undefined);
-    await act(async () => renderer.root.findByType('select').props.onChange({ target: { value: 'חדש' } }));
+    await act(async () => renderer.root.findByType(SearchableSelect).props.onChange('חדש'));
     assert.equal(rows().length, 20); assert.equal(rows(1).length, 20); assert.match(text(renderer), /חדש/);
     await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '101' } }));
     assert.match(text(renderer), /אין יישובים התואמים/); assert.equal(more(), undefined); assert.equal(more('אחוז התמיכה'), undefined);
