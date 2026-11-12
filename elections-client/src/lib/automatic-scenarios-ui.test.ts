@@ -1,3 +1,4 @@
+import SearchableSelect from '../components/SearchableSelect';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
@@ -176,7 +177,7 @@ test('research loads national results for selected-list scenarios and retains lo
     React.createElement(Routes, {}, React.createElement(Route, { path: '/research/:electionId', element: React.createElement(PartyResearch) })))); await tick(); });
   assert.equal(FakeWorker.instances.at(-1)!.payload.party, 'a');
   assert.equal(renderer.root.findAllByType('table').length, 2);
-  await act(async () => renderer.root.findByType('select').props.onChange({ target: { value: 'b' } }));
+  await act(async () => renderer.root.findByType(SearchableSelect).props.onChange('b'));
   assert.equal(FakeWorker.instances.at(-1)!.payload.party, 'b');
 });
 

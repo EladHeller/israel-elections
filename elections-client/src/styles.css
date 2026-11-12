@@ -634,16 +634,17 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.algorithm-select {
+.election-setting .election-control {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+
+.election-setting .election-selector {
+  min-width: 170px;
   max-width: 100%;
-  font-family: 'Assistant', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--ink-20);
-  background: var(--card);
-  color: var(--ink-90);
 }
 
 .block-percentage-editor {
@@ -1348,8 +1349,7 @@ body {
 }
 
 .scenario-config-row input,
-.add-agreement select,
-.add-agreement button,
+.add-agreement > button,
 .vote-row input {
   font-family: 'Assistant', sans-serif;
   border: 1px solid var(--ink-20);
@@ -1414,15 +1414,24 @@ body {
 .add-agreement {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.add-agreement select {
+.add-agreement .searchable-select-control {
   min-width: 0;
+  width: 100%;
 }
 
-.add-agreement button {
+.add-agreement .election-selector-trigger > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-agreement > button {
+  min-height: 44px;
   background: var(--strong-background);
   color: var(--button-text);
   cursor: pointer;
@@ -1955,13 +1964,11 @@ body {
 
 /* Keep interactive boundaries distinct from quiet table separators. */
 .election-selector-trigger,
-.algorithm-select,
 .block-percentage-editor,
 .party-vote-input,
 .ghost,
 .scenario-config-row input,
-.add-agreement select,
-.add-agreement button,
+.add-agreement > button,
 .vote-row input {
   border-color: var(--control-border);
 }
@@ -2059,7 +2066,7 @@ body {
 .party-research-link:hover, .party-research-link:focus-visible { color: var(--ink-50); }
 .research-controls { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-block: 1.5rem; }
 .research-controls label { display: flex; flex-direction: column; gap: .5rem; }
-.research-controls select, .research-controls input { padding: .7rem; max-width: 100%; }
+.research-controls label > input { padding: .7rem; max-width: 100%; }
 .research-rankings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; margin-block: 1rem; }
 .research-show-more { margin-top: 1rem; min-height: 44px; font: inherit; }
 .research-show-more:hover { background: var(--surface-hover); color: var(--ink-90); }
@@ -2318,7 +2325,7 @@ body {
 
 .searchable-select-control { display: flex; flex-direction: column; gap: .5rem; width: 280px; max-width: 100%; }
 .searchable-select-menu { max-height: none; overflow: visible; box-sizing: border-box; }
-.searchable-select-menu input { width: 100%; box-sizing: border-box; margin-bottom: .5rem; font: inherit; border: 1px solid var(--ink-20); border-radius: 9px; background: var(--card); color: var(--ink-90); }
+.searchable-select-menu input { width: 100%; box-sizing: border-box; margin-bottom: .5rem; padding: .55rem .65rem; font: inherit; border: 1px solid var(--ink-20); border-radius: 9px; background: var(--card); color: var(--ink-90); }
 .searchable-select-options { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
 .searchable-select-options button.is-active { outline: 2px solid var(--ink-50); outline-offset: -2px; }
 .searchable-select-menu p { padding: .5rem; margin: 0; color: var(--ink-50); }

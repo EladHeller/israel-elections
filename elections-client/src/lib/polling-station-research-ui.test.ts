@@ -1,3 +1,4 @@
+import SearchableSelect from '../components/SearchableSelect';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
@@ -61,7 +62,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   assert.match(content(renderer), /פיצול 1/);
   assert.match(content(renderer), /בכל קלפי/);
   assert.equal(content(renderer).includes('קובץ נתוני הקלפיות עודכן'), false, 'final elections omit file timestamps');
-  assert.equal(renderer.root.findByType('select').props.value, 'אמת');
+  assert.equal(renderer.root.findByType(SearchableSelect).props.value, 'אמת');
   if (election === '26') assert.ok(requests.includes('GET /data/26/polling-stations.csv'));
   else assert.ok(requests.every(request => request === 'GET /data/19/elections.csv'));
   const more = renderer.root.findByProps({ 'aria-label': 'הצגת קלפיות נוספות לפי מספר קולות' });
@@ -70,7 +71,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   assert.equal(rows(1).length, 20);
   await act(async () => renderer.root.findByProps({ 'aria-label': 'הצגת קלפיות נוספות לפי אחוז התמיכה' }).props.onClick());
   assert.equal(rows(1).length, 70);
-  await act(async () => renderer.root.findByType('select').props.onChange({ target: { value: 'מחל' } }));
+  await act(async () => renderer.root.findByType(SearchableSelect).props.onChange('מחל'));
   assert.equal(rows(0).length, 20);
   assert.match(renderer.root.findByType('output').children.join(''), /level=stations/);
   assert.match(renderer.root.findByType('output').children.join(''), /party=/);
@@ -79,7 +80,7 @@ for (const election of ['19', '26']) test(`station research selects, paginates, 
   await act(async () => { button('לפי יישובים').props.onClick(); await tick(); });
   assert.equal(renderer.root.findByProps({ type: 'number' }).props.value, 0);
   assert.doesNotMatch(renderer.root.findByType('output').children.join(''), /level=/);
-  assert.equal(renderer.root.findByType('select').props.value, 'מחל');
+  assert.equal(renderer.root.findByType(SearchableSelect).props.value, 'מחל');
   assert.equal(rows(0).length, 1);
   assert.equal(renderer.root.findAllByType('thead')[0].findAllByType('th').length, 4);
   await act(async () => renderer.root.findByProps({ type: 'number' }).props.onChange({ target: { value: '10001' } }));
