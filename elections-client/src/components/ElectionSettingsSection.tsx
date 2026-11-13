@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { algorithmLabel, numberFormat, percentageFormat } from '../lib/ui-helpers';
 import type { ElectionConfig } from '../types';
+import { OptionSelect } from './ElectionSelector';
+
+const algorithms = ['baderOffer', 'ceilRound'] as const;
+const algorithmOptions = algorithms.map(id => ({ id, name: algorithmLabel(id) }));
 
 interface ElectionSettingsSectionProps {
   editable: boolean;
@@ -59,19 +63,19 @@ const ElectionSettingsSection: React.FC<ElectionSettingsSectionProps> = ({
         )}
       </div>
       <div className="election-setting">
-        <label htmlFor={editable ? 'election-algorithm' : undefined}>שיטת חישוב:</label>
         {editable ? (
-          <select
-            id="election-algorithm"
-            className="algorithm-select"
+          <OptionSelect
+            label="שיטת חישוב:"
             value={activeConfig.algorithm}
-            onChange={(e) => onAlgorithmChange?.(e.target.value as ElectionConfig['algorithm'])}
-          >
-            <option value="baderOffer">{algorithmLabel('baderOffer')}</option>
-            <option value="ceilRound">{algorithmLabel('ceilRound')}</option>
-          </select>
+            valueLabel={algorithmLabel(activeConfig.algorithm)}
+            options={algorithmOptions}
+            onChange={algorithm => onAlgorithmChange?.(algorithm)}
+          />
         ) : (
-          <strong>{algorithmLabel(activeConfig.algorithm)}</strong>
+          <>
+            <span>שיטת חישוב:</span>
+            <strong>{algorithmLabel(activeConfig.algorithm)}</strong>
+          </>
         )}
       </div>
     </section>

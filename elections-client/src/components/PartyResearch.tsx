@@ -6,6 +6,7 @@ import { hasLocalityData, hasEmbeddedPollingStations, pollingStationSource } fro
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AppHeader from './AppHeader';
+import SearchableSelect from './SearchableSelect';
 import { useElectionData } from '../hooks/use-election-data';
 import { parseLocalities, parsePollingStations, rankLocalities, type LocalityVotes } from '../lib/party-research';
 import { localityHref } from '../lib/locality-results';
@@ -125,9 +126,17 @@ export default function PartyResearch() {
         {data && !parties.length && <p>טרם פורסמו תוצאות לפי {singular}.</p>}
         {!!parties.length && <>
           <div className="research-controls">
-            <label>רשימה<select value={party} onChange={event => { const next = new URLSearchParams(search); next.set('party', event.target.value); setSearch(next); setLimits({ votes: 20, percentage: 20 }); }}>
-              {parties.map(key => <option key={key} value={key}>{name(key)} ({key})</option>)}
-            </select></label>
+            <SearchableSelect
+              label="רשימה"
+              value={party}
+              options={parties.map(id => ({ id, name: `${name(id)} (${id})` }))}
+              onChange={id => {
+                const next = new URLSearchParams(search);
+                next.set('party', id);
+                setSearch(next);
+                setLimits({ votes: 20, percentage: 20 });
+              }}
+            />
             {!byStation && <label>מינימום קולות כשרים ביישוב<input type="number" min="0" step="1" value={minimum} onChange={event => { setMinimum(Math.max(0, Math.floor(Number(event.target.value) || 0))); setLimits({ votes: 20, percentage: 20 }); }} /></label>}
           </div>
           <h2>{name(party)}</h2>

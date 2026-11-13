@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { numberFormat, getStablePartyColor } from '../lib/ui-helpers';
 import type { BlocsConfig } from '../types';
 import PartyRow from './PartyRow';
+import SearchableSelect from './SearchableSelect';
 
 interface DeltaChipProps {
   delta?: number | null;
@@ -144,65 +145,69 @@ const AgreementsPanel: React.FC<AgreementsPanelProps> = ({
   agreementSelectableParties,
   addAgreement,
   agreementValidation,
-}) => (
-  <>
-    <div className="scenario-agreements">
-      {agreements.length === 0 && (
-        <div className="agreement-empty">אין הסכמי עודפים</div>
-      )}
-      {agreements.map(([a, b]) => (
-        <div key={`${a}-${b}`} className="agreement-edit-item">
-          <span>{getPartyName(a)}</span>
-          <span className="agreement-plus">+</span>
-          <span>{getPartyName(b)}</span>
-          {editable && (
-            <button
-              type="button"
-              className="ghost danger"
-              onClick={() => removeAgreement(a, b)}
-            >
-              הסר
-            </button>
-          )}
-        </div>
-      ))}
-    </div>
+}) => {
+  const options = [
+    { id: '', name: 'בחירת רשימה' },
+    ...agreementSelectableParties.map(id => ({ id, name: getPartyName(id) })),
+  ];
 
-    {editable && (
-      <div className="add-agreement">
-        <select value={addAgreementA} onChange={(e) => setAddAgreementA(e.target.value)}>
-          <option value="">רשימה א׳</option>
-          {agreementSelectableParties.map((party) => (
-            <option key={party} value={party}>
-              {getPartyName(party)}
-            </option>
-          ))}
-        </select>
-        <select value={addAgreementB} onChange={(e) => setAddAgreementB(e.target.value)}>
-          <option value="">רשימה ב׳</option>
-          {agreementSelectableParties
-            .filter((party) => party !== addAgreementA)
-            .map((party) => (
-              <option key={party} value={party}>
-                {getPartyName(party)}
-              </option>
-            ))}
-        </select>
-        <button type="button" onClick={addAgreement}>
-          הוספת הסכם
-        </button>
-      </div>
-    )}
-
-    {editable && !agreementValidation.isValid && (
-      <div className="validation-errors">
-        {agreementValidation.errors.map((msg) => (
-          <div key={msg}>{msg}</div>
+  return (
+    <>
+      <div className="scenario-agreements">
+        {agreements.length === 0 && (
+          <div className="agreement-empty">אין הסכמי עודפים</div>
+        )}
+        {agreements.map(([a, b]) => (
+          <div key={`${a}-${b}`} className="agreement-edit-item">
+            <span>{getPartyName(a)}</span>
+            <span className="agreement-plus">+</span>
+            <span>{getPartyName(b)}</span>
+            {editable && (
+              <button
+                type="button"
+                className="ghost danger"
+                onClick={() => removeAgreement(a, b)}
+              >
+                הסר
+              </button>
+            )}
+          </div>
         ))}
       </div>
-    )}
-  </>
-);
+
+      {editable && (
+        <div className="add-agreement">
+          <SearchableSelect
+            label="רשימה א׳"
+            value={addAgreementA}
+            options={options}
+            onChange={party => {
+              setAddAgreementA(party);
+              if (party === addAgreementB) setAddAgreementB('');
+            }}
+          />
+          <SearchableSelect
+            label="רשימה ב׳"
+            value={addAgreementB}
+            options={options.filter(option => !option.id || option.id !== addAgreementA)}
+            onChange={setAddAgreementB}
+          />
+          <button type="button" onClick={addAgreement}>
+            הוספת הסכם
+          </button>
+        </div>
+      )}
+
+      {editable && !agreementValidation.isValid && (
+        <div className="validation-errors">
+          {agreementValidation.errors.map((msg) => (
+            <div key={msg}>{msg}</div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
 
 interface PartyPanelProps {
   researchElection?: string;
