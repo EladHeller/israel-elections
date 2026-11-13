@@ -146,6 +146,7 @@ export interface CalcSteps {
   totalWhole: number;
   remainingMandats: number;
   agreementsInfo: AgreementInfo[];
+  allocationGroups: CalcVoteData;
   remainderRounds: (BaderRound | (CeilCandidate & { getsBonus: boolean }))[];
   algorithmUsed: Algorithm;
   agreementSplits: AgreementSplit[];
@@ -326,6 +327,7 @@ export const buildCalcSteps = (
     totalWhole,
     remainingMandats,
     agreementsInfo,
+    allocationGroups: withAgreements,
     remainderRounds,
     algorithmUsed: algorithm,
     agreementSplits,

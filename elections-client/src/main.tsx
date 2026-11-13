@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import './styles.css';
+import './mandate-replay.css';
 import './election-night.css';
 
 const container = document.getElementById('root');

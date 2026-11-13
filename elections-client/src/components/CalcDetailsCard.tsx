@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { numberFormat, percentageFormat } from '../lib/ui-helpers';
 import { buildCalcSteps, type CalcSteps, type AgreementSplit } from '../lib/calcSteps';
 import type { VoteData } from '../types';
+import MandateReplay from './MandateReplay';
 
 const NON_PARTY_KEYS = new Set(['﻿סמל ועדה', 'סמל ועדה']);
 
@@ -682,6 +683,7 @@ const CalcDetailsCard: React.FC<CalcDetailsCardProps> = ({
   return (
     <section className="calc-details-panel panel">
       <h2>חישוב מנדטים — שלב אחר שלב</h2>
+      <MandateReplay steps={steps} getPartyName={resolvePartyName} />
 
       <StepSection
         number={1}
